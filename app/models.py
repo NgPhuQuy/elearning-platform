@@ -18,14 +18,17 @@ class BaseModel(db.Model):
 class User(BaseModel, UserMixin):
     username = Column(String(255), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
+    first_name = Column(String(255), nullable=False)
+    last_name = Column(String(255), nullable=False)
     avatar = Column(String(255), default='')
     email = Column(String(255), nullable=False, unique=True)
+    phone = Column(String(255), nullable=False)
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         db.session.commit()
         password = hashlib.sha256(b'123').hexdigest()
-        admin = User(username = 'admin', password = password, email = '')
+        admin = User(username = 'admin', password = password,first_name="",last_name="", email = '', phone='')
         db.session.add(admin)
         db.session.commit()
