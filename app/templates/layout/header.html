@@ -1,0 +1,26 @@
+<header class="site-header">
+    <nav aria-label="Điều hướng chính">
+        <a href="/" class="logo">
+            LOGO placeholder
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="/">Trang chủ</a></li>
+{#            <li><a href="{{ url_for('courses') }}">Khóa học</a></li>#}
+{#            <li><a href="{{ url_for('about') }}">Giới thiệu</a></li>#}
+{#            <li><a href="{{ url_for('contact') }}">Liên hệ</a></li>#}
+        </ul>
+
+        {% if current_user.is_authenticated %}
+            <ul class="nav-user">
+{#                <li><a href="{{ url_for('profile') }}">{{ current_user.username }}</a></li>#}
+                <li><a href="{{ url_for('logout') }}">Đăng xuất</a></li>
+            </ul>
+        {% else %}
+            <ul class="nav-user">
+                <li><a href="{{ url_for('login') }}">Đăng nhập</a></li>
+{#                <li><a href="{{ url_for('register') }}" class="btn-primary">Đăng ký</a></li>#}
+            </ul>
+        {% endif %}
+    </nav>
+</header>
