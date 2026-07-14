@@ -15,7 +15,8 @@ def auth_user(username, password):
 
 def register_user(username, password, email,
                   phone, avatar, first_name, last_name):
-    user = User(username=username, password=password, email=email,phone=phone,
+    hashed_password = hash_password(password)
+    user = User(username=username, password=hashed_password, email=email,phone=phone,
                 avatar=avatar, first_name=first_name, last_name=last_name)
     db.session.add(user)
     db.session.commit()
