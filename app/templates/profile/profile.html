@@ -1,0 +1,84 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<section class="container my-5" style="max-width:1200px;">
+
+    <!-- ================= HERO PROFILE ================= -->
+    <section class="card border-0 shadow-lg rounded-5 mb-5 overflow-hidden">
+
+        <header class="p-5"
+                style="background: linear-gradient(135deg, #e0e7ff, #f8fafc);">
+
+            <div class="d-flex align-items-center flex-wrap gap-4">
+
+                <!-- Avatar -->
+                <figure class="mb-0 rounded-circle p-1"
+                        style="background: linear-gradient(135deg,#6366f1,#38bdf8);">
+                    <img src="{{ current_user.avatar }}"
+                         class="rounded-circle bg-white"
+                         width="120" height="120"
+                         style="object-fit: cover"
+                         alt="Ảnh đại diện của {{ current_user.first_name }} {{ current_user.last_name }}">
+                </figure>
+
+                <!-- Info -->
+                <div class="flex-grow-1">
+                    <h2 class="fw-bold mb-1 text-dark">
+                        {{ current_user.first_name }}
+                        {{ current_user.last_name }}
+                    </h2>
+
+                    <p class="text-muted mb-2">
+                        {{ current_user.email }} · {{ current_user.phone }}
+                    </p>
+                </div>
+
+                <nav class="d-flex flex-column flex-sm-row gap-2">
+                    <a href="/profile/change-info">
+                        Đổi thông tin cá nhân
+                    </a>
+                    <a href="/profile/change-password">
+                        Đổi mật khẩu
+                    </a>
+                </nav>
+
+            </div>
+        </header>
+    </section>
+
+    <section class="row g-4 mb-5">
+        <article class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 hover-shadow">
+                <div class="card-body p-4">
+                    <span class="icon-box d-inline-flex align-items-center justify-content-center mb-3"
+                          style="background:#eef2ff;color:#4f46e5;">
+                        🎓
+                    </span>
+                    <h6 class="fw-bold">Học viên</h6>
+                    <p class="text-muted small mb-4">
+                        Theo dõi khóa học và tiến độ học tập
+                    </p>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- ================= ACCOUNT STATUS ================= -->
+    <section class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <dl class="row text-center mb-0">
+                <dt class="col-md-6 mb-3 text-muted small fw-normal">Trạng thái tài khoản</dt>
+                <dd class="col-md-6 mb-3">
+                    {% if current_user.is_active %}
+                        <span class="fw-bold text-success fs-5">Hoạt động</span>
+                    {% else %}
+                        <span class="fw-bold text-danger fs-5">Bị khóa</span>
+                    {% endif %}
+                </dd>
+            </dl>
+        </div>
+    </section>
+
+</section>
+
+{% endblock %}
