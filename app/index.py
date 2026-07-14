@@ -5,7 +5,7 @@ from flask import redirect, render_template, request
 from flask_login import login_user, current_user, logout_user
 from app import app, dao, login, db
 from datetime import datetime
-from app.dao import register_user
+from app.dao import register_user, hash_password
 
 
 @app.context_processor
@@ -26,6 +26,7 @@ def register():
         if password != confirm:
             error = "Mật khẩu không khớp!"
             return render_template("auth/register.html", error=error)
+        password = hash_password(password)
 
         username = request.form.get('username')
         if dao.is_username_exist(username=username):
