@@ -1,5 +1,3 @@
-import hashlib
-
 import cloudinary.uploader
 from flask import redirect, render_template, request
 from flask_login import login_user, current_user, logout_user, login_required
