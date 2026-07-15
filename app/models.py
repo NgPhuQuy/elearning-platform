@@ -68,4 +68,18 @@ if __name__ == '__main__':
         db.session.add(teacher)
         db.session.add(teacher_profile)
         db.session.add(admin)
+        categories = [
+            Category(name="Lập trình Python"),
+            Category(name="Lập trình Java"),
+            Category(name="Lập trình Web"),
+            Category(name="Cơ sở dữ liệu"),
+            Category(name="Trí tuệ nhân tạo"),
+            Category(name="Machine Learning"),
+            Category(name="Tiếng Anh"),
+            Category(name="Tiếng Nhật"),
+            Category(name="Thiết kế UI/UX"),
+            Category(name="Marketing")
+        ]
+
+        db.session.add_all(categories)
         db.session.commit()

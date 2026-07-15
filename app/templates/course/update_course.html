@@ -1,0 +1,64 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Cập nhật khóa học</h2>
+
+    <hr>
+
+    <form method="POST">
+
+        <div class="mb-3">
+            <label class="form-label">Tên khóa học</label>
+            <input type="text"
+                   class="form-control"
+                   name="name"
+                   value="{{ course.name }}">
+        </div>
+
+
+        <div class="mb-3">
+            <label class="form-label">Mô tả</label>
+            <textarea class="form-control"
+                      name="description"
+                      rows="4">{{ course.description }}</textarea>
+        </div>
+
+
+        <div class="mb-3">
+            <label class="form-label">Hình ảnh (URL)</label>
+            <input type="text"
+                   class="form-control"
+                   name="image"
+                   value="{{ course.image }}">
+        </div>
+
+
+        {% if course.image %}
+        <div class="mb-3">
+            <label class="form-label">Ảnh hiện tại</label>
+            <br>
+            <img src="{{ course.image }}"
+                 width="350"
+                 class="img-fluid">
+        </div>
+        {% endif %}
+
+
+        <button type="submit" class="btn btn-primary">
+            Lưu thay đổi
+        </button>
+
+
+        <a href="{{ url_for('course_details', course_id=course.id) }}"
+           class="btn btn-secondary">
+            Hủy
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

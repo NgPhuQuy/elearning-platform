@@ -64,6 +64,10 @@ def change_password(new_password):
         return False, str(e)
     return True, None
 
+def get_categories():
+    return Category.query.all()
+
+
 def create_course(  name, description , image,teacher_id , category_ids):
     course = Course(name=name, description=description, image=image, teacher_id=teacher_id)
     if category_ids and isinstance(category_ids, list):
@@ -80,12 +84,17 @@ def create_course(  name, description , image,teacher_id , category_ids):
 
     return course
 
-def get_course_details(course_id):
-    return Course.query.get(course_id)
+def get_course_details(course_id, teacher_id):
+    return Course.query.filter(
+        Course.id == course_id,
+        Course.teacher_id == teacher_id
+    ).first()
+
 
 def get_courses_by_teacher_id(teacher_id):
-    return Course.query.filter(Course.teacher_id == teacher_id).all()
-
+    return Course.query.filter_by(
+        teacher_id=teacher_id
+    ).all()
 def update_course (course_id, teacher_id, name=None, description=None, image=None):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
