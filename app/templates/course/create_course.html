@@ -25,14 +25,24 @@
             <input type="file" name="image" accept="image/*" required>
         </div>
 
-        <div>
-            <label>Danh mục (Chọn nhiều bằng Ctrl/Cmd):</label>
-            <select name="category_ids" multiple required>
-                {% for c in categories %}
-                    <option value="{{ c.id }}">{{ c.name }}</option>
-                {% endfor %}
-            </select>
+      <div class="mb-3">
+    <label class="form-label">Danh mục:</label>
+
+    {% for c in categories %}
+        <div class="form-check">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                name="category_ids"
+                value="{{ c.id }}"
+                id="category{{ c.id }}">
+
+            <label class="form-check-label" for="category{{ c.id }}">
+                {{ c.name }}
+            </label>
         </div>
+    {% endfor %}
+</div>
 
         <button type="submit">Tạo khóa học</button>
     </form>

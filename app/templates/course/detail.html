@@ -1,0 +1,25 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2>{{ course.name }}</h2>
+
+    <hr>
+
+    {% if course.image %}
+        <img src="{{ course.image }}"
+             width="350"
+             class="img-fluid mb-3">
+    {% endif %}
+
+    <h5>Mô tả</h5>
+
+    <p>{{ course.description }}</p>
+
+    <a href="{{ url_for('course_index') }}" class="btn btn-secondary">
+        Quay lại
+    </a>
+
+</div>
+{% endblock %}

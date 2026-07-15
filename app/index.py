@@ -75,6 +75,8 @@ def login():
 
         if user:
             login_user(user)
+            if user.teach:
+                return redirect("/courses")
             return redirect("/")
         else:
             error = "Tài khoản hoặc mật khẩu không đúng!"
@@ -138,6 +140,7 @@ def change_password():
     return render_template("profile/change-password.html", error=error)
 
 
+
 @app.route('/create-course', methods=['GET', 'POST'])
 @login_required
 def create_course():
@@ -151,6 +154,9 @@ def create_course():
     if not teacher:
         return redirect('/')
 
+    # Lấy tất cả category để hiển thị trên form
+    categories = dao.get_categories()
+
     if request.method == "POST":
         name = request.form.get('name')
         description = request.form.get('description')
@@ -159,7 +165,11 @@ def create_course():
 
         if not name or not description or not image:
             error = "Vui lòng nhập đầy đủ tên và mô tả khóa học và cả hình ảnh khóa học!"
-            return render_template("course/create_course.html", error=error)
+            return render_template(
+                "course/create_course.html",
+                error=error,
+                categories=categories
+            )
 
         file_path = None
         try:
@@ -167,7 +177,11 @@ def create_course():
             file_path = res["secure_url"]
         except Exception:
             error = "Tải ảnh thất bại!"
-            return render_template("course/create_course.html", error=error)
+            return render_template(
+                "course/create_course.html",
+                error=error,
+                categories=categories
+            )
 
         try:
             course = dao.create_course(
@@ -177,17 +191,97 @@ def create_course():
                 teacher_id=teacher.id,
                 category_ids=category_ids
             )
+
             if not course:
                 error = "Hệ thống lỗi, vui lòng thử lại!"
-                return render_template("course/create_course.html", error=error)
+                return render_template(
+                    "course/create_course.html",
+                    error=error,
+                    categories=categories
+                )
 
-            return redirect('/')
+            return redirect('/courses')
 
         except Exception:
             db.session.rollback()
             error = "Hệ thống lỗi, vui lòng thử lại!"
-            return render_template("course/create_course.html", error=error)
+            return render_template(
+                "course/create_course.html",
+                error=error,
+                categories=categories
+            )
 
-    return render_template("course/create_course.html", error=error)
+    return render_template(
+        "course/create_course.html",
+        error=error,
+        categories=categories
+    )
+
+@app.route("/course/<int:course_id>")
+@login_required
+def course_detail(course_id):
+    if not current_user.teach:
+        return redirect("/")
+
+    teacher = current_user.teach[0]
+
+    course = dao.get_course_details(course_id, teacher.id)
+
+    if not course:
+        return redirect("/courses")
+
+    return render_template(
+        "course/detail.html",
+        course=course
+    )
+@app.route("/courses")
+@login_required
+def course_index():
+    if not current_user.teach:
+        return redirect("/")
+
+    teacher = current_user.teach[0]
+
+    courses = dao.get_courses_by_teacher_id(teacher.id)
+
+    return render_template(
+        "course/index.html",
+        courses=courses
+    )
+@app.route("/update_course/<int:course_id>", methods=["GET", "POST"])
+@login_required
+def update_course(course_id):
+
+    if not current_user.teach:
+        return redirect("/")
+
+    teacher = current_user.teach[0]
+
+    course = dao.get_course_details(course_id, teacher.id)
+
+    if not course:
+        return redirect("/courses")
+
+
+    if request.method == "POST":
+        name = request.form.get('name')
+        description = request.form.get('description')
+        image = request.files.get('image')
+
+        dao.update_course(
+            course_id=course_id,
+            teacher_id=teacher.id,
+            name=name,
+            description=description,
+            image=image
+        )
+
+        return redirect(f"/course/{course_id}")
+
+
+    return render_template(
+        "course/update_course.html",
+        course=course
+    )
 if __name__ == '__main__':
     app.run(debug=True)
