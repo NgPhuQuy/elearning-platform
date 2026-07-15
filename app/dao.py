@@ -2,7 +2,7 @@ import hashlib
 
 from flask_login import current_user
 
-from app.models import User
+from app.models import User, Course, Lesson, Category
 from app import db, login
 
 @login.user_loader
@@ -62,3 +62,108 @@ def change_password(new_password):
         db.session.rollback()
         return False, str(e)
     return True, None
+
+def create_course(  name, description , image,teacher_id , category_ids):
+    course = Course(name=name, description=description, image=image, teacher_id=teacher_id)
+    if category_ids and isinstance(category_ids, list):
+        categories = Category.query.filter(Category.id.in_(category_ids)).all()
+        course.categories = categories
+
+
+    try:
+        db.session.add(course)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return None
+
+    return course
+
+def get_course_details(course_id):
+    return Course.query.get(course_id)
+
+def get_courses_by_teacher_id(teacher_id):
+    return Course.query.filter(Course.teacher_id == teacher_id).all()
+
+def update_course (course_id, teacher_id, name=None, description=None, image=None):
+    course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
+    if course:
+        if  name:
+            course.name = name
+        if  description:
+            course.description = description
+        if image:
+            course.image = image
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return None;
+
+        return course;
+
+    return None;
+
+
+
+def create_lesson(teacher_id ,course_id, description, name):
+    course = Course.query.filter(Course.teacher_id == teacher_id, Course.id == course_id).first()
+    if not course:
+        return None
+    lesson = Lesson(name=name, description=description, course_id=course_id)
+    try:
+        db.session.add(lesson)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return None
+
+    return lesson
+
+
+def update_lesson(lesson_id, course_id, teacher_id, name=None, description=None):
+
+    lesson = Lesson.query.join(Course).filter(
+        Course.id == course_id,
+        Course.teacher_id == teacher_id,
+        Lesson.id == lesson_id
+    ).first()
+
+    if lesson:
+
+        if name:
+            lesson.name = name
+        if description:
+            lesson.description = description
+
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return None
+        return lesson;
+
+    return None
+
+
+def delete_lesson(lesson_id, course_id, teacher_id):
+    lesson = Lesson.query.join(Course).filter(
+        Course.id == course_id,
+        Course.teacher_id == teacher_id,
+        Lesson.id == lesson_id
+    ).first()
+
+    if lesson:
+        try:
+            db.session.delete(lesson)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return False
+        return True
+
+    return False
+def get_lesson_details(lesson_id):
+    return Lesson.query.get(lesson_id)

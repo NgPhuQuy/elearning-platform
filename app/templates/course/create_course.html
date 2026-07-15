@@ -1,0 +1,39 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+    <h1>Tạo khóa học mới</h1>
+
+    <!-- Nếu có lỗi, hiện thông báo ở đây -->
+    {% if error %}
+        <p style="color: red; font-weight: bold;">{{ error }}</p>
+    {% endif %}
+
+    <!-- enctype là BẮT BUỘC để upload ảnh -->
+    <form method="POST" action="/create-course" enctype="multipart/form-data">
+        <div>
+            <label>Tên khóa học:</label>
+            <input type="text" name="name" required>
+        </div>
+
+        <div>
+            <label>Mô tả:</label>
+            <textarea name="description" required></textarea>
+        </div>
+
+        <div>
+            <label>Hình ảnh:</label>
+            <input type="file" name="image" accept="image/*" required>
+        </div>
+
+        <div>
+            <label>Danh mục (Chọn nhiều bằng Ctrl/Cmd):</label>
+            <select name="category_ids" multiple required>
+                {% for c in categories %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit">Tạo khóa học</button>
+    </form>
+{% endblock %}

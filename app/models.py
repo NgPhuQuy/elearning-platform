@@ -2,7 +2,8 @@ import hashlib
 from datetime import datetime
 
 from flask_login import UserMixin
-from sqlalchemy import Column, DateTime, Integer, String, Boolean
+from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Table
+from sqlalchemy.orm import relationship
 
 from app import db, app
 
@@ -23,12 +24,48 @@ class User(BaseModel, UserMixin):
     avatar = Column(String(255), default='')
     email = Column(String(255), nullable=False, unique=True)
     phone = Column(String(255), nullable=False)
+    teach =relationship("Teacher", backref="user", lazy=True)
+
+
+class Teacher(BaseModel):
+    user_id = Column(Integer, ForeignKey('user.id'), unique=True, nullable=False)
+    note = Column(String(255), default="")
+    courses = relationship("Course", backref="teacher", lazy=True)
+
+
+course_category = Table(
+    'course_category', BaseModel.metadata,
+    Column('course_id', Integer, ForeignKey('course.id'), primary_key=True),
+    Column('category_id', Integer, ForeignKey('category.id'), primary_key=True)
+)
+
+class Course(BaseModel):
+    description = Column(String(255), nullable=False)
+    image = Column(String(500), default="")
+    teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
+    lessons = relationship("Lesson", backref="course", lazy = True)
+    categories = relationship("Category", secondary=course_category, backref="courses")
+class Lesson(BaseModel):
+    description = Column(String(255), nullable=False)
+    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
+
+class Category(BaseModel):
+    pass
+
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         db.session.commit()
         password = hashlib.sha256(b'123').hexdigest()
+        teacher = User(username='teacher', password=password,first_name="Emifukada", last_name="", email='jfafhaf@gmail.com', phone='')
+        teacher_profile = Teacher(
+            user=teacher,
+            note="Giáo viên dạy tiếng nhật"
+        )
+
         admin = User(username = 'admin', password = password,first_name="",last_name="", email = '', phone='')
+        db.session.add(teacher)
+        db.session.add(teacher_profile)
         db.session.add(admin)
         db.session.commit()

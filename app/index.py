@@ -2,7 +2,7 @@ import hashlib
 
 import cloudinary.uploader
 from flask import redirect, render_template, request
-from flask_login import login_user, current_user, logout_user
+from flask_login import login_user, current_user, logout_user, login_required
 from app import app, dao, login, db
 from datetime import datetime
 from app.dao import register_user
@@ -140,5 +140,56 @@ def change_password():
     return render_template("profile/change-password.html", error=error)
 
 
+@app.route('/create-course', methods=['GET', 'POST'])
+@login_required
+def create_course():
+    error = None
+
+    if current_user.teach:
+        teacher = current_user.teach[0]
+    else:
+        teacher = None
+
+    if not teacher:
+        return redirect('/')
+
+    if request.method == "POST":
+        name = request.form.get('name')
+        description = request.form.get('description')
+        image = request.files.get('image')
+        category_ids = request.form.getlist('category_ids')
+
+        if not name or not description or not image:
+            error = "Vui lòng nhập đầy đủ tên và mô tả khóa học và cả hình ảnh khóa học!"
+            return render_template("course/create_course.html", error=error)
+
+        file_path = None
+        try:
+            res = cloudinary.uploader.upload(image)
+            file_path = res["secure_url"]
+        except Exception:
+            error = "Tải ảnh thất bại!"
+            return render_template("course/create_course.html", error=error)
+
+        try:
+            course = dao.create_course(
+                name=name,
+                description=description,
+                image=file_path,
+                teacher_id=teacher.id,
+                category_ids=category_ids
+            )
+            if not course:
+                error = "Hệ thống lỗi, vui lòng thử lại!"
+                return render_template("course/create_course.html", error=error)
+
+            return redirect('/')
+
+        except Exception:
+            db.session.rollback()
+            error = "Hệ thống lỗi, vui lòng thử lại!"
+            return render_template("course/create_course.html", error=error)
+
+    return render_template("course/create_course.html", error=error)
 if __name__ == '__main__':
     app.run(debug=True)
