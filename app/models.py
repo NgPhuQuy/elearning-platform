@@ -43,7 +43,7 @@ class Course(BaseModel):
     teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
     lessons = relationship("Lesson", backref="course", lazy = True)
     course_category = relationship("CourseCategory", backref="course",cascade="all, delete-orphan", lazy=True)
-    posts = relationship("Post", backref="course", lazy=True)
+
 
 class Teacher(BaseModel):
     user_id = Column(Integer, ForeignKey('user.id'), unique=True, nullable=False)
@@ -60,7 +60,6 @@ class Post(BaseModel):
     image = Column(String(500), default="")
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     category_id = Column(Integer,ForeignKey(PostCate.id),nullable=False)
-    course_id = Column(Integer, ForeignKey(Course.id), nullable=False)
     comments = relationship("Comment",backref="post",lazy=True)
     reactions = relationship("ReactionPost",backref="post",lazy=True)
     user = relationship("User",backref="posts")
