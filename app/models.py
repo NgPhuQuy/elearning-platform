@@ -25,6 +25,18 @@ class User(BaseModel, UserMixin):
     email = Column(String(255), nullable=False, unique=True)
     phone = Column(String(255), nullable=False)
 
+class Category(BaseModel):
+    course_category = relationship("CourseCategory", backref="category",lazy=True)
+
+class CourseCategory(db.Model):
+    __tablename__ = "course_category"
+    course_id = Column(Integer, ForeignKey('course.id',ondelete="CASCADE"), primary_key=True)
+    category_id = Column(Integer, ForeignKey('category.id'), primary_key=True)
+
+class Lesson(BaseModel):
+    description = Column(String(255), nullable=False)
+    course_id = Column(Integer, ForeignKey('course.id'), primary_key=True)
+
 class Course(BaseModel):
     description = Column(String(255), nullable=False)
     image = Column(String(500), default="")
@@ -88,7 +100,7 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         db.session.commit()
-        # password = hashlib.sha256(b'123').hexdigest()
-        # admin = User(username = 'admin', password = password,first_name="",last_name="", email = '', phone='')
-        # db.session.add(admin)
-        # db.session.commit()
+        password = hashlib.sha256(b'123').hexdigest()
+        admin = User(username = 'admin', password = password,first_name="",last_name="", email = '', phone='')
+        db.session.add(admin)
+        db.session.commit()
