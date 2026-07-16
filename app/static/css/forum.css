@@ -1,0 +1,498 @@
+/* =========================
+   General Forum
+========================= */
+body{
+    background:#f5f7fb;
+}
+.forum-container {
+    max-width: 800px;
+}
+
+
+/* =========================
+   Forum List Page
+========================= */
+
+.forum-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+
+.forum-header h2 {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.forum-post-item{
+
+    background:white;
+
+    padding:20px;
+
+    margin-bottom:15px;
+
+    border-radius:12px;
+
+    border:1px solid #e9ecef;
+
+    transition:0.2s;
+}
+
+
+.forum-post-item:hover{
+
+    border-color:#0d6efd;
+
+    box-shadow:
+        0 3px 12px rgba(0,0,0,.06);
+}
+
+.forum-post-thumbnail{
+
+    width:220px;
+
+    max-height:180px;
+
+    object-fit:cover;
+
+    border-radius:12px;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    box-shadow:
+        0 2px 10px rgba(0,0,0,.1);
+}
+
+
+.forum-post-thumbnail:hover{
+
+    transform:scale(1.03);
+
+    opacity:.9;
+}
+
+.forum-post-author{
+
+    font-size:14px;
+
+    color:#6c757d;
+
+    margin-bottom:10px;
+}
+
+
+.forum-post-title{
+
+    margin-bottom:10px;
+}
+
+
+.forum-post-title a{
+
+    text-decoration:none;
+
+    color:#212529;
+
+    font-size:24px;
+
+    font-weight:700;
+}
+
+
+.forum-post-title a:hover{
+
+    color:#0d6efd;
+}
+
+
+.forum-post-preview{
+
+    color:#495057;
+
+    line-height:1.7;
+
+    margin-bottom:15px;
+}
+
+
+.forum-post-footer{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    border-top:1px solid #eee;
+
+    padding-top:12px;
+
+    font-size:14px;
+}
+
+
+.forum-post-footer a{
+
+    text-decoration:none;
+
+    font-weight:600;
+}
+
+/* =========================
+   Create Post Page
+========================= */
+
+
+.forum-form {
+
+    background:white;
+
+    padding:30px;
+
+    border-radius:15px;
+
+    box-shadow:
+        0 5px 20px rgba(0,0,0,.08);
+
+}
+
+
+
+.forum-form h2 {
+
+    font-weight:700;
+
+    margin-bottom:25px;
+
+}
+
+
+
+.forum-form .form-control {
+
+    border-radius:10px;
+
+    padding:12px;
+
+}
+
+
+
+.forum-form textarea {
+
+    resize:none;
+
+}
+
+
+
+.forum-form button {
+
+    border-radius:20px;
+
+    padding:10px 25px;
+
+}
+
+
+/* =========================
+   Post Detail
+========================= */
+
+
+.post-detail-card {
+
+    border:none;
+
+    border-radius:15px;
+
+    box-shadow:
+    0 5px 20px rgba(0,0,0,.1);
+
+}
+
+
+
+.post-title {
+
+    font-weight:700;
+
+    color:#2c3e50;
+
+}
+
+
+
+.post-content {
+
+    font-size:17px;
+
+    line-height:1.7;
+
+}
+
+
+/* =========================
+   Reaction
+========================= */
+
+
+.reaction-bar {
+
+    display:flex;
+
+    gap:8px;
+
+    flex-wrap:wrap;
+
+}
+
+
+
+.reaction-bar form {
+
+    display:inline;
+
+}
+
+
+
+.react-btn {
+
+    border:none;
+
+    background:#f1f3f5;
+
+    border-radius:50%;
+
+    width:45px;
+
+    height:45px;
+
+    font-size:22px;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+
+
+.react-btn:hover {
+
+    background:#e0e0e0;
+
+    transform:scale(1.15);
+
+}
+
+
+
+.react-btn-small {
+
+    border:none;
+
+    background:#f5f5f5;
+
+    border-radius:50%;
+
+    width:32px;
+
+    height:32px;
+
+    font-size:15px;
+
+}
+
+
+
+.react-btn-small:hover {
+
+    transform:scale(1.15);
+
+}
+
+
+
+/* =========================
+   Comment
+========================= */
+
+
+.comment-box {
+
+    background:#f8f9fa;
+
+    padding:12px 15px;
+
+    border-radius:12px;
+
+    border-left:4px solid #0d6efd;
+
+    margin-bottom:12px;
+
+}
+
+
+
+.comment-box strong {
+
+    font-size:14px;
+
+    color:#34495e;
+
+}
+
+
+
+.comment-box p {
+
+    margin:6px 0;
+
+    font-size:14px;
+
+    color:#555;
+
+    line-height:1.4;
+
+}
+
+
+
+.comment-reactions {
+
+    display:flex;
+
+    gap:4px;
+
+    margin-top:5px;
+
+}
+
+
+
+.react-btn-small {
+
+    border:none;
+
+    background:#fff;
+
+    border-radius:50%;
+
+    width:28px;
+
+    height:28px;
+
+    font-size:13px;
+
+    padding:0;
+
+    cursor:pointer;
+
+}
+
+
+
+.react-btn-small:hover {
+
+    transform:scale(1.15);
+
+}
+
+
+
+.comment-box small {
+
+    font-size:12px;
+
+}
+
+
+
+.comment-box .btn {
+
+    font-size:13px;
+
+    padding:4px 12px;
+
+}
+
+
+
+/* =========================
+   Buttons
+========================= */
+
+
+.btn {
+
+    border-radius:20px;
+
+}
+
+
+
+.btn-primary {
+
+    padding-left:20px;
+
+    padding-right:20px;
+
+}
+
+
+.btn-success {
+
+    padding-left:25px;
+
+    padding-right:25px;
+
+}
+
+.reply-comment{
+
+    margin-left:40px;
+
+    margin-top:15px;
+
+    padding:12px;
+
+    background:#f1f3f5;
+
+    border-radius:12px;
+
+}
+
+
+.reply-form textarea{
+
+    border-radius:10px;
+
+}
+
+.active-react{
+    background:#0d6efd !important;
+    color:white !important;
+    border:2px solid #0d6efd;
+}
+
+.post-action-bar{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-top:15px;
+
+    padding-top:10px;
+
+    border-top:1px solid #eee;
+}

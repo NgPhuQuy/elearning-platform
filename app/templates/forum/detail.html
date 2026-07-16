@@ -1,0 +1,322 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/forum.css') }}">
+
+
+<div class="container mt-4">
+
+    <div class="card post-detail-card">
+        <div class="card-body">
+
+             <p class="post-content">
+                {{ post.content }}
+            </p>
+
+         {% if post.image %}
+
+        <img src="{{ post.image }}"
+             class="forum-post-thumbnail mb-2"
+             onclick="openImageModal('{{ post.image }}')">
+
+        {% endif %}
+
+
+                  <div class="text-muted mb-3">
+                      Post by:
+                {{ post.user.first_name }}
+                {{ post.user.last_name }}
+            </div>
+            <hr>
+
+            {% set selected_post = my_post_react.type.name if my_post_react else '' %}
+
+            <div class="reaction-bar">
+
+                {% for type, icon in {
+                    'LIKE':'👍',
+                    'LOVE':'❤️',
+                    'HAHA':'😆',
+                    'WOW':'😮',
+                    'SAD':'😢',
+                    'ANGRY':'😡'
+                }.items() %}
+
+                <form class="react-form"
+                      data-post="{{ post.id }}">
+
+                    <input type="hidden"
+                           name="type"
+                           value="{{ type }}">
+
+                    <button type="submit"
+                            class="react-btn {% if selected_post == type %}active-react{% endif %}">
+                        {{ icon }}
+                    </button>
+
+                </form>
+
+                {% endfor %}
+
+            </div>
+
+           <div class="post-action-bar">
+
+    <div id="post-react-count"
+         class="text-muted">
+        {{ post.reactions|length }} reactions
+    </div>
+
+    <button
+        type="button"
+        class="btn btn-outline-primary btn-sm"
+        data-bs-toggle="modal"
+        data-bs-target="#commentModal">
+
+        💬 Add Comment
+
+    </button>
+
+</div>
+        </div>
+    </div>
+
+    <hr>
+
+    <h4>Comments</h4>
+
+    {% for c in post.comments %}
+
+        {% if c.parent_comment_id == None %}
+
+        <div class="comment-box mb-3">
+
+            <strong>
+                {{ c.user.first_name }}
+                {{ c.user.last_name }}
+            </strong>
+
+            <p class="mt-2">
+                {{ c.content }}
+            </p>
+
+            {% set my_comment_react =
+            (c.reactions
+            | selectattr('user_id','equalto',current_user.id)
+            | list
+            | first) %}
+
+            <div class="comment-reactions">
+
+                {% for type, icon in {
+                    'LIKE':'👍',
+                    'LOVE':'❤️',
+                    'HAHA':'😆',
+                    'WOW':'😮',
+                    'SAD':'😢',
+                    'ANGRY':'😡'
+                }.items() %}
+
+                <form class="comment-react-form"
+                      data-comment-id="{{ c.id }}">
+
+                    <input type="hidden"
+                           name="type"
+                           value="{{ type }}">
+
+                    <button type="submit"
+                            class="react-btn-small {% if my_comment_react and my_comment_react.type.name == type %}active-react{% endif %}">
+                        {{ icon }}
+                    </button>
+
+                </form>
+
+                {% endfor %}
+
+            </div>
+
+            <small id="comment-react-{{ c.id }}"
+                   class="text-muted">
+                {{ c.reactions|length }} reactions
+            </small>
+
+            <br>
+
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary mt-2"
+                    onclick="showReply({{ c.id }})">
+                Reply
+            </button>
+
+            <form method="post"
+                  action="{{ url_for('reply_comment', comment_id=c.id) }}"
+                  id="reply-{{ c.id }}"
+                  style="display:none"
+                  class="mt-2">
+
+                <input type="hidden"
+                       name="post_id"
+                       value="{{ post.id }}">
+
+                <textarea name="content"
+                          class="form-control"
+                          rows="2"
+                          placeholder="Write reply..."
+                          required></textarea>
+
+                <button class="btn btn-primary btn-sm mt-2">
+                    Send Reply
+                </button>
+
+            </form>
+
+            {% for r in c.replies %}
+
+            <div class="reply-comment mt-3">
+
+                <strong>
+                    {{ r.user.first_name }}
+                    {{ r.user.last_name }}
+                </strong>
+
+                <p>
+                    {{ r.content }}
+                </p>
+
+                {% set my_reply_react =
+                (r.reactions
+                | selectattr('user_id','equalto',current_user.id)
+                | list
+                | first) %}
+
+                <div class="comment-reactions">
+
+                    {% for type, icon in {
+                        'LIKE':'👍',
+                        'LOVE':'❤️',
+                        'HAHA':'😆',
+                        'WOW':'😮',
+                        'SAD':'😢',
+                        'ANGRY':'😡'
+                    }.items() %}
+
+                    <form class="comment-react-form"
+                          data-comment-id="{{ r.id }}">
+
+                        <input type="hidden"
+                               name="type"
+                               value="{{ type }}">
+
+                        <button type="submit"
+                                class="react-btn-small {% if my_reply_react and my_reply_react.type.name == type %}active-react{% endif %}">
+                            {{ icon }}
+                        </button>
+
+                    </form>
+
+                    {% endfor %}
+
+                </div>
+
+                <small id="comment-react-{{ r.id }}"
+                       class="text-muted">
+                    {{ r.reactions|length }} reactions
+                </small>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% endif %}
+
+    {% endfor %}
+
+
+</div>
+
+<div class="modal fade"
+     id="imageModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+
+        <div class="modal-content bg-transparent border-0">
+
+            <img id="modalImage"
+                 src=""
+                 class="img-fluid rounded">
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal fade"
+     id="commentModal"
+     tabindex="-1">
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <form method="post"
+                  action="{{ url_for('add_comment', post_id=post.id) }}">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        Add Comment
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <textarea
+                        class="form-control"
+                        rows="5"
+                        name="content"
+                        placeholder="Write your comment..."
+                        required></textarea>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cancel
+
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        Comment
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="{{ url_for('static', filename='js/forum.js') }}"></script>
+{% endblock %}

@@ -97,9 +97,64 @@ class ReactionComment(BaseModel):
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
-        db.session.commit()
+        # db.create_all()
+        # db.session.commit()
         password = hashlib.sha256(b'123').hexdigest()
-        admin = User(username = 'admin', password = password,first_name="",last_name="", email = '', phone='')
-        db.session.add(admin)
+        # admin = User(username = 'admin', password = password,first_name="",last_name="", email = '', phone='')
+        # db.session.add(admin)
+
+        teacher_user1 = User(username='teacher01', password=password,
+            first_name='Nguyen', last_name='An', email='an.teacher@gmail.com',
+            phone='0911111111')
+
+        teacher_user2 = User(username='teacher02', password=password,
+            first_name='Tran', last_name='Binh', email='binh.teacher@gmail.com',
+            phone='0922222222')
+
+
+        user1 = User(
+            username='user01',
+            password=password,
+            first_name='Le',
+            last_name='Nam',
+            email='nam@gmail.com',
+            phone='0933333333'
+        )
+
+
+        user2 = User(
+            username='user02',
+            password=password,
+            first_name='Pham',
+            last_name='Hoa',
+            email='hoa@gmail.com',
+            phone='0944444444'
+        )
+
+
+        db.session.add_all([user1,user2,teacher_user1,teacher_user2])
         db.session.commit()
+
+        teacher1 = Teacher(user_id=teacher_user1.id,
+            note="Giảng viên lập trình Python và Flask")
+
+        teacher2 = Teacher(user_id=teacher_user2.id,
+            note="Giảng viên Java Spring Boot")
+
+        db.session.add_all([teacher1, teacher2])
+
+        db.session.commit()
+
+        cate1 = PostCate(name="Công nghệ")
+
+        cate2 = PostCate(name="Lập trình")
+
+        cate3 = PostCate(name="Hỏi đáp")
+
+        cate4 = PostCate(name="Chia sẻ kinh nghiệm")
+
+        db.session.add_all([cate1, cate2, cate3, cate4])
+
+        db.session.commit()
+
+

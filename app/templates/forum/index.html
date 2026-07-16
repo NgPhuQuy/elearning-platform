@@ -1,0 +1,58 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/forum.css') }}">
+
+<div class="container mt-4 forum-container">
+
+   <div class="forum-header">
+
+        <h2>Discussion Forum</h2>
+
+        <a href="/forum/create"
+           class="btn btn-primary">
+            Create Discussion
+        </a>
+
+    </div>
+
+    {% for p in posts %}
+
+    <div class="forum-post-item">
+
+    <div class="forum-post-author">
+        {{ p.user.first_name }}
+        {{ p.user.last_name }}
+    </div>
+
+    <h4 class="forum-post-title">
+        <a href="/forum/{{ p.id }}">
+            {{ p.title }}
+        </a>
+    </h4>
+
+    <p class="forum-post-preview">
+        {{ p.content[:250] }}
+        {% if p.content|length > 250 %}
+            ...
+        {% endif %}
+    </p>
+
+    <div class="forum-post-footer">
+        <span>
+            💬 {{ p.comments|length }} comments
+        </span>
+
+        <a href="/forum/{{ p.id }}">
+            Read more →
+        </a>
+    </div>
+
+</div>
+
+    {% endfor %}
+
+</div>
+
+{% endblock %}
