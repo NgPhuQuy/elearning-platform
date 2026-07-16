@@ -2,7 +2,7 @@ import hashlib
 
 from flask_login import current_user
 
-from app.models import User, Course, Lesson, Category
+from app.models import User, Course, Lesson, Category, CourseCategory
 from app import db, login
 
 @login.user_loader
@@ -70,13 +70,20 @@ def get_categories():
 
 def create_course(  name, description , image,teacher_id , category_ids):
     course = Course(name=name, description=description, image=image, teacher_id=teacher_id)
-    if category_ids and isinstance(category_ids, list):
-        categories = Category.query.filter(Category.id.in_(category_ids)).all()
-        course.categories = categories
+
 
 
     try:
         db.session.add(course)
+        db.session.commit()
+        if category_ids and isinstance(category_ids, list):
+            for cate_id in category_ids:
+                course_category = CourseCategory(
+                    course_id=course.id,
+                    category_id=cate_id
+                )
+                db.session.add(course_category)
+
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -95,7 +102,7 @@ def get_courses_by_teacher_id(teacher_id):
     return Course.query.filter_by(
         teacher_id=teacher_id
     ).all()
-def update_course (course_id, teacher_id, name=None, description=None, image=None):
+def update_course (course_id, teacher_id, name=None, description=None, image=None, category_ids=None):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
         if  name:
@@ -104,7 +111,10 @@ def update_course (course_id, teacher_id, name=None, description=None, image=Non
             course.description = description
         if image:
             course.image = image
-
+        if category_ids is not None:
+            CourseCategory.query.filter_by(course_id=course.id).delete()
+            for cate_id in category_ids:
+                db.session.add(CourseCategory(course_id=course.id, category_id=cate_id))
         try:
             db.session.commit()
         except Exception as e:
@@ -157,6 +167,14 @@ def update_lesson(lesson_id, course_id, teacher_id, name=None, description=None)
 
     return None
 
+
+def delete_course(course_id , teacher_id):
+    course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
+    if course:
+        db.session.delete(course)
+        db.session.commit()
+        return True
+    return False
 
 def delete_lesson(lesson_id, course_id, teacher_id):
     lesson = Lesson.query.join(Course).filter(

@@ -154,7 +154,7 @@ def create_course():
     if not teacher:
         return redirect('/')
 
-    # Lấy tất cả category để hiển thị trên form
+
     categories = dao.get_categories()
 
     if request.method == "POST":
@@ -217,7 +217,7 @@ def create_course():
         categories=categories
     )
 
-@app.route("/course/<int:course_id>")
+@app.route("/courses/<int:course_id>")
 @login_required
 def course_detail(course_id):
     if not current_user.teach:
@@ -267,21 +267,33 @@ def update_course(course_id):
         name = request.form.get('name')
         description = request.form.get('description')
         image = request.files.get('image')
-
+        category_ids = request.form.getlist('category_ids')
         dao.update_course(
             course_id=course_id,
             teacher_id=teacher.id,
             name=name,
             description=description,
-            image=image
+            image=image ,
+            category_ids = category_ids
         )
 
-        return redirect(f"/course/{course_id}")
+        return redirect(f"/courses/{course_id}")
 
 
     return render_template(
         "course/update_course.html",
-        course=course
+        course=course,
+        categories = dao.get_categories()
     )
+@app.route("/delete_course/<int:course_id>", methods=["POST"])
+@login_required
+def delete_course(course_id):
+    if not current_user.teach:
+        return redirect("/")
+    teacher = current_user.teach[0]
+    if dao.delete_course(course_id, teacher.id):
+        return redirect("/courses")
+    return redirect("/courses")
+
 if __name__ == '__main__':
     app.run(debug=True)

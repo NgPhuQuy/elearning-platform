@@ -33,24 +33,27 @@ class Teacher(BaseModel):
     courses = relationship("Course", backref="teacher", lazy=True)
 
 
-course_category = Table(
-    'course_category', BaseModel.metadata,
-    Column('course_id', Integer, ForeignKey('course.id'), primary_key=True),
-    Column('category_id', Integer, ForeignKey('category.id'), primary_key=True)
-)
+
+class Category(BaseModel):
+    course_category = relationship("CourseCategory", backref="category",   lazy=True)
+class CourseCategory(db.Model):
+    __tablename__ = "course_category"
+    course_id = Column(Integer, ForeignKey('course.id',ondelete="CASCADE"), primary_key=True)
+    category_id = Column(Integer, ForeignKey('category.id'), primary_key=True)
 
 class Course(BaseModel):
     description = Column(String(255), nullable=False)
     image = Column(String(500), default="")
     teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
     lessons = relationship("Lesson", backref="course", lazy = True)
-    categories = relationship("Category", secondary=course_category, backref="courses")
+    course_category = relationship("CourseCategory", backref="course",cascade="all, delete-orphan", lazy=True)
+
 class Lesson(BaseModel):
     description = Column(String(255), nullable=False)
-    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
+    course_id = Column(Integer, ForeignKey('course.id'), primary_key=True)
 
-class Category(BaseModel):
-    pass
+
+
 
 
 if __name__ == '__main__':
