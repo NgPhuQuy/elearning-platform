@@ -25,28 +25,40 @@ class User(BaseModel, UserMixin):
     email = Column(String(255), nullable=False, unique=True)
     phone = Column(String(255), nullable=False)
 
+class Course(BaseModel):
+    description = Column(String(255), nullable=False)
+    image = Column(String(500), default="")
+    teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
+    lessons = relationship("Lesson", backref="course", lazy = True)
+    course_category = relationship("CourseCategory", backref="course",cascade="all, delete-orphan", lazy=True)
+    posts = relationship("Post", backref="course", lazy=True)
+
 class Teacher(BaseModel):
     user_id = Column(Integer, ForeignKey('user.id'), unique=True, nullable=False)
     note = Column(String(255), default="")
     courses = relationship("Course", backref="teacher", lazy=True)
     user = relationship("User", backref="teacher")
+
 class PostCate(BaseModel):
     posts = relationship("Post", backref="category", lazy=True)
 
 class Post(BaseModel):
     title = Column(String(255), nullable=False)
     content = Column(String(255), nullable=False)
-    teacher_id = Column(Integer,ForeignKey(Teacher.id),nullable=False)
+    image = Column(String(500), default="")
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     category_id = Column(Integer,ForeignKey(PostCate.id),nullable=False)
+    course_id = Column(Integer, ForeignKey(Course.id), nullable=False)
     comments = relationship("Comment",backref="post",lazy=True)
     reactions = relationship("ReactionPost",backref="post",lazy=True)
+    user = relationship("User",backref="posts")
 
 class Comment(BaseModel):
     content = Column(String(255), nullable=False)
     user_id = Column(Integer,ForeignKey(User.id),nullable=False)
     post_id = Column(Integer,ForeignKey(Post.id),nullable=False)
     parent_comment_id = Column(Integer,ForeignKey('comment.id'),nullable=True)
-    user = relationship("User")
+    user = relationship("User",backref="comments")
     replies = relationship("Comment",backref=backref("parent_comment",remote_side="Comment.id"),lazy=True)
     reactions = relationship("ReactionComment",backref="comment",lazy=True)
 
@@ -62,13 +74,13 @@ class ReactionPost(BaseModel):
     type = Column(Enum(ReactionType),nullable=False)
     user_id = Column(Integer,ForeignKey(User.id),nullable=False)
     post_id = Column(Integer,ForeignKey(Post.id), nullable=False)
-    user = relationship("User")
+    user = relationship("User", backref="reaction_posts")
 
 class ReactionComment(BaseModel):
     type = Column(Enum(ReactionType),nullable=False)
     user_id = Column(Integer,ForeignKey(User.id),nullable=False)
     comment_id = Column(Integer, ForeignKey(Comment.id),nullable=False)
-    user = relationship("User")
+    user = relationship("User", backref="reaction_comments")
 
 
 
