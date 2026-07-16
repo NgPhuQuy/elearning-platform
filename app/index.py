@@ -172,25 +172,40 @@ def create_post():
 
     return render_template('forum/create-post.html',categories=categories)
 
-@app.route('/forum/<int:post_id>/react',methods=['POST'])
+@app.route('/forum/<int:post_id>/react',
+           methods=['POST'])
 @login_required
 def react_post(post_id):
 
-    react_type = ReactionType[request.form.get('type')]
+    react_type = ReactionType[
+        request.form.get('type')
+    ]
 
-    dao.react_post(post_id,current_user.id,react_type)
+    active = dao.react_post(
+        post_id,
+        current_user.id,
+        react_type
+    )
 
-    post = Post.query.get(post_id)
+    count = ReactionPost.query.filter_by(
+        post_id=post_id
+    ).count()
 
-    current_react = ReactionPost.query.filter_by(post_id=post_id,user_id=current_user.id).first()
-
-    active = ( current_react is not None and current_react.type == react_type)
+    icons = {
+        "LIKE": "👍",
+        "LOVE": "❤️",
+        "HAHA": "😆",
+        "WOW": "😮",
+        "SAD": "😢",
+        "ANGRY": "😡"
+    }
 
     return {
         "success": True,
-        "count": len(post.reactions),
+        "count": count,
         "active": active,
-        "type": react_type.name
+        "type": react_type.name,
+        "icon": icons[react_type.name]
     }
 
 @app.route('/comment/<int:comment_id>/react',methods=['POST'])
@@ -209,12 +224,21 @@ def react_comment(comment_id):
 
     active = (current_react is not None and current_react.type == react_type)
 
+    icons = {
+        "LIKE": "👍",
+        "LOVE": "❤️",
+        "HAHA": "😆",
+        "WOW": "😮",
+        "SAD": "😢",
+        "ANGRY": "😡"
+    }
     return {
         "success": True,
         "count": len(comment.reactions),
         "comment_id": comment_id,
         "active": active,
-        "type": react_type.name
+        "type": react_type.name,
+        "icon": icons[react_type.name]
     }
 
 @app.route('/comment/<int:comment_id>/reply',methods=['POST'])

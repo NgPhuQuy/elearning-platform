@@ -4,76 +4,94 @@ function showReply(id) {
         "reply-" + id
     );
 
-    if (form.style.display === "none") {
-        form.style.display = "block";
-    } else {
-        form.style.display = "none";
-    }
+    form.style.display =
+        form.style.display === "block"
+        ? "none"
+        : "block";
 }
 
 
+/* =========================
+   POST REACTION
+========================= */
 
-document.querySelectorAll(".react-form")
-.forEach(form => {
+function reactPost(postId, type) {
 
-    form.addEventListener(
-        "submit",
-        function (e) {
+    fetch(
+        `/forum/${postId}/react`,
+        {
+            method: "POST",
 
-            e.preventDefault();
+            headers: {
+                "Content-Type":
+                    "application/x-www-form-urlencoded"
+            },
+
+            body: `type=${type}`
+        }
+    )
+    .then(res => res.json())
+    .then(data => {
+
+        document.getElementById(
+            "post-react-count"
+        ).innerHTML =
+            data.count + " reactions";
+
+        let likeBtn =
+            document.querySelector(
+                `.reaction-menu[data-post="${postId}"] .like-btn`
+            );
+
+        if (!likeBtn)
+            return;
+        if (data.active) {
+
+            likeBtn.classList.add(
+                "active-react"
+            );
+
+            likeBtn.dataset.current =
+                data.type;
+
+            likeBtn.innerHTML =
+                data.icon;
+
+        }
+        else {
+
+            likeBtn.classList.remove(
+                "active-react"
+            );
+
+            likeBtn.dataset.current =
+                "";
+
+            likeBtn.innerHTML =
+                "👍";
+        }
+    });
+}
+
+
+document
+.querySelectorAll(".reaction-option")
+.forEach(btn => {
+
+    btn.addEventListener(
+        "click",
+        function () {
 
             let postId =
                 this.dataset.post;
 
             let type =
-                this.querySelector(
-                    "input[name='type']"
-                ).value;
+                this.dataset.type;
 
-            fetch(
-                `/forum/${postId}/react`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/x-www-form-urlencoded"
-                    },
-
-                    body: `type=${type}`
-                }
-            )
-            .then(res => res.json())
-            .then(data => {
-
-                document
-                    .getElementById(
-                        "post-react-count"
-                    )
-                    .innerHTML =
-                    data.count + " reactions";
-
-
-                document
-                    .querySelectorAll(
-                        `.react-form[data-post="${postId}"] .react-btn`
-                    )
-                    .forEach(btn =>
-                        btn.classList.remove(
-                            "active-react"
-                        )
-                    );
-
-
-                if (data.active) {
-                    this.querySelector(
-                        ".react-btn"
-                    ).classList.add(
-                        "active-react"
-                    );
-                }
-
-            });
+            reactPost(
+                postId,
+                type
+            );
 
         }
     );
@@ -82,58 +100,135 @@ document.querySelectorAll(".react-form")
 
 
 
-document.querySelectorAll(".comment-react-form").forEach(form => {
+/* =========================
+   COMMENT REACTION
+========================= */
 
-    form.addEventListener("submit",function (e) {
+function reactComment(commentId, type) {
 
-            e.preventDefault();
+    fetch(
+        `/comment/${commentId}/react`,
+        {
+            method: "POST",
 
-            let commentId =this.dataset.commentId;
+            headers: {
+                "Content-Type":
+                    "application/x-www-form-urlencoded"
+            },
 
-            let type =this.querySelector("input[name='type']").value;
+            body: `type=${type}`
+        }
+    )
+    .then(res => res.json())
+    .then(data => {
 
-            fetch(`/comment/${commentId}/react`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type":
-                            "application/x-www-form-urlencoded"
-                    },
+        document.getElementById(
+            `comment-react-${commentId}`
+        ).innerHTML =
+            data.count + " reactions";
 
-                    body: `type=${type}`
-                }
-            )
-            .then(res => res.json())
-            .then(data => {
+        let likeBtn =
+            document.querySelector(
+                `.comment-reaction-menu[data-comment-id="${commentId}"] .comment-like-btn`
+            );
 
-                document.getElementById(`comment-react-${data.comment_id}`)
-                 .innerHTML =data.count +" reactions";
+        if (!likeBtn)
+            return;
 
+        if (data.active) {
 
-                document.querySelectorAll(`.comment-react-form[data-comment-id="${commentId}"] .react-btn-small`)
-                    .forEach(btn =>
-                        btn.classList.remove(
-                            "active-react"
-                        )
-                    );
+            likeBtn.classList.add(
+                "active-react"
+            );
 
+            likeBtn.dataset.current =data.type;
+            likeBtn.innerHTML =data.icon;
 
-                if (data.active) {
-                    this.querySelector(
-                        ".react-btn-small"
-                    ).classList.add(
-                        "active-react"
-                    );
-                }
+        }
+        else {
 
-            });
+            likeBtn.classList.remove(
+                "active-react"
+            );
+            likeBtn.dataset.current = "";
+            likeBtn.innerHTML ="👍";
+        }
+
+    });
+}
+
+document
+.querySelectorAll(".comment-reaction-option")
+.forEach(btn => {
+
+    btn.addEventListener(
+        "click",
+        function () {
+
+            reactComment(
+                this.dataset.comment,
+                this.dataset.type
+            );
 
         }
     );
 
 });
 
-function openImageModal(imageUrl){
+document
+.querySelectorAll(".comment-reaction-menu")
+.forEach(menu => {
+
+    const popup =
+        menu.querySelector(
+            ".comment-reaction-popup"
+        );
+
+    let showTimer;
+    let hideTimer;
+
+    menu.addEventListener(
+        "mouseenter",
+        () => {
+
+            clearTimeout(hideTimer);
+
+            showTimer =
+                setTimeout(() => {
+
+                    popup.classList.add(
+                        "show-popup"
+                    );
+
+                }, 500);
+        }
+    );
+
+    menu.addEventListener(
+        "mouseleave",
+        () => {
+
+            clearTimeout(showTimer);
+
+            hideTimer =
+                setTimeout(() => {
+
+                    popup.classList.remove(
+                        "show-popup"
+                    );
+
+                }, 300);
+        }
+    );
+
+});
+
+
+/* =========================
+   IMAGE MODAL
+========================= */
+
+function openImageModal(imageUrl) {
 
     document
         .getElementById("modalImage")
@@ -148,3 +243,102 @@ function openImageModal(imageUrl){
 
     modal.show();
 }
+
+document.querySelectorAll(".reaction-menu")
+.forEach(menu => {
+
+    const popup =
+        menu.querySelector(".reaction-popup");
+
+    let showTimer;
+    let hideTimer;
+
+    menu.addEventListener("mouseenter", () => {
+
+        clearTimeout(hideTimer);
+
+        showTimer = setTimeout(() => {
+            popup.classList.add("show-popup");
+        }, 500);
+
+    });
+
+    menu.addEventListener("mouseleave", () => {
+
+        clearTimeout(showTimer);
+
+        hideTimer = setTimeout(() => {
+            popup.classList.remove("show-popup");
+        }, 300);
+
+    });
+
+});
+
+function toggleReaction(btn, postId){
+
+    const current =
+        btn.dataset.current;
+
+    if(current){
+        reactPost(postId, current);
+    }else{
+        reactPost(postId, "LIKE");
+    }
+}
+
+function toggleCommentReaction(btn, commentId){
+
+    const current =
+        btn.dataset.current;
+
+    if(current){
+        reactComment(commentId, current);
+    }else{
+        reactComment(commentId, "LIKE");
+    }
+}
+
+document
+.querySelectorAll(".comment-reaction-menu")
+.forEach(menu => {
+
+    const popup =
+        menu.querySelector(
+            ".comment-reaction-popup"
+        );
+
+    let showTimer;
+    let hideTimer;
+
+    menu.addEventListener(
+        "mouseenter",
+        () => {
+
+            clearTimeout(hideTimer);
+
+            showTimer = setTimeout(() => {
+                popup.classList.add(
+                    "show-popup"
+                );
+            }, 500);
+
+        }
+    );
+
+    menu.addEventListener(
+        "mouseleave",
+        () => {
+
+            clearTimeout(showTimer);
+
+            hideTimer = setTimeout(() => {
+                popup.classList.remove(
+                    "show-popup"
+                );
+            }, 300);
+
+        }
+    );
+
+});

@@ -118,22 +118,35 @@ def add_reply_comment(parent_comment_id, post_id,user_id,content):
     return reply
 
 def react_post(post_id, user_id, react_type):
-    react = ReactionPost.query.filter_by(post_id=post_id,user_id=user_id).first()
+
+    react = ReactionPost.query.filter_by(
+        post_id=post_id,
+        user_id=user_id
+    ).first()
 
     if react:
+
         if react.type == react_type:
             db.session.delete(react)
+            db.session.commit()
 
-        else:
-            react.type = react_type
+            return False
 
-    else:
-        react = ReactionPost(post_id=post_id,user_id=user_id,type=react_type)
-        db.session.add(react)
+        react.type = react_type
+        db.session.commit()
 
+        return True
+
+    react = ReactionPost(
+        post_id=post_id,
+        user_id=user_id,
+        type=react_type
+    )
+
+    db.session.add(react)
     db.session.commit()
 
-    return ReactionPost.query.filter_by(post_id=post_id).count()
+    return True
 
 def react_comment(comment_id, user_id, react_type):
 
