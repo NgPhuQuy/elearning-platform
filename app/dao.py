@@ -2,7 +2,7 @@ import hashlib
 
 from flask_login import current_user
 
-from app.models import User,Post,Comment,ReactionPost,ReactionComment,PostCate
+from app.models import User, Course, Lesson, Category, CourseCategory, Post,Comment,ReactionPost,ReactionComment,PostCate
 from app import db, login
 import cloudinary.uploader
 @login.user_loader
@@ -64,106 +64,134 @@ def change_password(new_password):
         return False, str(e)
     return True, None
 
-def get_posts():
-    return Post.query.order_by(
-        Post.created_date.desc()
-    ).all()
-
-def get_post_categories():
-    return PostCate.query.filter_by(
-        is_active=True
-    ).all()
-
-def get_post_by_id(post_id):
-    return Post.query.get(post_id)
+def get_categories():
+    return Category.query.all()
 
 
-def add_post(form, user_id):
-    image = ""
-
-    if 'image' in form.files:
-        file = form.files['image']
-
-        if file.filename:
-            res = cloudinary.uploader.upload(file)
-            image = res['secure_url']
-
-    post = Post(
-        title=form.form.get("title"),
-        content=form.form.get("content"),
-        image=image,
-        category_id=form.form.get("category_id"),
-        user_id=user_id
-    )
-
-    db.session.add(post)
-    db.session.commit()
-
-    return post
+def create_course(  name, description , image,teacher_id , category_ids):
+    course = Course(name=name, description=description, image=image, teacher_id=teacher_id)
 
 
-def add_comment(post_id, user_id, content):
-    c = Comment(content=content,post_id=post_id,user_id=user_id)
 
-    db.session.add(c)
-    db.session.commit()
+    try:
+        db.session.add(course)
+        db.session.commit()
+        if category_ids and isinstance(category_ids, list):
+            for cate_id in category_ids:
+                course_category = CourseCategory(
+                    course_id=course.id,
+                    category_id=cate_id
+                )
+                db.session.add(course_category)
 
-    return c
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return None
 
-def add_reply_comment(parent_comment_id, post_id,user_id,content):
-    reply = Comment(content=content,user_id=user_id,post_id=post_id,parent_comment_id=parent_comment_id)
-    db.session.add(reply)
-    db.session.commit()
+    return course
 
-    return reply
-
-def react_post(post_id, user_id, react_type):
-
-    react = ReactionPost.query.filter_by(
-        post_id=post_id,
-        user_id=user_id
+def get_course_details(course_id, teacher_id):
+    return Course.query.filter(
+        Course.id == course_id,
+        Course.teacher_id == teacher_id
     ).first()
 
-    if react:
 
-        if react.type == react_type:
-            db.session.delete(react)
+def get_courses_by_teacher_id(teacher_id):
+    return Course.query.filter_by(
+        teacher_id=teacher_id
+    ).all()
+def update_course (course_id, teacher_id, name=None, description=None, image=None, category_ids=None):
+    course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
+    if course:
+        if  name:
+            course.name = name
+        if  description:
+            course.description = description
+        if image:
+            course.image = image
+        if category_ids is not None:
+            CourseCategory.query.filter_by(course_id=course.id).delete()
+            for cate_id in category_ids:
+                db.session.add(CourseCategory(course_id=course.id, category_id=cate_id))
+        try:
             db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return None;
 
-            return False
+        return course;
 
-        react.type = react_type
+    return None;
+
+
+
+def create_lesson(teacher_id ,course_id, description, name):
+    course = Course.query.filter(Course.teacher_id == teacher_id, Course.id == course_id).first()
+    if not course:
+        return None
+    lesson = Lesson(name=name, description=description, course_id=course_id)
+    try:
+        db.session.add(lesson)
         db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return None
 
+    return lesson
+
+
+def update_lesson(lesson_id, course_id, teacher_id, name=None, description=None):
+
+    lesson = Lesson.query.join(Course).filter(
+        Course.id == course_id,
+        Course.teacher_id == teacher_id,
+        Lesson.id == lesson_id
+    ).first()
+
+    if lesson:
+
+        if name:
+            lesson.name = name
+        if description:
+            lesson.description = description
+
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return None
+        return lesson;
+
+    return None
+
+
+def delete_course(course_id , teacher_id):
+    course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
+    if course:
+        db.session.delete(course)
+        db.session.commit()
+        return True
+    return False
+
+def delete_lesson(lesson_id, course_id, teacher_id):
+    lesson = Lesson.query.join(Course).filter(
+        Course.id == course_id,
+        Course.teacher_id == teacher_id,
+        Lesson.id == lesson_id
+    ).first()
+
+    if lesson:
+        try:
+            db.session.delete(lesson)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return False
         return True
 
-    react = ReactionPost(
-        post_id=post_id,
-        user_id=user_id,
-        type=react_type
-    )
-
-    db.session.add(react)
-    db.session.commit()
-
-    return True
-
-def react_comment(comment_id, user_id, react_type):
-
-    react = ReactionComment.query.filter_by(comment_id=comment_id,user_id=user_id).first()
-    if react:
-        if react.type == react_type:
-            db.session.delete(react)
-
-        else:
-            react.type = react_type
-
-    else:
-        react = ReactionComment(comment_id=comment_id,user_id=user_id,type=react_type)
-        db.session.add(react)
-
-    db.session.commit()
-
-    return ReactionComment.query.filter_by(
-        comment_id=comment_id
-    ).count()
+    return False
+def get_lesson_details(lesson_id):
+    return Lesson.query.get(lesson_id)

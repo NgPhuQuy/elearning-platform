@@ -24,6 +24,37 @@ class User(BaseModel, UserMixin):
     avatar = Column(String(255), default='')
     email = Column(String(255), nullable=False, unique=True)
     phone = Column(String(255), nullable=False)
+    teach =relationship("Teacher", backref="user", lazy=True)
+
+
+class Teacher(BaseModel):
+    user_id = Column(Integer, ForeignKey('user.id'), unique=True, nullable=False)
+    note = Column(String(255), default="")
+    courses = relationship("Course", backref="teacher", lazy=True)
+
+
+
+class Category(BaseModel):
+    course_category = relationship("CourseCategory", backref="category",   lazy=True)
+class CourseCategory(db.Model):
+    __tablename__ = "course_category"
+    course_id = Column(Integer, ForeignKey('course.id',ondelete="CASCADE"), primary_key=True)
+    category_id = Column(Integer, ForeignKey('category.id'), primary_key=True)
+
+class Course(BaseModel):
+    description = Column(String(255), nullable=False)
+    image = Column(String(500), default="")
+    teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
+    lessons = relationship("Lesson", backref="course", lazy = True)
+    course_category = relationship("CourseCategory", backref="course",cascade="all, delete-orphan", lazy=True)
+
+class Lesson(BaseModel):
+    description = Column(String(255), nullable=False)
+    course_id = Column(Integer, ForeignKey('course.id'), primary_key=True)
+
+
+
+
 
 class Category(BaseModel):
     course_category = relationship("CourseCategory", backref="category",lazy=True)
