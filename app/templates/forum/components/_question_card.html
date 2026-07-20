@@ -1,0 +1,76 @@
+<div class="question-card">
+
+    <div class="vote-column">
+
+        <div class="vote-score">
+            {{ dao.get_post_score(post) }}
+        </div>
+
+        <small>votes</small>
+
+        <div class="answer-count">
+            {{ post.comments|length }}
+        </div>
+
+        <small>TL</small>
+
+    </div>
+
+    <div class="question-content">
+
+        <div class="d-flex justify-content-between">
+
+            <a href="{{ url_for('forum_detail',
+            post_id=post.id) }}"
+               class="question-title">
+
+                {{ post.title }}
+
+            </a>
+
+            {% if post.is_solved %}
+
+            <span class="solved-icon">
+                ✓
+            </span>
+
+            {% endif %}
+
+        </div>
+
+        <p class="question-desc">
+
+            {{ post.content[:250] }}...
+
+        </p>
+
+        <div class="question-footer">
+
+            <div>
+
+                <span class="tag">
+                    #{{ post.category.name }}
+                </span>
+
+            </div>
+
+            <div class="meta-info">
+
+                👁 {{ post.view_count }}
+
+                •
+
+                {{ post.created_date.strftime('%d/%m/%Y') }}
+
+                •
+
+                {{ post.author.first_name }}
+                {{ post.author.last_name }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
