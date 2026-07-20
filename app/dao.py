@@ -2,7 +2,7 @@ import hashlib
 
 from flask_login import current_user
 
-from app.models import User,Post,Comment,ReactionPost,ReactionComment,PostCate
+from app.models import User,Post,ReactionPost,ReactionComment,Comment,VoteType
 from app import db, login
 import cloudinary.uploader
 @login.user_loader
@@ -64,37 +64,33 @@ def change_password(new_password):
         return False, str(e)
     return True, None
 
-def get_posts():
-    return Post.query.order_by(
-        Post.created_date.desc()
-    ).all()
 
-def get_post_categories():
-    return PostCate.query.filter_by(
-        is_active=True
-    ).all()
+# forum
+def get_posts(keyword=None,solved=None):
+
+    query = Post.query
+
+    if keyword:
+        query = query.filter(Post.title.contains(keyword))
+
+    if solved is not None:
+        query = query.filter(Post.is_solved == solved)
+
+    return query.order_by(Post.created_date.desc()).all()
+
 
 def get_post_by_id(post_id):
-    return Post.query.get(post_id)
+    post = Post.query.get(post_id)
 
+    if post:
+        post.view_count += 1
+        db.session.commit()
 
-def add_post(form, user_id):
-    image = ""
+    return post
 
-    if 'image' in form.files:
-        file = form.files['image']
+def create_post(title,content,category_id,user_id,image=None):
 
-        if file.filename:
-            res = cloudinary.uploader.upload(file)
-            image = res['secure_url']
-
-    post = Post(
-        title=form.form.get("title"),
-        content=form.form.get("content"),
-        image=image,
-        category_id=form.form.get("category_id"),
-        user_id=user_id
-    )
+    post = Post(title=title,content=content,category_id=category_id,user_id=user_id,image=image)
 
     db.session.add(post)
     db.session.commit()
@@ -102,68 +98,104 @@ def add_post(form, user_id):
     return post
 
 
-def add_comment(post_id, user_id, content):
-    c = Comment(content=content,post_id=post_id,user_id=user_id)
+def add_comment(post_id, user_id,content,parent_comment_id=None):
+
+    c = Comment(content=content,post_id=post_id,user_id=user_id, parent_comment_id=parent_comment_id)
 
     db.session.add(c)
     db.session.commit()
 
     return c
 
-def add_reply_comment(parent_comment_id, post_id,user_id,content):
-    reply = Comment(content=content,user_id=user_id,post_id=post_id,parent_comment_id=parent_comment_id)
-    db.session.add(reply)
-    db.session.commit()
+def accept_answer(comment_id):
 
-    return reply
+    comment = Comment.query.get(comment_id)
 
-def react_post(post_id, user_id, react_type):
+    if not comment:
+        return False
 
-    react = ReactionPost.query.filter_by(
-        post_id=post_id,
-        user_id=user_id
-    ).first()
+    comment.is_accepted = True
+    comment.post.is_solved = True
 
-    if react:
-
-        if react.type == react_type:
-            db.session.delete(react)
-            db.session.commit()
-
-            return False
-
-        react.type = react_type
-        db.session.commit()
-
-        return True
-
-    react = ReactionPost(
-        post_id=post_id,
-        user_id=user_id,
-        type=react_type
-    )
-
-    db.session.add(react)
     db.session.commit()
 
     return True
 
-def react_comment(comment_id, user_id, react_type):
+def vote_post(post_id, user_id, vote_type):
 
-    react = ReactionComment.query.filter_by(comment_id=comment_id,user_id=user_id).first()
-    if react:
-        if react.type == react_type:
-            db.session.delete(react)
+    reaction = ReactionPost.query.filter_by(
+        post_id=post_id,
+        user_id=user_id
+    ).first()
+
+    if reaction:
+
+
+        if reaction.vote_type == vote_type:
+            db.session.delete(reaction)
+
 
         else:
-            react.type = react_type
+            reaction.vote_type = vote_type
 
     else:
-        react = ReactionComment(comment_id=comment_id,user_id=user_id,type=react_type)
-        db.session.add(react)
+        reaction = ReactionPost(
+            post_id=post_id,
+            user_id=user_id,
+            vote_type=vote_type
+        )
+
+        db.session.add(reaction)
 
     db.session.commit()
 
-    return ReactionComment.query.filter_by(
-        comment_id=comment_id
-    ).count()
+def vote_comment(comment_id,user_id,vote_type):
+
+    reaction = ReactionComment.query.filter_by(comment_id=comment_id,user_id=user_id).first()
+
+    if reaction:
+        reaction.vote_type = vote_type
+    else:
+        reaction = ReactionComment(comment_id=comment_id,user_id=user_id,vote_type=vote_type)
+
+        db.session.add(reaction)
+
+    db.session.commit()
+
+def get_post_score(post):
+
+    score = 0
+
+    for r in post.reactions:
+        if r.vote_type == VoteType.UP:
+            score += 1
+
+    return score
+
+def get_comment_score(comment):
+
+    score = 0
+
+    for r in comment.reactions:
+        score += r.vote_type.value
+
+    return score
+
+def get_related_posts(post_id,category_id,limit=5):
+
+    return (
+        Post.query.filter(
+            Post.category_id == category_id,
+            Post.id != post_id
+        )
+        .order_by(Post.created_date.desc())
+        .limit(limit)
+        .all()
+    )
+
+def get_user_post_vote(post_id, user_id):
+
+    return ReactionPost.query.filter_by(
+        post_id=post_id,
+        user_id=user_id
+    ).first()

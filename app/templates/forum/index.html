@@ -2,50 +2,51 @@
 
 {% block content %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/forum.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static',
+      filename='css/forum.css') }}">
 
-<div class="container mt-4 forum-container">
+<div class="container-fluid forum-wrapper">
 
-   <div class="forum-header">
+    <div class="row justify-content-center">
 
-        <h2>Discussion Forum</h2>
+        <div class="col-lg-8">
 
-        <a href="/forum/create"
-           class="btn btn-primary">
-            Create Discussion
-        </a>
+            <div class="forum-header">
+
+                <div>
+                    <h2 class="fw-bold">
+                        Câu hỏi & Thảo luận
+                    </h2>
+
+                    <p class="text-muted">
+                        {{ posts|length }} câu hỏi
+                    </p>
+                </div>
+
+                <a href="{{ url_for('create_question') }}"
+                   class="btn btn-forum">
+
+                    + Đặt câu hỏi mới
+                </a>
+
+            </div>
+
+            {% include 'forum/components/_search_bar.html' %}
+
+            {% for post in posts %}
+                {% include 'forum/components/_question_card.html' %}
+            {% endfor %}
+
+        </div>
+
+        <div class="col-lg-3">
+
+            {% include 'forum/components/_forum_sidebar.html' %}
+
+        </div>
 
     </div>
-
-    {% for p in posts %}
-
-    <div class="forum-post-item">
-
-    <div class="forum-post-author">
-        {{ p.user.first_name }}
-        {{ p.user.last_name }}
-    </div>
-
-    <h4 class="forum-post-title">
-        <a href="/forum/{{ p.id }}">
-            {{ p.title }}
-        </a>
-    </h4>
-
-
-    <div class="forum-post-footer">
-        <span>
-            💬 {{ p.comments|length }} comments
-        </span>
-
-        <a href="/forum/{{ p.id }}">
-            Read more →
-        </a>
-    </div>
-
-</div>
-
-    {% endfor %}
 
 </div>
 

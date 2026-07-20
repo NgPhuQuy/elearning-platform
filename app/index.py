@@ -4,12 +4,14 @@ from flask_login import login_user, current_user, logout_user,login_required
 from app import app, dao, login, db
 from datetime import datetime
 from app.dao import register_user
-from app.models import ReactionType,Post,Comment,ReactionPost,ReactionComment
+from app.models import PostCate,VoteType,Comment,Post
 
 @app.context_processor
-def inject_now():
-    return {'current_year': datetime.now().year}
-
+def inject_common():
+    return {
+        "current_year": datetime.now().year,
+        "dao": dao
+    }
 @app.route('/')
 def index():
     return render_template("index.html")
@@ -138,118 +140,136 @@ def change_password():
     return render_template("profile/change-password.html", error=error)
 
 
-@app.route('/forum')
+#forum
+
+@app.route("/forum")
 @login_required
 def forum():
-    posts = dao.get_posts()
-    return render_template('forum/index.html',posts=posts)
 
-@app.route('/forum/<int:post_id>')
+    keyword = request.args.get("kw")
+    solved = request.args.get("solved")
+
+    if solved == "true":
+        solved = True
+    elif solved == "false":
+        solved = False
+    else:
+        solved = None
+
+    posts = dao.get_posts(keyword=keyword, solved=solved)
+
+    return render_template( "forum/index.html",posts=posts)
+
+@app.route("/forum/<int:post_id>")
 @login_required
 def forum_detail(post_id):
+    post = Post.query.get_or_404(post_id)
 
-    post = dao.get_post_by_id(post_id)
+    post.view_count += 1
+    db.session.commit()
+    related_posts = dao.get_related_posts(post.id,post.category_id)
+    user_vote = dao.get_user_post_vote(post.id, current_user.id)
+    return render_template("forum/detail.html",post=post,related_posts=related_posts,user_vote=user_vote)
 
-    my_post_react = ReactionPost.query.filter_by(post_id=post_id,user_id=current_user.id).first()
-
-    return render_template('forum/detail.html',post=post,my_post_react=my_post_react)
-
-@app.route('/forum/<int:post_id>/comment',methods=['POST'])
+@app.route("/forum/create", methods=["GET", "POST"])
 @login_required
-def add_comment(post_id):
-    dao.add_comment(post_id,current_user.id,request.form.get('content'))
+def create_question():
 
-    return redirect(url_for('forum_detail',post_id=post_id))
+    if request.method == "POST":
 
-@app.route('/forum/create', methods=['GET', 'POST'])
-@login_required
-def create_post():
-    categories = dao.get_post_categories()
+        image = request.files.get("image")
 
-    if request.method == 'POST':
-        dao.add_post(request,current_user.id)
-        return redirect(url_for('forum'))
+        image_url = None
 
-    return render_template('forum/create-post.html',categories=categories)
+        if image and image.filename:
+            res = cloudinary.uploader.upload(image)
+            image_url = res["secure_url"]
 
-@app.route('/forum/<int:post_id>/react',
-           methods=['POST'])
-@login_required
-def react_post(post_id):
+        dao.create_post(
+            title=request.form["title"],
+            content=request.form["content"],
+            category_id=request.form["category_id"],
+            user_id=current_user.id,
+            image=image_url
+        )
 
-    react_type = ReactionType[
-        request.form.get('type')
-    ]
+        return redirect(url_for("forum"))
 
-    active = dao.react_post(
-        post_id,
-        current_user.id,
-        react_type
+    categories = PostCate.query.all()
+
+    return render_template(
+        "forum/create.html",
+        categories=categories
     )
 
-    count = ReactionPost.query.filter_by(
-        post_id=post_id
-    ).count()
-
-    icons = {
-        "LIKE": "👍",
-        "LOVE": "❤️",
-        "HAHA": "😆",
-        "WOW": "😮",
-        "SAD": "😢",
-        "ANGRY": "😡"
-    }
-
-    return {
-        "success": True,
-        "count": count,
-        "active": active,
-        "type": react_type.name,
-        "icon": icons[react_type.name]
-    }
-
-@app.route('/comment/<int:comment_id>/react',methods=['POST'])
+@app.route("/forum/<int:post_id>/answer",methods=["POST"])
 @login_required
-def react_comment(comment_id):
+def answer(post_id):
 
-    react_type = ReactionType[
-        request.form.get('type')
-    ]
+    dao.add_comment(
+        post_id=post_id,
+        user_id=current_user.id,
+        content=request.form["content"]
+    )
 
-    dao.react_comment(comment_id,current_user.id,react_type)
+    return redirect(
+        url_for("forum_detail",post_id=post_id)
+    )
 
-    comment = Comment.query.get(comment_id)
+@app.route("/forum/<int:post_id>/upvote",methods=["POST"])
+@login_required
+def upvote_post(post_id):
 
-    current_react = ReactionComment.query.filter_by(comment_id=comment_id,user_id=current_user.id).first()
+    dao.vote_post(post_id,current_user.id,VoteType.UP)
+    return redirect(url_for("forum_detail",post_id=post_id))
 
-    active = (current_react is not None and current_react.type == react_type)
+@app.route("/forum/<int:post_id>/downvote",methods=["POST"])
+@login_required
+def downvote_post(post_id):
 
-    icons = {
-        "LIKE": "👍",
-        "LOVE": "❤️",
-        "HAHA": "😆",
-        "WOW": "😮",
-        "SAD": "😢",
-        "ANGRY": "😡"
-    }
-    return {
-        "success": True,
-        "count": len(comment.reactions),
-        "comment_id": comment_id,
-        "active": active,
-        "type": react_type.name,
-        "icon": icons[react_type.name]
-    }
+    dao.vote_post(post_id,current_user.id,VoteType.DOWN)
 
-@app.route('/comment/<int:comment_id>/reply',methods=['POST'])
+    return redirect(url_for("forum_detail",post_id=post_id))
+
+
+@app.route("/comment/<int:comment_id>/accept",methods=["POST"])
+@login_required
+def accept_answer(comment_id):
+
+    dao.accept_answer(comment_id)
+
+    return redirect(request.referrer)
+
+@app.route("/comment/<int:comment_id>/upvote",methods=["POST"])
+@login_required
+def upvote_comment(comment_id):
+
+    dao.vote_comment(comment_id,current_user.id,VoteType.UP)
+
+    return redirect(request.referrer)
+
+@app.route("/comment/<int:comment_id>/downvote",methods=["POST"])
+@login_required
+def downvote_comment(comment_id):
+
+    dao.vote_comment(comment_id,current_user.id,VoteType.DOWN)
+
+    return redirect(request.referrer)
+
+
+@app.route("/comment/<int:comment_id>/reply",methods=["POST"])
 @login_required
 def reply_comment(comment_id):
-    content = request.form.get('content')
-    post_id = request.form.get('post_id')
-    dao.add_reply_comment(comment_id,post_id,current_user.id,content)
 
+    parent_comment = Comment.query.get_or_404(comment_id)
 
-    return redirect(url_for('forum_detail',post_id=post_id))
+    dao.add_comment(
+        post_id=parent_comment.post_id,
+        user_id=current_user.id,
+        content=request.form["content"],
+        parent_comment_id=comment_id
+    )
 
+    return redirect(url_for("forum_detail",post_id=parent_comment.post_id))
 if __name__ == '__main__':
     app.run(debug=True)
