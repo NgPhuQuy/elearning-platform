@@ -28,10 +28,10 @@ class User(BaseModel, UserMixin):
     phone = Column(String(255), nullable=False)
     teacher_profile = relationship("Teacher", backref="user", uselist=False, lazy=True)
 
-    class Teacher(BaseModel):
-        user_id = Column(Integer, ForeignKey('user.id', ondelete="CASCADE"), nullable=False, unique=True)
 
-        courses = relationship("Course", backref="teacher", lazy=True)
+class Teacher(BaseModel):
+    user_id = Column(Integer, ForeignKey('user.id', ondelete="CASCADE"), nullable=False, unique=True)
+    courses = relationship("Course", backref="teacher", lazy=True)
 
 
 class Category(BaseModel):
