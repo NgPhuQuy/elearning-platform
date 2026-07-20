@@ -7,6 +7,7 @@ from flask_login import login_user, current_user, logout_user, login_required
 from app import app, dao, db
 from app.dao import register_user
 from app.models import Comment, ReactionPost, ReactionComment
+from decorator import teacher_required
 
 
 @app.context_processor
@@ -149,17 +150,11 @@ def change_password():
 
 
 @app.route('/create-course', methods=['GET', 'POST'])
-@login_required
+@teacher_required
 def create_course():
     error = None
 
-    if current_user.teach:
-        teacher = current_user.teach[0]
-    else:
-        teacher = None
-
-    if not teacher:
-        return redirect('/')
+    teacher = current_user.teacher_profile
 
     categories = dao.get_categories()
 
@@ -171,23 +166,16 @@ def create_course():
 
         if not name or not description or not image:
             error = "Vui lòng nhập đầy đủ tên và mô tả khóa học và cả hình ảnh khóa học!"
-            return render_template(
-                "course/create_course.html",
-                error=error,
-                categories=categories
-            )
-
+            return render_template("course/create_course.html",
+                                   error=error,categories=categories)
         file_path = None
         try:
             res = cloudinary.uploader.upload(image)
             file_path = res["secure_url"]
         except Exception:
             error = "Tải ảnh thất bại!"
-            return render_template(
-                "course/create_course.html",
-                error=error,
-                categories=categories
-            )
+            return render_template("course/create_course.html",
+                                   error=error, categories=categories)
 
         try:
             course = dao.create_course(
@@ -409,4 +397,8 @@ def reply_comment(comment_id):
 
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+
+        db.session.commit()
     app.run(debug=True)
