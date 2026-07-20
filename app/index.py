@@ -1,12 +1,12 @@
 from datetime import datetime
 
 import cloudinary.uploader
-from flask import redirect, render_template, request
+from flask import redirect, render_template, request, url_for
 from flask_login import login_user, current_user, logout_user, login_required
 
 from app import app, dao, db
 from app.dao import register_user
-from app.models import ReactionType, Comment, ReactionPost, ReactionComment
+from app.models import Comment, ReactionPost, ReactionComment
 
 
 @app.context_processor
@@ -338,7 +338,7 @@ def create_post():
 
     if request.method == 'POST':
         dao.add_post(request, current_user.id)
-        return redirect(url_for('forum'))
+        return redirect('/forum')
 
     return render_template('forum/create-post.html', categories=categories)
 
@@ -347,44 +347,30 @@ def create_post():
            methods=['POST'])
 @login_required
 def react_post(post_id):
-    react_type = ReactionType[
-        request.form.get('type')
-    ]
+
 
     active = dao.react_post(
         post_id,
         current_user.id,
-        react_type
+
     )
 
     count = ReactionPost.query.filter_by(
         post_id=post_id
     ).count()
 
-    icons = {
-        "LIKE": "👍",
-        "LOVE": "❤️",
-        "HAHA": "😆",
-        "WOW": "😮",
-        "SAD": "😢",
-        "ANGRY": "😡"
-    }
+
 
     return {
         "success": True,
         "count": count,
         "active": active,
-        "type": react_type.name,
-        "icon": icons[react_type.name]
     }
 
 
 @app.route('/comment/<int:comment_id>/react', methods=['POST'])
 @login_required
 def react_comment(comment_id):
-    react_type = ReactionType[
-        request.form.get('type')
-    ]
 
     dao.react_comment(comment_id, current_user.id, react_type)
 
