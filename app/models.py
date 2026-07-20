@@ -31,7 +31,6 @@ class User(BaseModel, UserMixin):
 
 class Teacher(BaseModel):
     user_id = Column(Integer, ForeignKey('user.id', ondelete="CASCADE"), nullable=False, unique=True)
-
     courses = relationship("Course", backref="teacher", lazy=True)
 
 
