@@ -1,12 +1,15 @@
+import os
+
+import cloudinary
+from dotenv import load_dotenv
 from flask import Flask
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
-import cloudinary
 
+load_dotenv()
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "KNJBJku f<j ]f2;w]r[jnofpmc,snKZD l12sa,lm2njwqd"
-app.config["SQLALCHEMY_DATABASE_URI"] = \
-    "mysql+pymysql://root:Thanhdat2311%40@localhost/demoflask?charset=utf8mb4"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DB_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 cloudinary.config(cloud_name='dtvg4cpoq',
                   api_key='211564137488191',

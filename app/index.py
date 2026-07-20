@@ -1,18 +1,23 @@
+from datetime import datetime
+
 import cloudinary.uploader
 from flask import redirect, render_template, request
 from flask_login import login_user, current_user, logout_user, login_required
-from app import app, dao, login, db
-from datetime import datetime
+
+from app import app, dao, db
 from app.dao import register_user
-from app.models import ReactionType,Post,Comment,ReactionPost,ReactionComment
+from app.models import ReactionType, Comment, ReactionPost, ReactionComment
+
 
 @app.context_processor
 def inject_now():
     return {'current_year': datetime.now().year}
 
+
 @app.route('/')
 def index():
     return render_template("index.html")
+
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -64,6 +69,7 @@ def register():
 
     return render_template("auth/register.html", error=error)
 
+
 @app.route('/login', methods=["GET", "POST"])
 def login():
     error = None
@@ -82,10 +88,12 @@ def login():
             error = "Tài khoản hoặc mật khẩu không đúng!"
     return render_template("auth/login.html", error=error)
 
+
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect("/")
+
 
 @app.route('/profile')
 def profile():
@@ -140,7 +148,6 @@ def change_password():
     return render_template("profile/change-password.html", error=error)
 
 
-
 @app.route('/create-course', methods=['GET', 'POST'])
 @login_required
 def create_course():
@@ -153,7 +160,6 @@ def create_course():
 
     if not teacher:
         return redirect('/')
-
 
     categories = dao.get_categories()
 
@@ -217,6 +223,7 @@ def create_course():
         categories=categories
     )
 
+
 @app.route("/courses/<int:course_id>")
 @login_required
 def course_detail(course_id):
@@ -234,6 +241,8 @@ def course_detail(course_id):
         "course/detail.html",
         course=course
     )
+
+
 @app.route("/courses")
 @login_required
 def course_index():
@@ -248,10 +257,11 @@ def course_index():
         "course/index.html",
         courses=courses
     )
+
+
 @app.route("/update_course/<int:course_id>", methods=["GET", "POST"])
 @login_required
 def update_course(course_id):
-
     if not current_user.teach:
         return redirect("/")
 
@@ -261,7 +271,6 @@ def update_course(course_id):
 
     if not course:
         return redirect("/courses")
-
 
     if request.method == "POST":
         name = request.form.get('name')
@@ -273,18 +282,19 @@ def update_course(course_id):
             teacher_id=teacher.id,
             name=name,
             description=description,
-            image=image ,
-            category_ids = category_ids
+            image=image,
+            category_ids=category_ids
         )
 
         return redirect(f"/courses/{course_id}")
 
-
     return render_template(
         "course/update_course.html",
         course=course,
-        categories = dao.get_categories()
+        categories=dao.get_categories()
     )
+
+
 @app.route("/delete_course/<int:course_id>", methods=["POST"])
 @login_required
 def delete_course(course_id):
@@ -294,28 +304,32 @@ def delete_course(course_id):
     if dao.delete_course(course_id, teacher.id):
         return redirect("/courses")
     return redirect("/courses")
+
+
 @app.route('/forum')
 @login_required
 def forum():
     posts = dao.get_posts()
-    return render_template('forum/index.html',posts=posts)
+    return render_template('forum/index.html', posts=posts)
+
 
 @app.route('/forum/<int:post_id>')
 @login_required
 def forum_detail(post_id):
-
     post = dao.get_post_by_id(post_id)
 
-    my_post_react = ReactionPost.query.filter_by(post_id=post_id,user_id=current_user.id).first()
+    my_post_react = ReactionPost.query.filter_by(post_id=post_id, user_id=current_user.id).first()
 
-    return render_template('forum/detail.html',post=post,my_post_react=my_post_react)
+    return render_template('forum/detail.html', post=post, my_post_react=my_post_react)
 
-@app.route('/forum/<int:post_id>/comment',methods=['POST'])
+
+@app.route('/forum/<int:post_id>/comment', methods=['POST'])
 @login_required
 def add_comment(post_id):
-    dao.add_comment(post_id,current_user.id,request.form.get('content'))
+    dao.add_comment(post_id, current_user.id, request.form.get('content'))
 
-    return redirect(url_for('forum_detail',post_id=post_id))
+    return redirect(url_for('forum_detail', post_id=post_id))
+
 
 @app.route('/forum/create', methods=['GET', 'POST'])
 @login_required
@@ -323,16 +337,16 @@ def create_post():
     categories = dao.get_post_categories()
 
     if request.method == 'POST':
-        dao.add_post(request,current_user.id)
+        dao.add_post(request, current_user.id)
         return redirect(url_for('forum'))
 
-    return render_template('forum/create-post.html',categories=categories)
+    return render_template('forum/create-post.html', categories=categories)
+
 
 @app.route('/forum/<int:post_id>/react',
            methods=['POST'])
 @login_required
 def react_post(post_id):
-
     react_type = ReactionType[
         request.form.get('type')
     ]
@@ -364,19 +378,19 @@ def react_post(post_id):
         "icon": icons[react_type.name]
     }
 
-@app.route('/comment/<int:comment_id>/react',methods=['POST'])
+
+@app.route('/comment/<int:comment_id>/react', methods=['POST'])
 @login_required
 def react_comment(comment_id):
-
     react_type = ReactionType[
         request.form.get('type')
     ]
 
-    dao.react_comment(comment_id,current_user.id,react_type)
+    dao.react_comment(comment_id, current_user.id, react_type)
 
     comment = Comment.query.get(comment_id)
 
-    current_react = ReactionComment.query.filter_by(comment_id=comment_id,user_id=current_user.id).first()
+    current_react = ReactionComment.query.filter_by(comment_id=comment_id, user_id=current_user.id).first()
 
     active = (current_react is not None and current_react.type == react_type)
 
@@ -397,15 +411,16 @@ def react_comment(comment_id):
         "icon": icons[react_type.name]
     }
 
-@app.route('/comment/<int:comment_id>/reply',methods=['POST'])
+
+@app.route('/comment/<int:comment_id>/reply', methods=['POST'])
 @login_required
 def reply_comment(comment_id):
     content = request.form.get('content')
     post_id = request.form.get('post_id')
-    dao.add_reply_comment(comment_id,post_id,current_user.id,content)
+    dao.add_reply_comment(comment_id, post_id, current_user.id, content)
 
+    return redirect(url_for('forum_detail', post_id=post_id))
 
-    return redirect(url_for('forum_detail',post_id=post_id))
 
 if __name__ == '__main__':
     app.run(debug=True)
