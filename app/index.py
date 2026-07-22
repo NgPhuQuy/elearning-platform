@@ -1,24 +1,20 @@
-from datetime import datetime
-
 import cloudinary.uploader
-from flask import redirect, render_template, request, url_for
-from flask_login import login_user, current_user, logout_user, login_required
-
-from app import app, dao, db
+from flask import redirect, render_template, request,url_for
+from flask_login import login_user, current_user, logout_user,login_required
+from app import app, dao, login, db
+from datetime import datetime
 from app.dao import register_user
-from app.models import Comment, ReactionPost, ReactionComment
-from decorator import teacher_required
-
+from app.models import PostCate,VoteType,Comment,Post
 
 @app.context_processor
-def inject_now():
-    return {'current_year': datetime.now().year}
-
-
+def inject_common():
+    return {
+        "current_year": datetime.now().year,
+        "dao": dao
+    }
 @app.route('/')
 def index():
     return render_template("index.html")
-
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -70,7 +66,6 @@ def register():
 
     return render_template("auth/register.html", error=error)
 
-
 @app.route('/login', methods=["GET", "POST"])
 def login():
     error = None
@@ -82,19 +77,15 @@ def login():
 
         if user:
             login_user(user)
-            if user.teach:
-                return redirect("/courses")
             return redirect("/")
         else:
             error = "Tài khoản hoặc mật khẩu không đúng!"
     return render_template("auth/login.html", error=error)
 
-
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect("/")
-
 
 @app.route('/profile')
 def profile():
@@ -149,256 +140,136 @@ def change_password():
     return render_template("profile/change-password.html", error=error)
 
 
-@app.route('/create-course', methods=['GET', 'POST'])
-@teacher_required
-def create_course():
-    error = None
+#forum
 
-    teacher = current_user.teacher_profile
+@app.route("/forum")
+@login_required
+def forum():
 
-    categories = dao.get_categories()
+    keyword = request.args.get("kw")
+    solved = request.args.get("solved")
+
+    if solved == "true":
+        solved = True
+    elif solved == "false":
+        solved = False
+    else:
+        solved = None
+
+    posts = dao.get_posts(keyword=keyword, solved=solved)
+
+    return render_template( "forum/index.html",posts=posts)
+
+@app.route("/forum/<int:post_id>")
+@login_required
+def forum_detail(post_id):
+    post = Post.query.get_or_404(post_id)
+
+    post.view_count += 1
+    db.session.commit()
+    related_posts = dao.get_related_posts(post.id,post.category_id)
+    user_vote = dao.get_user_post_vote(post.id, current_user.id)
+    return render_template("forum/detail.html",post=post,related_posts=related_posts,user_vote=user_vote)
+
+@app.route("/forum/create", methods=["GET", "POST"])
+@login_required
+def create_question():
 
     if request.method == "POST":
-        name = request.form.get('name')
-        description = request.form.get('description')
-        image = request.files.get('image')
-        category_ids = request.form.getlist('category_ids')
 
-        if not name or not description or not image:
-            error = "Vui lòng nhập đầy đủ tên và mô tả khóa học và cả hình ảnh khóa học!"
-            return render_template("course/create_course.html",
-                                   error=error,categories=categories)
-        file_path = None
-        try:
+        image = request.files.get("image")
+
+        image_url = None
+
+        if image and image.filename:
             res = cloudinary.uploader.upload(image)
-            file_path = res["secure_url"]
-        except Exception:
-            error = "Tải ảnh thất bại!"
-            return render_template("course/create_course.html",
-                                   error=error, categories=categories)
+            image_url = res["secure_url"]
 
-        try:
-            course = dao.create_course(
-                name=name,
-                description=description,
-                image=file_path,
-                teacher_id=teacher.id,
-                category_ids=category_ids
-            )
+        dao.create_post(
+            title=request.form["title"],
+            content=request.form["content"],
+            category_id=request.form["category_id"],
+            user_id=current_user.id,
+            image=image_url
+        )
 
-            if not course:
-                error = "Hệ thống lỗi, vui lòng thử lại!"
-                return render_template(
-                    "course/create_course.html",
-                    error=error,
-                    categories=categories
-                )
+        return redirect(url_for("forum"))
 
-            return redirect('/courses')
-
-        except Exception:
-            db.session.rollback()
-            error = "Hệ thống lỗi, vui lòng thử lại!"
-            return render_template(
-                "course/create_course.html",
-                error=error,
-                categories=categories
-            )
+    categories = PostCate.query.all()
 
     return render_template(
-        "course/create_course.html",
-        error=error,
+        "forum/create.html",
         categories=categories
     )
 
-
-@app.route("/courses/<int:course_id>")
+@app.route("/forum/<int:post_id>/answer",methods=["POST"])
 @login_required
-def course_detail(course_id):
-    if not current_user.teach:
-        return redirect("/")
+def answer(post_id):
 
-    teacher = current_user.teach[0]
-
-    course = dao.get_course_details(course_id, teacher.id)
-
-    if not course:
-        return redirect("/courses")
-
-    return render_template(
-        "course/detail.html",
-        course=course
+    dao.add_comment(
+        post_id=post_id,
+        user_id=current_user.id,
+        content=request.form["content"]
     )
 
-
-@app.route("/courses")
-@login_required
-def course_index():
-    if not current_user.teach:
-        return redirect("/")
-
-    teacher = current_user.teach[0]
-
-    courses = dao.get_courses_by_teacher_id(teacher.id)
-
-    return render_template(
-        "course/index.html",
-        courses=courses
+    return redirect(
+        url_for("forum_detail",post_id=post_id)
     )
 
-
-@app.route("/update_course/<int:course_id>", methods=["GET", "POST"])
+@app.route("/forum/<int:post_id>/upvote",methods=["POST"])
 @login_required
-def update_course(course_id):
-    if not current_user.teach:
-        return redirect("/")
+def upvote_post(post_id):
 
-    teacher = current_user.teach[0]
+    dao.vote_post(post_id,current_user.id,VoteType.UP)
+    return redirect(url_for("forum_detail",post_id=post_id))
 
-    course = dao.get_course_details(course_id, teacher.id)
-
-    if not course:
-        return redirect("/courses")
-
-    if request.method == "POST":
-        name = request.form.get('name')
-        description = request.form.get('description')
-        image = request.files.get('image')
-        category_ids = request.form.getlist('category_ids')
-        dao.update_course(
-            course_id=course_id,
-            teacher_id=teacher.id,
-            name=name,
-            description=description,
-            image=image,
-            category_ids=category_ids
-        )
-
-        return redirect(f"/courses/{course_id}")
-
-    return render_template(
-        "course/update_course.html",
-        course=course,
-        categories=dao.get_categories()
-    )
-
-
-@app.route("/delete_course/<int:course_id>", methods=["POST"])
+@app.route("/forum/<int:post_id>/downvote",methods=["POST"])
 @login_required
-def delete_course(course_id):
-    if not current_user.teach:
-        return redirect("/")
-    teacher = current_user.teach[0]
-    if dao.delete_course(course_id, teacher.id):
-        return redirect("/courses")
-    return redirect("/courses")
+def downvote_post(post_id):
+
+    dao.vote_post(post_id,current_user.id,VoteType.DOWN)
+
+    return redirect(url_for("forum_detail",post_id=post_id))
 
 
-@app.route('/forum')
+@app.route("/comment/<int:comment_id>/accept",methods=["POST"])
 @login_required
-def forum():
-    posts = dao.get_posts()
-    return render_template('forum/index.html', posts=posts)
+def accept_answer(comment_id):
 
+    dao.accept_answer(comment_id)
 
-@app.route('/forum/<int:post_id>')
+    return redirect(request.referrer)
+
+@app.route("/comment/<int:comment_id>/upvote",methods=["POST"])
 @login_required
-def forum_detail(post_id):
-    post = dao.get_post_by_id(post_id)
+def upvote_comment(comment_id):
 
-    my_post_react = ReactionPost.query.filter_by(post_id=post_id, user_id=current_user.id).first()
+    dao.vote_comment(comment_id,current_user.id,VoteType.UP)
 
-    return render_template('forum/detail.html', post=post, my_post_react=my_post_react)
+    return redirect(request.referrer)
 
-
-@app.route('/forum/<int:post_id>/comment', methods=['POST'])
+@app.route("/comment/<int:comment_id>/downvote",methods=["POST"])
 @login_required
-def add_comment(post_id):
-    dao.add_comment(post_id, current_user.id, request.form.get('content'))
+def downvote_comment(comment_id):
 
-    return redirect(url_for('forum_detail', post_id=post_id))
+    dao.vote_comment(comment_id,current_user.id,VoteType.DOWN)
 
-
-@app.route('/forum/create', methods=['GET', 'POST'])
-@login_required
-def create_post():
-    categories = dao.get_post_categories()
-
-    if request.method == 'POST':
-        dao.add_post(request, current_user.id)
-        return redirect('/forum')
-
-    return render_template('forum/create-post.html', categories=categories)
+    return redirect(request.referrer)
 
 
-@app.route('/forum/<int:post_id>/react',
-           methods=['POST'])
-@login_required
-def react_post(post_id):
-
-
-    active = dao.react_post(
-        post_id,
-        current_user.id,
-
-    )
-
-    count = ReactionPost.query.filter_by(
-        post_id=post_id
-    ).count()
-
-
-
-    return {
-        "success": True,
-        "count": count,
-        "active": active,
-    }
-
-
-@app.route('/comment/<int:comment_id>/react', methods=['POST'])
-@login_required
-def react_comment(comment_id):
-
-    dao.react_comment(comment_id, current_user.id, react_type)
-
-    comment = Comment.query.get(comment_id)
-
-    current_react = ReactionComment.query.filter_by(comment_id=comment_id, user_id=current_user.id).first()
-
-    active = (current_react is not None and current_react.type == react_type)
-
-    icons = {
-        "LIKE": "👍",
-        "LOVE": "❤️",
-        "HAHA": "😆",
-        "WOW": "😮",
-        "SAD": "😢",
-        "ANGRY": "😡"
-    }
-    return {
-        "success": True,
-        "count": len(comment.reactions),
-        "comment_id": comment_id,
-        "active": active,
-        "type": react_type.name,
-        "icon": icons[react_type.name]
-    }
-
-
-@app.route('/comment/<int:comment_id>/reply', methods=['POST'])
+@app.route("/comment/<int:comment_id>/reply",methods=["POST"])
 @login_required
 def reply_comment(comment_id):
-    content = request.form.get('content')
-    post_id = request.form.get('post_id')
-    dao.add_reply_comment(comment_id, post_id, current_user.id, content)
 
-    return redirect(url_for('forum_detail', post_id=post_id))
+    parent_comment = Comment.query.get_or_404(comment_id)
 
+    dao.add_comment(
+        post_id=parent_comment.post_id,
+        user_id=current_user.id,
+        content=request.form["content"],
+        parent_comment_id=comment_id
+    )
 
+    return redirect(url_for("forum_detail",post_id=parent_comment.post_id))
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-
-        db.session.commit()
     app.run(debug=True)

@@ -1,0 +1,198 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+<link rel="stylesheet"
+      href="{{ url_for('static',
+      filename='css/forum.css') }}">
+
+<div class="container-fluid forum-wrapper">
+
+    <div class="row justify-content-center">
+
+        <!-- FORM -->
+
+        <div class="col-lg-8">
+
+            <div class="question-create-card">
+
+                <div class="mb-4">
+
+                    <h2 class="fw-bold">
+                        Đặt câu hỏi mới
+                    </h2>
+
+                    <p class="text-muted">
+                        Mô tả vấn đề càng chi tiết thì càng dễ nhận được câu trả lời chính xác.
+                    </p>
+
+                </div>
+
+                <form method="post"
+                      enctype="multipart/form-data">
+
+                    <!-- TITLE -->
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+
+                            Tiêu đề câu hỏi
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="title"
+                            class="form-control form-control-lg"
+                            placeholder="Nhập câu hỏi"
+                            required>
+
+                        <div class="form-text">
+
+                            Hãy viết tiêu đề ngắn gọn và mô tả đúng vấn đề.
+
+                        </div>
+
+                    </div>
+
+                    <!-- CATEGORY -->
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+
+                            Danh mục
+
+                        </label>
+
+                        <select
+                            name="category_id"
+                            class="form-select"
+                            required>
+
+                            <option value="">
+                                Chọn danh mục
+                            </option>
+
+                            {% for c in categories %}
+
+                            <option value="{{ c.id }}">
+                                {{ c.name }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <!-- CONTENT -->
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+
+                            Nội dung câu hỏi
+
+                        </label>
+
+                        <textarea
+                            name="content"
+                            rows="10"
+                            class="form-control"
+                            placeholder="Mô tả chi tiết vấn đề của bạn..."
+                            required></textarea>
+
+                    </div>
+
+                    <!-- IMAGE -->
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+
+                            Ảnh minh họa (nếu có)
+
+                        </label>
+
+                        <input
+                            type="file"
+                            name="image"
+                            class="form-control">
+
+                    </div>
+
+                    <!-- BUTTON -->
+
+                    <div class="d-flex justify-content-end">
+
+                        <a href="{{ url_for('forum') }}"
+                           class="btn btn-light me-2">
+
+                            Hủy
+
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="btn btn-forum">
+
+                            Đăng câu hỏi
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+        <!-- SIDEBAR -->
+
+        <div class="col-lg-3">
+
+            <div class="forum-sidebar-card">
+
+                <h5 class="fw-bold">
+                    Hướng dẫn đặt câu hỏi
+                </h5>
+
+                <hr>
+
+                <div class="guide-item">
+                    <span>1</span>
+                    <p>Tìm kiếm trước khi đặt câu hỏi.</p>
+                </div>
+
+                <div class="guide-item">
+                    <span>2</span>
+                    <p>Tiêu đề ngắn gọn và rõ ràng.</p>
+                </div>
+
+                <div class="guide-item">
+                    <span>3</span>
+                    <p>Mô tả đầy đủ lỗi hoặc vấn đề.</p>
+                </div>
+
+                <div class="guide-item">
+                    <span>4</span>
+                    <p>Đính kèm hình ảnh nếu cần.</p>
+                </div>
+
+                <div class="guide-item">
+                    <span>5</span>
+                    <p>Chọn đúng danh mục.</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

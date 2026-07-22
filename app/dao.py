@@ -2,29 +2,25 @@ import hashlib
 
 from flask_login import current_user
 
+from app.models import User,Post,ReactionPost,ReactionComment,Comment,VoteType
 from app import db, login
-from app.models import User, Course, Lesson, Category, CourseCategory
-
-
+import cloudinary.uploader
 @login.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
-
 
 def auth_user(username, password):
     password = hash_password(password)
     return User.query.filter(User.username.__eq__(username), User.password.__eq__(password)).first()
 
-
 def register_user(username, password, email,
                   phone, avatar, first_name, last_name):
     hashed_password = hash_password(password)
-    user = User(username=username, password=hashed_password, email=email, phone=phone,
+    user = User(username=username, password=hashed_password, email=email,phone=phone,
                 avatar=avatar, first_name=first_name, last_name=last_name)
     db.session.add(user)
     db.session.commit()
     return user
-
 
 def is_username_exist(username):
     return User.query.filter(User.username == username).first()
@@ -37,10 +33,8 @@ def is_email_used(email):
 def is_phone_used(phone):
     return User.query.filter(User.phone == phone).first()
 
-
 def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
-
 
 def change_info(email, phone, file_path, first_name, last_name):
     if email != current_user.email:
@@ -71,135 +65,137 @@ def change_password(new_password):
     return True, None
 
 
-def get_categories():
-    return Category.query.all()
+# forum
+def get_posts(keyword=None,solved=None):
+
+    query = Post.query
+
+    if keyword:
+        query = query.filter(Post.title.contains(keyword))
+
+    if solved is not None:
+        query = query.filter(Post.is_solved == solved)
+
+    return query.order_by(Post.created_date.desc()).all()
 
 
-def create_course(name, description, image, teacher_id, category_ids):
-    course = Course(name=name, description=description, image=image, teacher_id=teacher_id)
+def get_post_by_id(post_id):
+    post = Post.query.get(post_id)
 
-    try:
-        db.session.add(course)
+    if post:
+        post.view_count += 1
         db.session.commit()
-        if category_ids and isinstance(category_ids, list):
-            for cate_id in category_ids:
-                course_category = CourseCategory(
-                    course_id=course.id,
-                    category_id=cate_id
-                )
-                db.session.add(course_category)
 
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return None
+    return post
 
-    return course
+def create_post(title,content,category_id,user_id,image=None):
+
+    post = Post(title=title,content=content,category_id=category_id,user_id=user_id,image=image)
+
+    db.session.add(post)
+    db.session.commit()
+
+    return post
 
 
-def get_course_details(course_id, teacher_id):
-    return Course.query.filter(
-        Course.id == course_id,
-        Course.teacher_id == teacher_id
+def add_comment(post_id, user_id,content,parent_comment_id=None):
+
+    c = Comment(content=content,post_id=post_id,user_id=user_id, parent_comment_id=parent_comment_id)
+
+    db.session.add(c)
+    db.session.commit()
+
+    return c
+
+def accept_answer(comment_id):
+
+    comment = Comment.query.get(comment_id)
+
+    if not comment:
+        return False
+
+    comment.is_accepted = True
+    comment.post.is_solved = True
+
+    db.session.commit()
+
+    return True
+
+def vote_post(post_id, user_id, vote_type):
+
+    reaction = ReactionPost.query.filter_by(
+        post_id=post_id,
+        user_id=user_id
     ).first()
 
-
-def get_courses_by_teacher_id(teacher_id):
-    return Course.query.filter_by(
-        teacher_id=teacher_id
-    ).all()
+    if reaction:
 
 
-def update_course(course_id, teacher_id, name=None, description=None, image=None, category_ids=None):
-    course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
-    if course:
-        if name:
-            course.name = name
-        if description:
-            course.description = description
-        if image:
-            course.image = image
-        if category_ids is not None:
-            CourseCategory.query.filter_by(course_id=course.id).delete()
-            for cate_id in category_ids:
-                db.session.add(CourseCategory(course_id=course.id, category_id=cate_id))
-        try:
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return None;
-
-        return course;
-
-    return None;
+        if reaction.vote_type == vote_type:
+            db.session.delete(reaction)
 
 
-def create_lesson(teacher_id, course_id, description, name):
-    course = Course.query.filter(Course.teacher_id == teacher_id, Course.id == course_id).first()
-    if not course:
-        return None
-    lesson = Lesson(name=name, description=description, course_id=course_id)
-    try:
-        db.session.add(lesson)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return None
+        else:
+            reaction.vote_type = vote_type
 
-    return lesson
+    else:
+        reaction = ReactionPost(
+            post_id=post_id,
+            user_id=user_id,
+            vote_type=vote_type
+        )
 
+        db.session.add(reaction)
 
-def update_lesson(lesson_id, course_id, teacher_id, name=None, description=None):
-    lesson = Lesson.query.join(Course).filter(
-        Course.id == course_id,
-        Course.teacher_id == teacher_id,
-        Lesson.id == lesson_id
+    db.session.commit()
+
+def vote_comment(comment_id,user_id,vote_type):
+
+    reaction = ReactionComment.query.filter_by(comment_id=comment_id,user_id=user_id).first()
+
+    if reaction:
+        reaction.vote_type = vote_type
+    else:
+        reaction = ReactionComment(comment_id=comment_id,user_id=user_id,vote_type=vote_type)
+
+        db.session.add(reaction)
+
+    db.session.commit()
+
+def get_post_score(post):
+
+    score = 0
+
+    for r in post.reactions:
+        if r.vote_type == VoteType.UP:
+            score += 1
+
+    return score
+
+def get_comment_score(comment):
+
+    score = 0
+
+    for r in comment.reactions:
+        score += r.vote_type.value
+
+    return score
+
+def get_related_posts(post_id,category_id,limit=5):
+
+    return (
+        Post.query.filter(
+            Post.category_id == category_id,
+            Post.id != post_id
+        )
+        .order_by(Post.created_date.desc())
+        .limit(limit)
+        .all()
+    )
+
+def get_user_post_vote(post_id, user_id):
+
+    return ReactionPost.query.filter_by(
+        post_id=post_id,
+        user_id=user_id
     ).first()
-
-    if lesson:
-
-        if name:
-            lesson.name = name
-        if description:
-            lesson.description = description
-
-        try:
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return None
-        return lesson;
-
-    return None
-
-
-def delete_course(course_id, teacher_id):
-    course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
-    if course:
-        db.session.delete(course)
-        db.session.commit()
-        return True
-    return False
-
-
-def delete_lesson(lesson_id, course_id, teacher_id):
-    lesson = Lesson.query.join(Course).filter(
-        Course.id == course_id,
-        Course.teacher_id == teacher_id,
-        Lesson.id == lesson_id
-    ).first()
-
-    if lesson:
-        try:
-            db.session.delete(lesson)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return False
-        return True
-
-    return False
-
-
-def get_lesson_details(lesson_id):
-    return Lesson.query.get(lesson_id)
