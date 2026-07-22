@@ -45,6 +45,7 @@ class CourseCategory(db.Model):
 
 
 class Course(BaseModel):
+    is_sale = Column(Boolean, default=True)
     description = Column(String(255), nullable=False)
     image = Column(String(500), default="")
     teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
@@ -119,8 +120,8 @@ class ReactionComment(db.Model):
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all()
-        # db.session.commit()
+        db.create_all()
+        db.session.commit()
         password = hashlib.sha256(b'123').hexdigest()
 
         teacher_user1 = User(username='teacher01', password=password,

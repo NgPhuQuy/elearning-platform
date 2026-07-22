@@ -6,14 +6,17 @@ from flask_login import login_user, current_user, logout_user, login_required
 
 from app import app, dao, db
 from app.dao import register_user
-from app.models import PostCate, VoteType, Comment, Post
+from app.models import PostCate, VoteType, Comment, Post, Course, User
 
 
 @app.context_processor
 def inject_common():
+    new_question_today = dao.get_question_today()
+    course_on_sale = dao.get_course_sale()
     return {
-        "current_year": datetime.now().year,
-        "dao": dao
+        "new_question_today": len(new_question_today),
+        "course_on_sale": len(course_on_sale),
+        "posts": dao.get_posts(),
     }
 
 
@@ -73,6 +76,12 @@ def register():
     return render_template("auth/register.html", error=error)
 
 
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    #TODO
+    pass
+
+
 @app.route('/login', methods=["GET", "POST"])
 def login():
     error = None
@@ -95,6 +104,13 @@ def logout():
     logout_user()
     return redirect("/")
 
+@app.route('/terms')
+def terms():
+    pass
+
+@app.route('/privacy')
+def privacy():
+    pass
 
 @app.route('/profile')
 def profile():
@@ -147,6 +163,11 @@ def change_password():
         return redirect("/")
 
     return render_template("profile/change-password.html", error=error)
+
+
+@app.route("/courses")
+def courses():
+    return Course.query.all()
 
 
 # forum
