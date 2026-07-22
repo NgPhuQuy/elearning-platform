@@ -14,4 +14,5 @@ def teacher_required(func):
             return redirect('/')
 
         return func(*args, **kwargs)
+
     return wrapper

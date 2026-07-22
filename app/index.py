@@ -1,10 +1,13 @@
-import cloudinary.uploader
-from flask import redirect, render_template, request,url_for
-from flask_login import login_user, current_user, logout_user,login_required
-from app import app, dao, login, db
 from datetime import datetime
+
+import cloudinary.uploader
+from flask import redirect, render_template, request, url_for
+from flask_login import login_user, current_user, logout_user, login_required
+
+from app import app, dao, db
 from app.dao import register_user
-from app.models import PostCate,VoteType,Comment,Post
+from app.models import PostCate, VoteType, Comment, Post
+
 
 @app.context_processor
 def inject_common():
@@ -12,9 +15,12 @@ def inject_common():
         "current_year": datetime.now().year,
         "dao": dao
     }
+
+
 @app.route('/')
 def index():
     return render_template("index.html")
+
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -66,6 +72,7 @@ def register():
 
     return render_template("auth/register.html", error=error)
 
+
 @app.route('/login', methods=["GET", "POST"])
 def login():
     error = None
@@ -82,10 +89,12 @@ def login():
             error = "Tài khoản hoặc mật khẩu không đúng!"
     return render_template("auth/login.html", error=error)
 
+
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect("/")
+
 
 @app.route('/profile')
 def profile():
@@ -140,12 +149,11 @@ def change_password():
     return render_template("profile/change-password.html", error=error)
 
 
-#forum
+# forum
 
 @app.route("/forum")
 @login_required
 def forum():
-
     keyword = request.args.get("kw")
     solved = request.args.get("solved")
 
@@ -158,7 +166,8 @@ def forum():
 
     posts = dao.get_posts(keyword=keyword, solved=solved)
 
-    return render_template( "forum/index.html",posts=posts)
+    return render_template("forum/index.html", posts=posts)
+
 
 @app.route("/forum/<int:post_id>")
 @login_required
@@ -167,14 +176,14 @@ def forum_detail(post_id):
 
     post.view_count += 1
     db.session.commit()
-    related_posts = dao.get_related_posts(post.id,post.category_id)
+    related_posts = dao.get_related_posts(post.id, post.category_id)
     user_vote = dao.get_user_post_vote(post.id, current_user.id)
-    return render_template("forum/detail.html",post=post,related_posts=related_posts,user_vote=user_vote)
+    return render_template("forum/detail.html", post=post, related_posts=related_posts, user_vote=user_vote)
+
 
 @app.route("/forum/create", methods=["GET", "POST"])
 @login_required
 def create_question():
-
     if request.method == "POST":
 
         image = request.files.get("image")
@@ -202,10 +211,10 @@ def create_question():
         categories=categories
     )
 
-@app.route("/forum/<int:post_id>/answer",methods=["POST"])
+
+@app.route("/forum/<int:post_id>/answer", methods=["POST"])
 @login_required
 def answer(post_id):
-
     dao.add_comment(
         post_id=post_id,
         user_id=current_user.id,
@@ -213,54 +222,52 @@ def answer(post_id):
     )
 
     return redirect(
-        url_for("forum_detail",post_id=post_id)
+        url_for("forum_detail", post_id=post_id)
     )
 
-@app.route("/forum/<int:post_id>/upvote",methods=["POST"])
+
+@app.route("/forum/<int:post_id>/upvote", methods=["POST"])
 @login_required
 def upvote_post(post_id):
+    dao.vote_post(post_id, current_user.id, VoteType.UP)
+    return redirect(url_for("forum_detail", post_id=post_id))
 
-    dao.vote_post(post_id,current_user.id,VoteType.UP)
-    return redirect(url_for("forum_detail",post_id=post_id))
 
-@app.route("/forum/<int:post_id>/downvote",methods=["POST"])
+@app.route("/forum/<int:post_id>/downvote", methods=["POST"])
 @login_required
 def downvote_post(post_id):
+    dao.vote_post(post_id, current_user.id, VoteType.DOWN)
 
-    dao.vote_post(post_id,current_user.id,VoteType.DOWN)
-
-    return redirect(url_for("forum_detail",post_id=post_id))
+    return redirect(url_for("forum_detail", post_id=post_id))
 
 
-@app.route("/comment/<int:comment_id>/accept",methods=["POST"])
+@app.route("/comment/<int:comment_id>/accept", methods=["POST"])
 @login_required
 def accept_answer(comment_id):
-
     dao.accept_answer(comment_id)
 
     return redirect(request.referrer)
 
-@app.route("/comment/<int:comment_id>/upvote",methods=["POST"])
+
+@app.route("/comment/<int:comment_id>/upvote", methods=["POST"])
 @login_required
 def upvote_comment(comment_id):
-
-    dao.vote_comment(comment_id,current_user.id,VoteType.UP)
+    dao.vote_comment(comment_id, current_user.id, VoteType.UP)
 
     return redirect(request.referrer)
 
-@app.route("/comment/<int:comment_id>/downvote",methods=["POST"])
+
+@app.route("/comment/<int:comment_id>/downvote", methods=["POST"])
 @login_required
 def downvote_comment(comment_id):
-
-    dao.vote_comment(comment_id,current_user.id,VoteType.DOWN)
+    dao.vote_comment(comment_id, current_user.id, VoteType.DOWN)
 
     return redirect(request.referrer)
 
 
-@app.route("/comment/<int:comment_id>/reply",methods=["POST"])
+@app.route("/comment/<int:comment_id>/reply", methods=["POST"])
 @login_required
 def reply_comment(comment_id):
-
     parent_comment = Comment.query.get_or_404(comment_id)
 
     dao.add_comment(
@@ -270,6 +277,8 @@ def reply_comment(comment_id):
         parent_comment_id=comment_id
     )
 
-    return redirect(url_for("forum_detail",post_id=parent_comment.post_id))
+    return redirect(url_for("forum_detail", post_id=parent_comment.post_id))
+
+
 if __name__ == '__main__':
     app.run(debug=True)
