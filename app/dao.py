@@ -1,26 +1,29 @@
 import hashlib
 
 from flask_login import current_user
-
-from app.models import User,Post,ReactionPost,ReactionComment,Comment,VoteType
 from app import db, login
-import cloudinary.uploader
+from app.models import User, Post, ReactionPost, ReactionComment, Comment, VoteType
+
+
 @login.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
+
 
 def auth_user(username, password):
     password = hash_password(password)
     return User.query.filter(User.username.__eq__(username), User.password.__eq__(password)).first()
 
+
 def register_user(username, password, email,
                   phone, avatar, first_name, last_name):
     hashed_password = hash_password(password)
-    user = User(username=username, password=hashed_password, email=email,phone=phone,
+    user = User(username=username, password=hashed_password, email=email, phone=phone,
                 avatar=avatar, first_name=first_name, last_name=last_name)
     db.session.add(user)
     db.session.commit()
     return user
+
 
 def is_username_exist(username):
     return User.query.filter(User.username == username).first()
@@ -33,8 +36,10 @@ def is_email_used(email):
 def is_phone_used(phone):
     return User.query.filter(User.phone == phone).first()
 
+
 def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
 
 def change_info(email, phone, file_path, first_name, last_name):
     if email != current_user.email:
@@ -66,8 +71,7 @@ def change_password(new_password):
 
 
 # forum
-def get_posts(keyword=None,solved=None):
-
+def get_posts(keyword=None, solved=None):
     query = Post.query
 
     if keyword:
@@ -88,9 +92,9 @@ def get_post_by_id(post_id):
 
     return post
 
-def create_post(title,content,category_id,user_id,image=None):
 
-    post = Post(title=title,content=content,category_id=category_id,user_id=user_id,image=image)
+def create_post(title, content, category_id, user_id, image=None):
+    post = Post(title=title, content=content, category_id=category_id, user_id=user_id, image=image)
 
     db.session.add(post)
     db.session.commit()
@@ -98,17 +102,16 @@ def create_post(title,content,category_id,user_id,image=None):
     return post
 
 
-def add_comment(post_id, user_id,content,parent_comment_id=None):
-
-    c = Comment(content=content,post_id=post_id,user_id=user_id, parent_comment_id=parent_comment_id)
+def add_comment(post_id, user_id, content, parent_comment_id=None):
+    c = Comment(content=content, post_id=post_id, user_id=user_id, parent_comment_id=parent_comment_id)
 
     db.session.add(c)
     db.session.commit()
 
     return c
 
-def accept_answer(comment_id):
 
+def accept_answer(comment_id):
     comment = Comment.query.get(comment_id)
 
     if not comment:
@@ -121,8 +124,8 @@ def accept_answer(comment_id):
 
     return True
 
-def vote_post(post_id, user_id, vote_type):
 
+def vote_post(post_id, user_id, vote_type):
     reaction = ReactionPost.query.filter_by(
         post_id=post_id,
         user_id=user_id
@@ -130,10 +133,8 @@ def vote_post(post_id, user_id, vote_type):
 
     if reaction:
 
-
         if reaction.vote_type == vote_type:
             db.session.delete(reaction)
-
 
         else:
             reaction.vote_type = vote_type
@@ -149,31 +150,43 @@ def vote_post(post_id, user_id, vote_type):
 
     db.session.commit()
 
-def vote_comment(comment_id,user_id,vote_type):
 
-    reaction = ReactionComment.query.filter_by(comment_id=comment_id,user_id=user_id).first()
+def vote_comment(comment_id, user_id, vote_type):
+    reaction = ReactionComment.query.filter_by(
+        comment_id=comment_id,
+        user_id=user_id
+    ).first()
 
     if reaction:
-        reaction.vote_type = vote_type
+
+        if reaction.vote_type == vote_type:
+            db.session.delete(reaction)
+
+        else:
+            reaction.vote_type = vote_type
+
     else:
-        reaction = ReactionComment(comment_id=comment_id,user_id=user_id,vote_type=vote_type)
+        reaction = ReactionComment(
+            comment_id=comment_id,
+            user_id=user_id,
+            vote_type=vote_type
+        )
 
         db.session.add(reaction)
 
     db.session.commit()
 
-def get_post_score(post):
 
+def get_post_score(post):
     score = 0
 
     for r in post.reactions:
-        if r.vote_type == VoteType.UP:
-            score += 1
+        score += r.vote_type.value
 
     return score
 
-def get_comment_score(comment):
 
+def get_comment_score(comment):
     score = 0
 
     for r in comment.reactions:
@@ -181,8 +194,8 @@ def get_comment_score(comment):
 
     return score
 
-def get_related_posts(post_id,category_id,limit=5):
 
+def get_related_posts(post_id, category_id, limit=5):
     return (
         Post.query.filter(
             Post.category_id == category_id,
@@ -193,8 +206,8 @@ def get_related_posts(post_id,category_id,limit=5):
         .all()
     )
 
-def get_user_post_vote(post_id, user_id):
 
+def get_user_post_vote(post_id, user_id):
     return ReactionPost.query.filter_by(
         post_id=post_id,
         user_id=user_id

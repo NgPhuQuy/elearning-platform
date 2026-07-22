@@ -2,19 +2,20 @@ import hashlib
 from datetime import datetime
 
 from flask_login import UserMixin
-from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Table,Enum,Text
-from sqlalchemy.orm import relationship,backref
+from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Text, Enum
+from sqlalchemy.orm import relationship, backref
 from enum import Enum as MyEnum
 from app import db, app
 
 
 class BaseModel(db.Model):
     __abstract__ = True
-    id =Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(255))
     created_date = Column(DateTime, default=datetime.now())
     updated_date = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
     is_active = Column(Boolean, default=True)
+
 
 class User(BaseModel, UserMixin):
     username = Column(String(255), nullable=False, unique=True)
@@ -24,27 +25,58 @@ class User(BaseModel, UserMixin):
     avatar = Column(String(255), default='')
     email = Column(String(255), nullable=False, unique=True)
     phone = Column(String(255), nullable=False)
-    posts = relationship("Post",backref="author",lazy=True)
-    comments = relationship("Comment",backref="author",lazy=True)
+    teacher_profile = relationship("Teacher", backref="user", uselist=False, lazy=True)
+
+
+class Teacher(BaseModel):
+    user_id = Column(Integer, ForeignKey('user.id'), unique=True, nullable=False)
+    note = Column(String(255), default="")
+    courses = relationship("Course", backref="teacher", lazy=True)
+
+
+class Category(BaseModel):
+    course_category = relationship("CourseCategory", backref="category", lazy=True)
+
+
+class CourseCategory(db.Model):
+    __tablename__ = "course_category"
+    course_id = Column(Integer, ForeignKey('course.id', ondelete="CASCADE"), primary_key=True)
+    category_id = Column(Integer, ForeignKey('category.id'), primary_key=True)
+
+
+class Course(BaseModel):
+    description = Column(String(255), nullable=False)
+    image = Column(String(500), default="")
+    teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
+    lessons = relationship("Lesson", backref="course", lazy=True)
+    course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True)
+
+
+class Lesson(BaseModel):
+    description = Column(String(255), nullable=False)
+    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
+
 
 class PostCate(BaseModel):
     __tablename__ = "post_cate"
 
-    description = Column(String(255),nullable=True)
+    description = Column(String(255), nullable=True)
     posts = relationship("Post", backref="category", lazy=True)
+
 
 class Post(BaseModel):
     __tablename__ = "post"
 
-    title = Column(String(500), nullable=False)
+    title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
-    image = Column(String(500))
+    image = Column(String(500), default="")
     view_count = Column(Integer, default=0)
     is_solved = Column(Boolean, default=False)
-    user_id = Column(Integer,ForeignKey(User.id),nullable=False)
-    category_id = Column(Integer,ForeignKey(PostCate.id),nullable=False)
-    comments = relationship("Comment",backref="post",cascade="all, delete-orphan",lazy=True)
-    reactions = relationship("ReactionPost",backref="post",cascade="all, delete-orphan",lazy=True)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    category_id = Column(Integer, ForeignKey(PostCate.id), nullable=False)
+    comments = relationship("Comment", backref="post", cascade="all, delete-orphan", lazy=True)
+    reactions = relationship("ReactionPost", backref="post", cascade="all, delete-orphan", lazy=True)
+    user = relationship("User", backref="posts")
 
 
 class Comment(BaseModel):
@@ -52,54 +84,87 @@ class Comment(BaseModel):
 
     content = Column(Text, nullable=False)
     is_accepted = Column(Boolean, default=False)
-    post_id = Column(Integer,ForeignKey(Post.id),nullable=False)
-    user_id = Column(Integer,ForeignKey(User.id),nullable=False)
-    parent_comment_id = Column(Integer,ForeignKey("comment.id"))
-    replies = relationship("Comment", backref=backref("parent",remote_side="Comment.id"))
-    reactions = relationship("ReactionComment",backref="comment",cascade="all, delete-orphan")
+    post_id = Column(Integer, ForeignKey(Post.id), nullable=False)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    parent_comment_id = Column(Integer, ForeignKey("comment.id"))
+    replies = relationship("Comment", backref=backref("parent", remote_side="Comment.id"))
+    reactions = relationship("ReactionComment", backref="comment", cascade="all, delete-orphan")
+    user = relationship("User", backref="comments")
+
 
 class VoteType(MyEnum):
     UP = 1
     DOWN = -1
 
+
 class ReactionPost(db.Model):
     __tablename__ = "reaction_post"
 
     id = Column(Integer, primary_key=True)
-    vote_type = Column(Enum(VoteType),nullable=False)
-    user_id = Column(Integer,ForeignKey(User.id),nullable=False)
-    post_id = Column(Integer,ForeignKey(Post.id),nullable=False)
-    created_date = Column(DateTime,default=datetime.now)
+    vote_type = Column(Enum(VoteType), nullable=False)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    post_id = Column(Integer, ForeignKey(Post.id), nullable=False)
+    created_date = Column(DateTime, default=datetime.now)
+
 
 class ReactionComment(db.Model):
     __tablename__ = "reaction_comment"
 
     id = Column(Integer, primary_key=True)
     vote_type = Column(Enum(VoteType), nullable=False)
-    user_id = Column(Integer,ForeignKey(User.id),nullable=False)
-    comment_id = Column(Integer,ForeignKey(Comment.id),nullable=False)
-    created_date = Column(DateTime,default=datetime.now)
-
-
-
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    comment_id = Column(Integer, ForeignKey(Comment.id), nullable=False)
+    created_date = Column(DateTime, default=datetime.now)
 
 
 if __name__ == '__main__':
     with app.app_context():
         # db.create_all()
         # db.session.commit()
-        # password = hashlib.sha256(b'123').hexdigest()
-        # admin = User(username = 'admin', password = password,first_name="",last_name="", email = '', phone='')
-        # db.session.add(admin)
-        # db.session.commit()
+        password = hashlib.sha256(b'123').hexdigest()
 
-        categories = [PostCate(name="Python", description="Python Programming"),
-            PostCate(name="Java", description="Java Programming"),
-            PostCate(name="Spring Boot", description="Spring Framework"),
-            PostCate(name="ReactJS", description="React Frontend"),
-            PostCate(name="Database", description="MySQL & SQL Server"),
-            PostCate(name="Machine Learning", description="AI & ML")]
+        teacher_user1 = User(username='teacher01', password=password,
+            first_name='Nguyen', last_name='An', email='an.teacher@gmail.com',
+            phone='0911111111')
 
-        db.session.add_all(categories)
+        teacher_user2 = User(username='teacher02', password=password,
+            first_name='Tran', last_name='Binh', email='binh.teacher@gmail.com',
+            phone='0922222222')
+
+        user1 = User(
+            username='user01',
+            password=password,
+            first_name='Le',
+            last_name='Nam',
+            email='nam@gmail.com',
+            phone='0933333333'
+        )
+
+        user2 = User(
+            username='user02',
+            password=password,
+            first_name='Pham',
+            last_name='Hoa',
+            email='hoa@gmail.com',
+            phone='0944444444'
+        )
+
+        db.session.add_all([user1, user2, teacher_user1, teacher_user2])
         db.session.commit()
 
+        teacher1 = Teacher(user_id=teacher_user1.id,
+            note="Giảng viên lập trình Python và Flask")
+
+        teacher2 = Teacher(user_id=teacher_user2.id,
+            note="Giảng viên Java Spring Boot")
+
+        db.session.add_all([teacher1, teacher2])
+        db.session.commit()
+
+        cate1 = PostCate(name="Công nghệ")
+        cate2 = PostCate(name="Lập trình")
+        cate3 = PostCate(name="Hỏi đáp")
+        cate4 = PostCate(name="Chia sẻ kinh nghiệm")
+
+        db.session.add_all([cate1, cate2, cate3, cate4])
+        db.session.commit()
