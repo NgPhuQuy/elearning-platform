@@ -2,20 +2,19 @@ import hashlib
 from datetime import datetime
 
 from flask_login import UserMixin
-from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Text, Enum
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Table, Enum, Text
+from sqlalchemy.orm import relationship,backref
 from enum import Enum as MyEnum
 from app import db, app
 
 
 class BaseModel(db.Model):
     __abstract__ = True
-    id = Column(Integer, primary_key=True)
+    id =Column(Integer, primary_key=True)
     name = Column(String(255))
     created_date = Column(DateTime, default=datetime.now())
     updated_date = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
     is_active = Column(Boolean, default=True)
-
 
 class User(BaseModel, UserMixin):
     username = Column(String(255), nullable=False, unique=True)
@@ -31,8 +30,24 @@ class User(BaseModel, UserMixin):
 class Teacher(BaseModel):
     user_id = Column(Integer, ForeignKey('user.id'), unique=True, nullable=False)
     note = Column(String(255), default="")
-    courses = relationship("Course", backref="teacher", lazy=True)
+    courses = relationship("Course", backref="teacher", lazy=True, )
 
+
+class Chapter(BaseModel):
+    description = Column(Text)
+
+    order = Column(Integer, default=1)
+
+    course_id = Column(Integer,
+                       ForeignKey("course.id"),
+                       nullable=False)
+
+    lessons = relationship(
+        "Lesson",
+        backref="chapter",
+        cascade="all, delete-orphan",
+        lazy=True
+    )
 
 class Category(BaseModel):
     course_category = relationship("CourseCategory", backref="category", lazy=True)
@@ -43,19 +58,64 @@ class CourseCategory(db.Model):
     course_id = Column(Integer, ForeignKey('course.id', ondelete="CASCADE"), primary_key=True)
     category_id = Column(Integer, ForeignKey('category.id'), primary_key=True)
 
+class CourseLevel(MyEnum):
+    BASIC = "Cơ bản"
+    INTERMEDIATE = "Trung cấp"
+    ADVANCED = "Nâng cao"
+
 
 class Course(BaseModel):
     is_sale = Column(Boolean, default=True)
-    description = Column(String(255), nullable=False)
-    image = Column(String(500), default="")
+
+    description = Column(String(1000), nullable=False)
+    image = Column(String(500),nullable=False, default="")
+    promo_video = Column(String(500), nullable=True)
     teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
-    lessons = relationship("Lesson", backref="course", lazy=True)
-    course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True)
+
+
+    chapters = relationship(
+        "Chapter",
+        backref="course",
+        cascade="all, delete-orphan",
+        lazy=True
+    )
+    course_category = relationship("CourseCategory", backref="course",cascade="all, delete-orphan", lazy=True)
+    level = Column(Enum(CourseLevel), nullable=False, default=CourseLevel.BASIC)
+
+class LessonType(MyEnum):
+    VIDEO = "Video"
+    EXERCISE = "Bài tập"
+    DOCUMENT = "Doc"
+
+
 
 
 class Lesson(BaseModel):
+
+    chapter_id = Column(
+        Integer,
+        ForeignKey("chapter.id"),
+        nullable=False
+    )
+    type = Column(
+        Enum(LessonType),
+        nullable=False,
+        default=LessonType.VIDEO
+    )
     description = Column(String(255), nullable=False)
-    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
+
+
+
+
+
+
+class CourseOutcome(BaseModel):
+    content = Column(String(255), nullable=False)
+
+    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
+
+    course = relationship("Course", backref="outcomes")
+
 
 
 class PostCate(BaseModel):
@@ -123,6 +183,8 @@ if __name__ == '__main__':
         db.create_all()
         db.session.commit()
         password = hashlib.sha256(b'123').hexdigest()
+        admin = User(username = 'admin', password = password,first_name="",last_name="", email = '', phone='')
+        db.session.add(admin)
 
         teacher_user1 = User(username='teacher01', password=password,
             first_name='Nguyen', last_name='An', email='an.teacher@gmail.com',
@@ -168,4 +230,31 @@ if __name__ == '__main__':
         cate4 = PostCate(name="Chia sẻ kinh nghiệm")
 
         db.session.add_all([cate1, cate2, cate3, cate4])
+        cate1 = Category(name="Lập trình")
+        cate2 = Category(name="Thiết kế")
+        cate3 = Category(name="Marketing")
+        cate4 = Category(name="Kinh doanh")
+        cate5 = Category(name="Ngoại ngữ")
+        cate6 = Category(name="Data Science")
+        cate7 = Category(name="Trí tuệ nhân tạo")
+        cate8 = Category(name="An ninh mạng")
+        cate9 = Category(name="Phát triển Web")
+        cate10 = Category(name="Phát triển Mobile")
+
+        db.session.add_all([
+            cate1,
+            cate2,
+            cate3,
+            cate4,
+            cate5,
+            cate6,
+            cate7,
+            cate8,
+            cate9,
+            cate10
+        ])
+
+
         db.session.commit()
+
+

@@ -2,8 +2,10 @@ import hashlib
 from datetime import datetime
 
 from flask_login import current_user
+
+
 from app import db, login
-from app.models import User, Post, ReactionPost, ReactionComment, Comment, VoteType, Course
+from app.models import User, Post, ReactionPost, ReactionComment, Comment, VoteType, Course ,Lesson, Chapter,  Category, CourseCategory,CourseOutcome, VoteType
 
 
 @login.user_loader
@@ -71,6 +73,165 @@ def change_password(new_password):
     return True, None
 
 
+def get_categories():
+    return Category.query.order_by(Category.name).all()
+
+def create_course(name,
+                  description,
+                  image,
+                  teacher_id,
+                  level,
+                  category_ids,
+                  promo_video=None):
+
+    course = Course(
+        name=name,
+        description=description,
+        image=image,
+        promo_video=promo_video,
+        teacher_id=teacher_id,
+        level=level
+    )
+
+    try:
+        db.session.add(course)
+        db.session.flush()
+
+        if category_ids:
+            for cate_id in category_ids:
+                db.session.add(
+                    CourseCategory(
+                        course_id=course.id,
+                        category_id=cate_id
+                    )
+                )
+
+        db.session.commit()
+        return course
+
+    except Exception:
+        db.session.rollback()
+        return None
+
+def get_course_details(course_id, teacher_id=None):
+    query = Course.query.filter_by(id=course_id)
+
+    if teacher_id is not None:
+        query = query.filter_by(teacher_id=teacher_id)
+
+    return query.first()
+
+def delete_course(course_id, teacher_id):
+    course = Course.query.filter_by(
+        id=course_id,
+        teacher_id=teacher_id
+    ).first()
+
+    if not course:
+        return False
+
+    try:
+        db.session.delete(course)
+        db.session.commit()
+        return True
+
+    except Exception:
+        db.session.rollback()
+        return False
+
+def update_lesson(lesson_id,
+                  teacher_id,
+                  name=None,
+                  description=None,
+                  lesson_type=None):
+
+    lesson = Lesson.query.join(Chapter).join(Course).filter(
+        Lesson.id == lesson_id,
+        Course.teacher_id == teacher_id
+    ).first()
+
+    if not lesson:
+        return None
+
+    if name:
+        lesson.name = name
+
+    if description:
+        lesson.description = description
+
+    if lesson_type:
+        lesson.type = lesson_type
+
+    try:
+        db.session.commit()
+        return lesson
+
+    except Exception:
+        db.session.rollback()
+        return None
+
+def delete_lesson(lesson_id, teacher_id):
+
+    lesson = Lesson.query.join(Chapter).join(Course).filter(
+        Lesson.id == lesson_id,
+        Course.teacher_id == teacher_id
+    ).first()
+
+    if not lesson:
+        return False
+
+    try:
+        db.session.delete(lesson)
+        db.session.commit()
+        return True
+
+    except Exception:
+        db.session.rollback()
+        return False
+def get_chapters(course_id):
+    return Chapter.query.filter_by(
+        course_id=course_id
+    ).order_by(Chapter.order).all()
+def get_lessons(chapter_id):
+    return Lesson.query.filter_by(
+        chapter_id=chapter_id
+    ).all()
+def get_lesson_details(lesson_id):
+    return Lesson.query.get(lesson_id)
+def get_outcomes(course_id):
+    return CourseOutcome.query.filter_by(course_id=course_id).all()
+
+
+def create_outcome(course_id, content):
+    outcome = CourseOutcome(
+        course_id=course_id,
+        content=content
+    )
+
+    try:
+        db.session.add(outcome)
+        db.session.commit()
+        return outcome
+
+    except Exception:
+        db.session.rollback()
+        return None
+
+
+def delete_outcome(outcome_id):
+    outcome = CourseOutcome.query.get(outcome_id)
+
+    if not outcome:
+        return False
+
+    try:
+        db.session.delete(outcome)
+        db.session.commit()
+        return True
+
+    except Exception:
+        db.session.rollback()
+        return False
 # forum
 def get_posts(keyword=None, solved=None):
     query = Post.query
@@ -108,20 +269,134 @@ def add_comment(post_id, user_id, content, parent_comment_id=None):
 
     db.session.add(c)
     db.session.commit()
+def get_courses_by_teacher_id(teacher_id):
+    return Course.query.filter_by(
+        teacher_id=teacher_id
+    ).all()
+def update_course (course_id, teacher_id, name=None, description=None, image=None,  promo_video=None, level=None,category_ids=None):
+    course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
+    if course:
+        if  name:
+            course.name = name
+        if  description:
+            course.description = description
+        if image:
+            course.image = image
+        if promo_video is not None:
+            course.promo_video = promo_video
 
-    return c
+        if level:
+            course.level = level
+        if category_ids is not None:
+            CourseCategory.query.filter_by(course_id=course.id).delete()
+            for cate_id in category_ids:
+                db.session.add(CourseCategory(course_id=course.id, category_id=cate_id))
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return None;
+
+    return
 
 
 def accept_answer(comment_id):
     comment = Comment.query.get(comment_id)
+def create_chapter(course_id,
+                   teacher_id,
+                   name,
+                   description):
 
-    if not comment:
-        return False
 
-    comment.is_accepted = True
-    comment.post.is_solved = True
+    course = Course.query.filter(
+        Course.id == course_id,
+        Course.teacher_id == teacher_id
+    ).first()
+
+
 
     db.session.commit()
+    if not course:
+        return None
+
+    chapter = Chapter(
+        name=name,
+        description=description,
+        course_id=course.id
+    )
+
+    try:
+        db.session.add(chapter)
+        db.session.commit()
+        return chapter
+
+    except Exception:
+        db.session.rollback()
+        return None
+
+def update_chapter(chapter_id,
+                   teacher_id,
+                   name=None,
+                   description=None):
+
+    chapter = Chapter.query.join(Course).filter(
+        Chapter.id == chapter_id,
+        Course.teacher_id == teacher_id
+    ).first()
+
+    if not chapter:
+        return None
+
+    if name:
+        chapter.name = name
+
+    if description:
+        chapter.description = description
+
+    try:
+        db.session.commit()
+        return chapter
+
+    except Exception:
+        db.session.rollback()
+        return None
+
+def delete_chapter(chapter_id, teacher_id):
+
+    chapter = Chapter.query.join(Course).filter(
+        Chapter.id == chapter_id,
+        Course.teacher_id == teacher_id
+    ).first()
+
+    if not chapter:
+        return False
+
+    try:
+        db.session.delete(chapter)
+        db.session.commit()
+        return True
+
+    except Exception:
+        db.session.rollback()
+        return False
+
+
+def create_lesson(teacher_id,  chapter_id,name,  description, lesson_type):
+    chapter = Chapter.query.join(Course).filter(
+        Chapter.id == chapter_id,
+        Course.teacher_id == teacher_id
+    ).first()
+
+    if not chapter:
+        return None
+    lesson = Lesson(name=name, description=description,  type=lesson_type,  chapter_id=chapter.id)
+    try:
+        db.session.add(lesson)
+        db.session.commit()
+        return lesson
+    except Exception as e:
+        db.session.rollback()
+        return None
 
     return True
 
@@ -184,6 +459,16 @@ def get_post_score(post):
     for r in post.reactions:
         score += r.vote_type.value
 
+    return False
+
+
+
+def get_lessons(chapter_id):
+    return Lesson.query.filter_by(
+        chapter_id=chapter_id
+    ).all()
+def get_lesson_details(lesson_id):
+    return Lesson.query.get(lesson_id)
     return score
 
 
