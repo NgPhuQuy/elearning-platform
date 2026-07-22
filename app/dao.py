@@ -1,8 +1,9 @@
 import hashlib
+from datetime import datetime
 
 from flask_login import current_user
 from app import db, login
-from app.models import User, Post, ReactionPost, ReactionComment, Comment, VoteType
+from app.models import User, Post, ReactionPost, ReactionComment, Comment, VoteType, Course
 
 
 @login.user_loader
@@ -212,3 +213,10 @@ def get_user_post_vote(post_id, user_id):
         post_id=post_id,
         user_id=user_id
     ).first()
+
+
+def get_course_sale():
+    return Course.query.filter_by(is_sale=True).all()
+
+def get_question_today():
+    return Post.query.filter(Post.created_date == datetime.today()).all()

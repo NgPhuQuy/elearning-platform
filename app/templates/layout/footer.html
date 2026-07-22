@@ -1,1 +1,89 @@
-{#placeholder#}
+<div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true" aria-labelledby="authModalTitle">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-ef-lg overflow-hidden border-0 shadow-lg">
+      <div class="ef-modal-top-bar"></div>
+      <div class="p-4 p-md-5">
+        <div class="d-flex align-items-center gap-2 mb-4">
+          <div class="ef-brand-icon" style="width:36px;height:36px;"><i class="bi bi-mortarboard-fill" aria-hidden="true"></i></div>
+          <span class="font-display fs-4" id="authModalTitle">EduForum</span>
+          <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        </div>
+
+        <nav aria-label="Chuyển đổi đăng nhập, đăng ký">
+          <ul class="nav nav-pills nav-fill bg-slate-100 p-1 rounded-3 mb-4 list-unstyled" id="authTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active rounded-3 fw-semibold" id="login-tab" data-bs-toggle="pill" data-bs-target="#login-pane" type="button">Đăng nhập</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link rounded-3 fw-semibold" id="register-tab" data-bs-toggle="pill" data-bs-target="#register-pane" type="button">Đăng ký</button>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="tab-content">
+          <section class="tab-pane fade show active" id="login-pane" aria-labelledby="login-tab">
+            <h2 class="font-display fs-3">Chào mừng trở lại!</h2>
+            <p class="text-muted-ef small mb-4">Đăng nhập để tiếp tục học tập</p>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6"><button type="button" class="btn btn-outline-secondary w-100 btn-sm py-2"><i class="bi bi-google me-1" aria-hidden="true"></i> Google</button></div>
+              <div class="col-6"><button type="button" class="btn btn-outline-secondary w-100 btn-sm py-2"><i class="bi bi-facebook me-1" aria-hidden="true"></i> Facebook</button></div>
+            </div>
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <hr class="flex-grow-1"><span class="small text-muted-ef">hoặc</span><hr class="flex-grow-1">
+            </div>
+            <form method="post" action="{{ url_for('login') }}">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" for="login-email">Email</label>
+                <input type="email" id="login-email" name="email" class="form-control" placeholder="Email của bạn" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" for="login-password">Mật khẩu</label>
+                <input type="password" id="login-password" name="password" class="form-control" placeholder="Mật khẩu" required>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="rememberMe" name="remember">
+                  <label class="form-check-label small" for="rememberMe">Ghi nhớ đăng nhập</label>
+                </div>
+                <a href="{{ url_for('forgot_password') }}" class="small fw-semibold text-indigo-700">Quên mật khẩu?</a>
+              </div>
+              <button type="submit" class="btn btn-indigo w-100 py-2"><i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i> Đăng nhập</button>
+            </form>
+          </section>
+
+          <section class="tab-pane fade" id="register-pane" aria-labelledby="register-tab">
+            <h2 class="font-display fs-3">Tạo tài khoản miễn phí</h2>
+            <p class="text-muted-ef small mb-4">Tham gia cộng đồng {{ member_count | default('50.000+') }} học viên</p>
+            <form method="post" action="{{ url_for('register') }}">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" for="reg-name">Họ và tên đầy đủ</label>
+                <input type="text" id="reg-name" name="full_name" class="form-control" placeholder="Nguyễn Văn A" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" for="reg-email">Email</label>
+                <input type="email" id="reg-email" name="email" class="form-control" placeholder="Email của bạn" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" for="reg-password">Mật khẩu</label>
+                <input type="password" id="reg-password" name="password" class="form-control" placeholder="Mật khẩu (tối thiểu 8 ký tự)" minlength="8" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold" for="reg-password2">Xác nhận mật khẩu</label>
+                <input type="password" id="reg-password2" name="password_confirm" class="form-control" placeholder="Xác nhận mật khẩu" minlength="8" required>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="agreeTerms" name="agree_terms" required>
+                <label class="form-check-label small" for="agreeTerms">Tôi đồng ý với <a href="{{ url_for('terms') }}" class="text-indigo-700 fw-semibold">Điều khoản dịch vụ</a> và <a href="{{ url_for('privacy') }}" class="text-indigo-700 fw-semibold">Chính sách bảo mật</a></label>
+              </div>
+              <button type="submit" class="btn btn-indigo w-100 py-2"><i class="bi bi-person-plus me-1" aria-hidden="true"></i> Đăng ký ngay</button>
+            </form>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
