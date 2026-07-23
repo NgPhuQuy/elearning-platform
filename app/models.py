@@ -25,6 +25,10 @@ class User(BaseModel, UserMixin):
     email = Column(String(255), nullable=False, unique=True)
     phone = Column(String(255), nullable=False)
     teacher_profile = relationship("Teacher", backref="user", uselist=False, lazy=True)
+    bio = Column(String(255), default='')
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
 
 
 class Teacher(BaseModel):
