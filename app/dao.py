@@ -82,13 +82,13 @@ def create_course(name,
                   teacher_id,
                   level,
                   category_ids,
-                  ):
+                  promo_video=None):
 
     course = Course(
         name=name,
         description=description,
         image=image,
-
+        promo_video=promo_video,
         teacher_id=teacher_id,
         level=level
     )
@@ -273,7 +273,7 @@ def get_courses_by_teacher_id(teacher_id):
     return Course.query.filter_by(
         teacher_id=teacher_id
     ).all()
-def update_course (course_id, teacher_id, name=None, description=None, image=None, level=None,category_ids=None):
+def update_course (course_id, teacher_id, name=None, description=None, image=None,  promo_video=None, level=None,category_ids=None):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
         if  name:
@@ -282,7 +282,8 @@ def update_course (course_id, teacher_id, name=None, description=None, image=Non
             course.description = description
         if image:
             course.image = image
-
+        if promo_video is not None:
+            course.promo_video = promo_video
 
         if level:
             course.level = level

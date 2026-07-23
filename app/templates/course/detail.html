@@ -1,0 +1,29 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+<h2>{{ course.name }}</h2>
+
+{% if course.image %}
+    <img src="{{ course.image }}" width="350">
+{% endif %}
+
+<h3>Mô tả</h3>
+
+<p>{{ course.description }}</p>
+
+<h3>Danh mục</h3>
+
+{% if course.course_category %}
+    <ul>
+        {% for cc in course.course_category %}
+            <li>{{ cc.category.name }}</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Chưa có danh mục.</p>
+{% endif %}
+
+<a href="{{ url_for('course_index') }}">Quay lại</a>
+
+{% endblock %}
