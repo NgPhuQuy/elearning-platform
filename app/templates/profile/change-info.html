@@ -1,46 +1,6 @@
 {% extends "layout/base.html" %}
 
-{% block title %}Đổi thông tin cá nhân - Academix{% endblock %}
+{% block title %}Đổi thông tin cá nhân{% endblock %}
 
 {% block content %}
-    <section class="auth-section" aria-labelledby="login-heading">
-        <h1 id="login-heading">Đổi thông tin cá nhân</h1>
-
-        {% if error %}
-            <p role="alert" class="form-error">{{ error }}</p>
-        {% endif %}
-
-        <form method="POST" enctype="multipart/form-data">
-            <fieldset>
-                <legend>Thông tin đăng ký</legend>
-
-                <p>
-                    <label for="first_name">Họ</label>
-                    <input type="text" id="first_name" name="first_name" required>
-                </p>
-
-                <p>
-                    <label for="last_name">Tên</label>
-                    <input type="text" id="last_name" name="last_name" required>
-                </p>
-
-                <p>
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
-                </p>
-
-                <p>
-                    <label for="phone">Số điện thoại</label>
-                    <input type="tel" id="phone" name="phone" pattern="[0-9]{10,11}" required>
-                </p>
-
-                <p>
-                    <label for="avatar">Ảnh đại diện</label>
-                    <input type="file" id="avatar" name="avatar" accept="image/*">
-                </p>
-            </fieldset>
-
-            <button type="submit">Xác nhận</button>
-        </form>
-    </section>
 {% endblock %}
