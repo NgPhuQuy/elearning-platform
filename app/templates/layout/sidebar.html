@@ -1,56 +1,68 @@
 <aside class="ef-sidebar d-none d-lg-flex flex-column">
-      <div class="ef-brand">
+    <div class="ef-brand">
         <div class="ef-brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
         <span class="font-display fs-5">EduForum</span>
-      </div>
+    </div>
 
-      <nav class="flex-grow-1 p-3 overflow-auto">
+    <nav class="flex-grow-1 p-3 overflow-auto">
         <p class="ef-nav-section-label mb-1">Menu</p>
         <a href="/" class="ef-nav-link active mb-1">
-          <i class="bi bi-house-fill"></i><span class="flex-grow-1">Trang chủ</span>
+            <i class="bi bi-house-fill"></i><span class="flex-grow-1">Trang chủ</span>
         </a>
         <a href="/forum" class="ef-nav-link  mb-1">
-          <i class="bi bi-chat-square-text-fill"></i><span class="flex-grow-1">Diễn đàn Q&amp;A</span>
+            <i class="bi bi-chat-square-text-fill"></i><span class="flex-grow-1">Diễn đàn Q&amp;A</span>
         </a>
         <a href="/courses" class="ef-nav-link  mb-1">
-          <i class="bi bi-journal-bookmark-fill"></i><span class="flex-grow-1">Khóa học</span>
+            <i class="bi bi-journal-bookmark-fill"></i><span class="flex-grow-1">Khóa học</span>
         </a>
         <a href="/messages" class="ef-nav-link  mb-1">
-          <i class="bi bi-chat-dots-fill"></i><span class="flex-grow-1">Tin nhắn</span>
-          <span class="ef-nav-badge">6</span>
+            <i class="bi bi-chat-dots-fill"></i><span class="flex-grow-1">Tin nhắn</span>
+            <span class="ef-nav-badge">6</span>
         </a>
 
         <div class="pt-3">
-          <a href="/" class="ef-nav-link mb-1"
-            style="color:var(--ef-violet-700); background:var(--ef-violet-50); border:1px solid var(--ef-violet-200); font-weight:600;">
-            <i class="bi bi-shield-check" style="color:var(--ef-violet-500);"></i> Đăng ký làm Giảng viên
-          </a>
+            <a href="/" class="ef-nav-link mb-1"
+               style="color:var(--ef-violet-700); background:var(--ef-violet-50); border:1px solid var(--ef-violet-200); font-weight:600;">
+                <i class="bi bi-shield-check" style="color:var(--ef-violet-500);"></i> Đăng ký làm Giảng viên
+            </a>
         </div>
 
         <div class="pt-3">
-          <p class="ef-nav-section-label mb-1">Tags hot</p>
-          <a href="/forum" class="ef-nav-link py-2 mb-0" style="font-weight:400;color:var(--ef-slate-500);"><i
-              class="bi bi-tag text-muted-ef"></i> React</a>
-          <a href="/forum" class="ef-nav-link py-2 mb-0" style="font-weight:400;color:var(--ef-slate-500);"><i
-              class="bi bi-tag text-muted-ef"></i> Python</a>
-          <a href="/forum" class="ef-nav-link py-2 mb-0" style="font-weight:400;color:var(--ef-slate-500);"><i
-              class="bi bi-tag text-muted-ef"></i> Machine Learning</a>
-          <a href="/forum" class="ef-nav-link py-2 mb-0" style="font-weight:400;color:var(--ef-slate-500);"><i
-              class="bi bi-tag text-muted-ef"></i> JavaScript</a>
-          <a href="/forum" class="ef-nav-link py-2 mb-0" style="font-weight:400;color:var(--ef-slate-500);"><i
-              class="bi bi-tag text-muted-ef"></i> UI/UX</a>
+            <p class="ef-nav-section-label mb-1">Tags hot</p>
+            <a href="/forum" class="ef-nav-link py-2 mb-0" style="font-weight:400;color:var(--ef-slate-500);"><i
+                    class="bi bi-tag text-muted-ef"></i> React</a>
+            <a href="/forum" class="ef-nav-link py-2 mb-0" style="font-weight:400;color:var(--ef-slate-500);"><i
+                    class="bi bi-tag text-muted-ef"></i> Python</a>
+            <a href="/forum" class="ef-nav-link py-2 mb-0" style="font-weight:400;color:var(--ef-slate-500);"><i
+                    class="bi bi-tag text-muted-ef"></i> Machine Learning</a>
+            <a href="/forum" class="ef-nav-link py-2 mb-0" style="font-weight:400;color:var(--ef-slate-500);"><i
+                    class="bi bi-tag text-muted-ef"></i> JavaScript</a>
+            <a href="/forum" class="ef-nav-link py-2 mb-0" style="font-weight:400;color:var(--ef-slate-500);"><i
+                    class="bi bi-tag text-muted-ef"></i> UI/UX</a>
         </div>
-      </nav>
-
-      <div class="p-3 border-top">
-        <a href="/profile" class="ef-nav-link  py-2">
-          <span class="ef-avatar ef-avatar-indigo" style="width:32px;height:32px;font-size:.8rem;">NA</span>
-          <span class="flex-grow-1 text-start">
-            <span class="d-block small fw-semibold text-dark">Nguyễn Văn An</span>
+    </nav>
+    {% if not current_user.is_authenticated %}
+        <div class="p-3 border-top">
+            <div class="d-grid gap-2">
+                <button class="btn btn-outline-indigo btn-sm rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#authModal"
+                        data-tab="login">Đăng nhập
+                </button>
+                <button class="btn btn-indigo btn-sm rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#authModal"
+                        data-tab="register">Đăng ký miễn phí
+                </button>
+            </div>
+        </div>
+    {% else %}
+        <div class="p-3 border-top">
+            <a href="/profile" class="ef-nav-link  py-2">
+                <span class="ef-avatar ef-avatar-indigo" style="width:32px;height:32px;font-size:.8rem;">{{ current_user.first_name[0].upper() }}{{ current_user.last_name[0].upper() }}</span>
+                <span class="flex-grow-1 text-start">
+            <span class="d-block small fw-semibold text-dark">{{ current_user }}</span>
             <span class="d-block text-muted-ef" style="font-size:.72rem;">
               2.840 điểm </span>
           </span>
-          <i class="bi bi-gear text-muted-ef"></i>
-        </a>
-      </div>
-    </aside>
+                <i class="bi bi-gear text-muted-ef"></i>
+            </a>
+        </div>
+    {% endif %}
+</aside>
