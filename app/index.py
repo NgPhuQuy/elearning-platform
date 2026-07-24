@@ -1,9 +1,7 @@
-from datetime import datetime
-
 import cloudinary.uploader
-from flask import redirect, render_template, request, url_for
-from flask_login import login_user, current_user, logout_user, login_required
-
+from flask import redirect, render_template, request, url_for, flash, jsonify
+from flask_login import login_user, current_user, logout_user
+from decorator import login_required, teacher_required, anonymous_required
 from app import app, dao, db
 from app.dao import register_user
 from app.models import PostCate, VoteType, Comment, Post, Course, User
@@ -17,6 +15,7 @@ def inject_common():
         "new_question_today": len(new_question_today),
         "course_on_sale": len(course_on_sale),
         "posts": dao.get_posts(),
+        "dao":dao
     }
 
 
@@ -26,54 +25,53 @@ def index():
 
 
 @app.route('/register', methods=["GET", "POST"])
+@anonymous_required
 def register():
-    error = None
     if request.method == "POST":
         password = request.form.get('password')
         confirm = request.form.get('confirm')
+        username = request.form.get('username')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+
+        if not all([password, confirm, username, email, phone, first_name, last_name]):
+            return jsonify({"success": False, "error": "Vui lòng nhập đầy đủ thông tin!"}), 400
 
         if password != confirm:
-            error = "Mật khẩu không khớp!"
-            return render_template("auth/register.html", error=error)
+            return jsonify({"success": False, "error": "Mật khẩu không khớp!"}), 400
 
-        username = request.form.get('username')
+        if len(password) < 8:
+            return jsonify({"success": False, "error": "Mật khẩu phải từ 8 ký tự trở lên!"}), 400
+
         if dao.is_username_exist(username=username):
-            error = "Username đã tồn tại!"
-            return render_template("auth/register.html", error=error)
+            return jsonify({"success": False, "error": "Username đã tồn tại!"}), 400
 
-        email = request.form.get("email")
         if dao.is_email_used(email=email):
-            error = "Email đã được sử dụng!"
-            return render_template("auth/register.html", error=error)
+            return jsonify({"success": False, "error": "Email đã được sử dụng!"}), 400
 
-        phone = request.form.get("phone")
         if dao.is_phone_used(phone=phone):
-            error = "Số điện thoại này đã được đăng ký!"
-            return render_template("auth/register.html", error=error)
+            return jsonify({"success": False, "error": "Số điện thoại này đã được đăng ký!"}), 400
 
-        first_name = request.form.get("first_name")
-        last_name = request.form.get("last_name")
         avatar = request.files.get("avatar")
-
         file_path = None
         if avatar:
             try:
                 res = cloudinary.uploader.upload(avatar)
                 file_path = res["secure_url"]
             except Exception:
-                error = "Tải file thất bại!"
-                return render_template("auth/register.html", error=error)
+                return jsonify({"success": False, "error": "Tải file thất bại!"}), 500
+
         try:
             user = register_user(username, password, email, phone, file_path, first_name, last_name)
             login_user(user)
-            return redirect("/")
-
+            return jsonify({"success": True, "redirect": "/"})
         except Exception:
-            error = "Hệ thống lỗi, vui lòng quay lại sau!"
             db.session.rollback()
-            return render_template("auth/register.html", error=error)
+            return jsonify({"success": False, "error": "Hệ thống lỗi, vui lòng quay lại sau!"}), 500
 
-    return render_template("auth/register.html", error=error)
+    return render_template("index.html")
 
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
@@ -83,8 +81,8 @@ def forgot_password():
 
 
 @app.route('/login', methods=["GET", "POST"])
+@anonymous_required
 def login():
-    error = None
     if request.method == "POST":
         username = request.form.get('username')
         password = request.form.get('password')
@@ -95,11 +93,12 @@ def login():
             login_user(user)
             return redirect("/")
         else:
-            error = "Tài khoản hoặc mật khẩu không đúng!"
-    return render_template("auth/login.html", error=error)
+            flash("Tài khoản hoặc mật khẩu không đúng!")
+    return redirect(request.referrer)
 
 
 @app.route('/logout')
+@login_required
 def logout():
     logout_user()
     return redirect("/")
@@ -113,11 +112,13 @@ def privacy():
     pass
 
 @app.route('/profile')
+@login_required
 def profile():
     return render_template("profile/profile.html")
 
 
 @app.route('/profile/change-info', methods=['GET', 'POST'])
+@login_required
 def change_info():
     error = None
     if request.method == "POST":
@@ -144,6 +145,7 @@ def change_info():
 
 
 @app.route('/profile/change-password', methods=['GET', 'POST'])
+@login_required
 def change_password():
     error = None
     if request.method == "POST":
