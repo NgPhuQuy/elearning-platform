@@ -2,7 +2,7 @@ import cloudinary.uploader
 from flask import redirect, render_template, request, url_for, flash, jsonify
 from flask_login import login_user, current_user, logout_user
 from decorator import login_required, teacher_required, anonymous_required
-from app import app, dao, db
+from app import app, dao, db, oauth
 from app.dao import register_user
 from app.models import PostCate, VoteType, Comment, Post, Course, User
 
@@ -100,6 +100,42 @@ def login():
 @login_required
 def logout():
     logout_user()
+    return redirect("/")
+
+from flask import redirect, url_for
+from flask_login import login_user
+
+@app.route("/login/google")
+def google_login():
+    redirect_uri = url_for("google_authorize", _external=True)
+    print(repr(redirect_uri))
+    return oauth.google.authorize_redirect(redirect_uri)
+
+@app.route("/authorize/google")
+def google_authorize():
+    token = oauth.google.authorize_access_token()
+    userinfo = token.get("userinfo")
+
+    if not userinfo or not userinfo.get("email_verified"):
+        return redirect(url_for("login"))
+
+    user = User.query.filter_by(google_sub=userinfo["sub"]).first()
+
+    if not user:
+        user = User.query.filter_by(email=userinfo["email"]).first()
+        if user:
+            user.google_sub = userinfo["sub"]
+        else:
+            user = User(
+                email=userinfo["email"],
+                first_name=userinfo.get("given_name"),
+                last_name=userinfo.get("family_name"),
+                google_sub=userinfo["sub"],
+            )
+            db.session.add(user)
+        db.session.commit()
+
+    login_user(user)
     return redirect("/")
 
 @app.route('/terms')
