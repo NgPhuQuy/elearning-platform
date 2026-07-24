@@ -19,13 +19,14 @@ class BaseModel(db.Model):
 
 
 class User(BaseModel, UserMixin):
-    username = Column(String(255), nullable=False, unique=True)
-    password = Column(String(255), nullable=False)
-    first_name = Column(String(255), nullable=False)
-    last_name = Column(String(255), nullable=False)
+    username = Column(String(255), unique=True)
+    password = Column(String(255))
+    google_sub = Column(String(255))
+    first_name = Column(String(255))
+    last_name = Column(String(255))
     avatar = Column(String(255), default='')
     email = Column(String(255), nullable=False, unique=True)
-    phone = Column(String(255), nullable=False)
+    phone = Column(String(255))
     teacher_profile = relationship("Teacher", backref="user", uselist=False, lazy=True)
     bio = Column(String(255), default='')
 
