@@ -1,76 +1,156 @@
-<div class="question-card">
+<article class="card border-0 shadow-sm mb-3">
 
-    <div class="vote-column">
+    <section class="card-body">
 
-        <div class="vote-score">
-            {{ dao.get_post_score(post) }}
-        </div>
+        <section class="row">
 
-        <small>votes</small>
+            <aside class="col-auto text-center border-end pe-4">
 
-        <div class="answer-count">
-            {{ post.comments|length }}
-        </div>
+                <h4
+                        class="
+                        {% if post.is_solved %}
+                            text-success
+                        {% endif %}
+                        mb-0">
 
-        <small>TL</small>
+                    {{ dao.get_post_score(post) }}
 
-    </div>
+                </h4>
 
-    <div class="question-content">
+                <small class="text-muted">
 
-        <div class="d-flex justify-content-between">
+                    votes
 
-            <a href="{{ url_for('forum_detail',
-            post_id=post.id) }}"
-               class="question-title">
+                </small>
 
-                {{ post.title }}
+                <hr>
 
-            </a>
+                <h5 class="mb-0">
 
-            {% if post.is_solved %}
+                    {{ post.comments|length }}
 
-            <span class="solved-icon">
-                ✓
-            </span>
+                </h5>
 
-            {% endif %}
+                <small class="text-muted">
 
-        </div>
+                    trả lời
 
-        <p class="question-desc">
+                </small>
 
-            {{ post.content[:250] }}...
+            </aside>
 
-        </p>
+            <section class="col">
 
-        <div class="question-footer">
+                <header
+                        class="
+                        d-flex
+                        justify-content-between
+                        align-items-start
+                        gap-3">
 
-            <div>
+                    <section>
 
-                <span class="tag">
-                    #{{ post.category.name }}
-                </span>
+                        <h4 class="mb-2">
 
-            </div>
+                            <a
+                                    href="{{ url_for('forum_detail',post_id=post.id) }}"
+                                    class="text-decoration-none">
 
-            <div class="meta-info">
+                                {{ post.title }}
 
-                👁 {{ post.view_count }}
+                            </a>
 
-                •
+                        </h4>
 
-                {{ post.created_date.strftime('%d/%m/%Y') }}
+                    </section>
 
-                •
+                    {% if post.is_solved %}
 
-                {{ post.author.first_name }}
-                {{ post.author.last_name }}
+                        <span
+                                class="
+                                badge
+                                rounded-pill
+                                bg-success">
 
-            </div>
+                            <i class="bi bi-check-circle"></i>
 
-        </div>
+                            Đã giải quyết
 
-    </div>
+                        </span>
 
-</div>
+                    {% endif %}
+
+                </header>
+
+                <p class="text-muted">
+
+                    {{ post.content[:250] }}
+
+                    {% if post.content|length > 250 %}
+                        ...
+                    {% endif %}
+
+                </p>
+
+                {% if post.image %}
+
+                    <img
+                            src="{{ post.image }}"
+                            class="img-fluid rounded mb-3"
+                            alt="question">
+
+                {% endif %}
+
+                <footer
+                        class="
+                        d-flex
+                        flex-column
+                        flex-md-row
+                        justify-content-between
+                        align-items-md-center
+                        gap-2">
+
+                    <section>
+
+                        <span class="badge bg-primary">
+
+                            {{ post.category.name }}
+
+                        </span>
+
+                    </section>
+
+                    <section
+                            class="
+                            text-muted
+                            small">
+
+                        <i class="bi bi-eye"></i>
+
+                        {{ post.view_count }}
+
+                        &nbsp;&nbsp;
+
+                        <i class="bi bi-calendar3"></i>
+
+                        {{ post.created_date.strftime("%d/%m/%Y") }}
+
+                        &nbsp;&nbsp;
+
+                        <i class="bi bi-person-circle"></i>
+
+                        {{ post.user.first_name }}
+
+                        {{ post.user.last_name }}
+
+                    </section>
+
+                </footer>
+
+            </section>
+
+        </section>
+
+    </section>
+
+</article>

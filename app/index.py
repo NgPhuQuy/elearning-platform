@@ -1,7 +1,7 @@
 import cloudinary.uploader
 from flask import redirect, render_template, request, url_for, flash, jsonify
 from flask_login import login_user, current_user, logout_user
-from decorator import login_required, teacher_required, anonymous_required
+from app.decorator import login_required, teacher_required, anonymous_required
 from app import app, dao, db, oauth
 from app.dao import register_user
 from app.models import PostCate, VoteType, Comment, Post, Course, User
@@ -101,9 +101,6 @@ def login():
 def logout():
     logout_user()
     return redirect("/")
-
-from flask import redirect, url_for
-from flask_login import login_user
 
 @app.route("/login/google")
 def google_login():
@@ -347,7 +344,7 @@ def delete_lesson(lesson_id):
 def forum():
     keyword = request.args.get("kw")
     solved = request.args.get("solved")
-
+    category = request.args.get("category", type=int)
     if solved == "true":
         solved = True
     elif solved == "false":
@@ -355,7 +352,7 @@ def forum():
     else:
         solved = None
 
-    posts = dao.get_posts(keyword=keyword, solved=solved)
+    posts = dao.get_posts(keyword=keyword, solved=solved,category_id=category)
 
     return render_template("forum/index.html", posts=posts)
 
