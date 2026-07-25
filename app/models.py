@@ -1,32 +1,29 @@
 import hashlib
 from datetime import datetime
-from enum import Enum as MyEnum
 
 from flask_login import UserMixin
-from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Enum, Text
-from sqlalchemy.orm import relationship, backref
-
+from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Table, Enum, Text
+from sqlalchemy.orm import relationship,backref
+from enum import Enum as MyEnum
 from app import db, app
 
 
 class BaseModel(db.Model):
     __abstract__ = True
-    id = Column(Integer, primary_key=True)
+    id =Column(Integer, primary_key=True)
     name = Column(String(255))
     created_date = Column(DateTime, default=datetime.now())
     updated_date = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
     is_active = Column(Boolean, default=True)
 
-
 class User(BaseModel, UserMixin):
-    username = Column(String(255), unique=True)
-    password = Column(String(255))
-    google_sub = Column(String(255))
-    first_name = Column(String(255))
-    last_name = Column(String(255))
+    username = Column(String(255), nullable=False, unique=True)
+    password = Column(String(255), nullable=False)
+    first_name = Column(String(255), nullable=False)
+    last_name = Column(String(255), nullable=False)
     avatar = Column(String(255), default='')
     email = Column(String(255), nullable=False, unique=True)
-    phone = Column(String(255))
+    phone = Column(String(255), nullable=False)
     teacher_profile = relationship("Teacher", backref="user", uselist=False, lazy=True)
     bio = Column(String(255), default='')
 
@@ -56,7 +53,6 @@ class Chapter(BaseModel):
         lazy=True
     )
 
-
 class Category(BaseModel):
     course_category = relationship("CourseCategory", backref="category", lazy=True)
 
@@ -65,7 +61,6 @@ class CourseCategory(db.Model):
     __tablename__ = "course_category"
     course_id = Column(Integer, ForeignKey('course.id', ondelete="CASCADE"), primary_key=True)
     category_id = Column(Integer, ForeignKey('category.id'), primary_key=True)
-
 
 class CourseLevel(MyEnum):
     BASIC = "Cơ bản"
@@ -77,9 +72,10 @@ class Course(BaseModel):
     is_sale = Column(Boolean, default=True)
 
     description = Column(String(1000), nullable=False)
-    image = Column(String(500), nullable=False, default="")
+    image = Column(String(500),nullable=False, default="")
     promo_video = Column(String(500), nullable=True)
     teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
+
 
     chapters = relationship(
         "Chapter",
@@ -87,9 +83,8 @@ class Course(BaseModel):
         cascade="all, delete-orphan",
         lazy=True
     )
-    course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True)
+    course_category = relationship("CourseCategory", backref="course",cascade="all, delete-orphan", lazy=True)
     level = Column(Enum(CourseLevel), nullable=False, default=CourseLevel.BASIC)
-
 
 class LessonType(MyEnum):
     VIDEO = "Video"
@@ -97,7 +92,10 @@ class LessonType(MyEnum):
     DOCUMENT = "Doc"
 
 
+
+
 class Lesson(BaseModel):
+
     chapter_id = Column(
         Integer,
         ForeignKey("chapter.id"),
@@ -111,12 +109,17 @@ class Lesson(BaseModel):
     description = Column(String(255), nullable=False)
 
 
+
+
+
+
 class CourseOutcome(BaseModel):
     content = Column(String(255), nullable=False)
 
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
 
     course = relationship("Course", backref="outcomes")
+
 
 
 class PostCate(BaseModel):
@@ -184,16 +187,16 @@ if __name__ == '__main__':
         db.create_all()
         db.session.commit()
         password = hashlib.sha256(b'123').hexdigest()
-        admin = User(username='admin', password=password, first_name="", last_name="", email='', phone='')
+        admin = User(username = 'admin', password = password,first_name="",last_name="", email = '', phone='')
         db.session.add(admin)
 
         teacher_user1 = User(username='teacher01', password=password,
-                             first_name='Nguyen', last_name='An', email='an.teacher@gmail.com',
-                             phone='0911111111')
+            first_name='Nguyen', last_name='An', email='an.teacher@gmail.com',
+            phone='0911111111')
 
         teacher_user2 = User(username='teacher02', password=password,
-                             first_name='Tran', last_name='Binh', email='binh.teacher@gmail.com',
-                             phone='0922222222')
+            first_name='Tran', last_name='Binh', email='binh.teacher@gmail.com',
+            phone='0922222222')
 
         user1 = User(
             username='user01',
@@ -217,10 +220,10 @@ if __name__ == '__main__':
         db.session.commit()
 
         teacher1 = Teacher(user_id=teacher_user1.id,
-                           note="Giảng viên lập trình Python và Flask")
+            note="Giảng viên lập trình Python và Flask")
 
         teacher2 = Teacher(user_id=teacher_user2.id,
-                           note="Giảng viên Java Spring Boot")
+            note="Giảng viên Java Spring Boot")
 
         db.session.add_all([teacher1, teacher2])
         db.session.commit()
@@ -255,4 +258,7 @@ if __name__ == '__main__':
             cate10
         ])
 
+
         db.session.commit()
+
+
