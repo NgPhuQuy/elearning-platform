@@ -143,6 +143,8 @@ def terms():
 def privacy():
     pass
 
+@app.route('/register-teacher', methods=['GET', 'POST'])
+
 @app.route('/profile')
 @login_required
 def profile():
