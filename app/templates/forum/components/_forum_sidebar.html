@@ -1,36 +1,91 @@
-<div class="forum-sidebar-card">
+<aside class="d-flex flex-column gap-4">
 
-    <h5>Hướng dẫn đặt câu hỏi</h5>
 
-    <ul class="guide-list">
 
-        <li>Tìm kiếm trước khi đặt</li>
+    <!-- Hướng dẫn -->
 
-        <li>Tiêu đề cụ thể rõ ràng</li>
+    <section class="card shadow-sm border-0">
 
-        <li>Mô tả chi tiết vấn đề</li>
+        <header class="card-header bg-white">
 
-        <li>Chia sẻ code nếu có lỗi</li>
+            <strong>
 
-        <li>Gắn tag phù hợp</li>
+                Hướng dẫn đặt câu hỏi
 
-    </ul>
+            </strong>
 
-</div>
+        </header>
 
-<div class="forum-sidebar-card mt-4">
+        <ol class="list-group list-group-numbered list-group-flush">
 
-    <h5>Tags phổ biến</h5>
+            <li class="list-group-item">
 
-    <div class="tag-cloud">
+                Đặt tiêu đề ngắn gọn, rõ ràng.
 
-        <span class="tag">#React</span>
-        <span class="tag">#Python</span>
-        <span class="tag">#SQL</span>
-        <span class="tag">#JavaScript</span>
-        <span class="tag">#NodeJS</span>
-        <span class="tag">#MachineLearning</span>
+            </li>
 
-    </div>
+            <li class="list-group-item">
 
-</div>
+                Mô tả đầy đủ lỗi hoặc vấn đề gặp phải.
+
+            </li>
+
+            <li class="list-group-item">
+
+                Chèn hình ảnh hoặc đoạn mã nếu cần.
+
+            </li>
+
+            <li class="list-group-item">
+
+                Chọn đúng danh mục.
+
+            </li>
+
+            <li class="list-group-item">
+
+                Đánh dấu câu trả lời đúng khi vấn đề đã được giải quyết.
+
+            </li>
+
+        </ol>
+
+    </section>
+
+
+    <!-- Tags -->
+
+    <section class="card shadow-sm border-0">
+
+        <header class="card-header bg-white">
+
+            <strong>
+
+                Tags phổ biến
+
+            </strong>
+
+        </header>
+
+        <article class="card-body">
+
+            {% for c in dao.get_post_categories() %}
+
+                <a
+                    href="{{ url_for('forum', category=c.id) }}"
+                    class="badge rounded-pill text-bg-primary text-decoration-none mb-2 me-1">
+
+                    #{{ c.name }}
+
+                </a>
+
+            {% endfor %}
+
+        </article>
+
+    </section>
+
+
+
+
+</aside>

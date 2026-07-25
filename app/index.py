@@ -214,7 +214,7 @@ def courses():
 def forum():
     keyword = request.args.get("kw")
     solved = request.args.get("solved")
-
+    category = request.args.get("category", type=int)
     if solved == "true":
         solved = True
     elif solved == "false":
@@ -222,7 +222,7 @@ def forum():
     else:
         solved = None
 
-    posts = dao.get_posts(keyword=keyword, solved=solved)
+    posts = dao.get_posts(keyword=keyword, solved=solved,category_id=category)
 
     return render_template("forum/index.html", posts=posts)
 

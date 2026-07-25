@@ -1,72 +1,128 @@
-<div class="answer-card">
+<article class="card shadow-sm border-0 mb-3">
 
-    {% if comment.is_accepted %}
+    <section class="card-body">
 
-    <div class="accepted-answer">
+        <section class="row">
 
-        ✓ Câu trả lời được chấp nhận
+            <aside class="col-auto text-center">
 
-    </div>
+                <form
+                        method="post"
+                        action="{{ url_for('upvote_comment',comment_id=comment.id) }}">
 
-    {% endif %}
+                    <button
+                            class="btn btn-light border rounded-circle">
 
-    <div class="d-flex">
+                        <i class="bi bi-chevron-up"></i>
 
-        <div class="answer-vote">
+                    </button>
 
-            {{ dao.get_comment_score(comment) }}
+                </form>
 
-        </div>
+                <h5 class="my-2">
 
-        <div class="flex-grow-1">
+                    {{ dao.get_comment_score(comment) }}
 
-            <p>
+                </h5>
 
-                {{ comment.content }}
+                <form
+                        method="post"
+                        action="{{ url_for('downvote_comment',comment_id=comment.id) }}">
 
-            </p>
+                    <button
+                            class="btn btn-light border rounded-circle">
 
-            <hr>
+                        <i class="bi bi-chevron-down"></i>
 
-            <div
-              class="d-flex justify-content-between">
+                    </button>
 
-                <div>
+                </form>
 
-                    {{ comment.author.first_name }}
-                    {{ comment.author.last_name }}
+                {% if comment.is_accepted %}
 
-                </div>
+                    <i class="bi bi-check-circle-fill text-success fs-3 mt-3"></i>
 
-                <small>
+                {% endif %}
 
-                    {{ comment.created_date.strftime('%d/%m/%Y') }}
+            </aside>
 
-                </small>
+            <section class="col">
 
-            </div>
+                <p class="mb-4">
 
-            {% if current_user.id == post.user_id
-            and not post.is_solved %}
+                    {{ comment.content }}
 
-            <form method="post"
-                  action="{{ url_for(
-                  'accept_answer',
-                  comment_id=comment.id) }}">
+                </p>
 
-                <button
-                    class="btn btn-success btn-sm mt-2">
+                <footer class="d-flex justify-content-between">
 
-                    Chấp nhận
+                    <small class="text-muted">
 
-                </button>
+                        {{ comment.user.first_name }}
 
-            </form>
+                        {{ comment.user.last_name }}
 
-            {% endif %}
+                    </small>
 
-        </div>
+                    <small class="text-muted">
 
-    </div>
+                        {{ comment.created_date.strftime("%d/%m/%Y") }}
 
-</div>
+                    </small>
+
+                </footer>
+
+                {% if current_user.id == post.user_id and not post.is_solved %}
+
+                    <form
+                            action="{{ url_for('accept_answer',comment_id=comment.id) }}"
+                            method="post"
+                            class="mt-3">
+
+                        <button class="btn btn-success btn-sm">
+
+                            ✓ Chấp nhận
+
+                        </button>
+
+                    </form>
+
+                {% endif %}
+
+                {% if comment.replies %}
+
+                    <section class="ms-4 mt-4">
+
+                        {% for reply in comment.replies %}
+
+                            <article class="border-start ps-3 mb-3">
+
+                                <p>
+
+                                    {{ reply.content }}
+
+                                </p>
+
+                                <small class="text-muted">
+
+                                    {{ reply.user.first_name }}
+
+                                    {{ reply.user.last_name }}
+
+                                </small>
+
+                            </article>
+
+                        {% endfor %}
+
+                    </section>
+
+                {% endif %}
+
+            </section>
+
+        </section>
+
+    </section>
+
+</article>
