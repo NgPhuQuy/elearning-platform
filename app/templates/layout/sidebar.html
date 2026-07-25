@@ -21,8 +21,8 @@
         </a>
 
        <div class="pt-3">
-{% if current_user.is_authenticated %}
-            {% if current_user.is_authenticated and current_user.teacher_profile %}
+
+            {% if current_user.teacher_profile %}
                 <p class="ef-nav-section-label mb-1">Giảng viên</p>
                     <a href="{{ url_for('my_courses') }}" class="ef-nav-link violet mb-1">
                     <i class="bi bi-journal-bookmark-fill"></i><span class="flex-grow-1">Khóa học của tôi</span>
@@ -31,12 +31,12 @@
                     <i class="bi bi-plus-circle-fill"></i><span class="flex-grow-1">Tạo khóa học</span>
                 </a>
 
-            {% else %}
-               <form method="POST" action="{{ url_for('become_teacher') }}">
-  <button type="submit" class="btn btn-indigo">Đăng ký làm giảng viên</button>
-</form>
+            {% elif current_user.is_authenticated %}
+                <a href="/register-teacher" class="ef-nav-link mb-1"
+                   style="color:var(--ef-violet-700); background:var(--ef-violet-50); border:1px solid var(--ef-violet-200); font-weight:600;">
+                    <i class="bi bi-shield-check" style="color:var(--ef-violet-500);"></i> Đăng ký làm Giảng viên
+                </a>
             {% endif %}
-       {% endif %}
         </div>
 
         <div class="pt-3">
