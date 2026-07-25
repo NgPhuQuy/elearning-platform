@@ -201,9 +201,128 @@ def change_password():
 
 @app.route("/courses")
 def courses():
-    return Course.query.all()
+    courses = Course.query.all()
+    return render_template("course/manage.html", courses=courses)
+
+@app.route('/courses/manage')
+@login_required
+@teacher_required
+def my_courses():
+    courses = dao.get_courses_by_teacher_id(current_user.teacher_profile.id)
+    return render_template('course/manage.html', courses=courses)
+
+@app.route('/courses/create', methods=['GET', 'POST'])
+@login_required
+@teacher_required
+def create_course():
+    if request.method == 'POST':
+        image = request.files.get('image')
+        image_url = None
+        if image and image.filename:
+            res = cloudinary.uploader.upload(image)
+            image_url = res['secure_url']
+
+        course = dao.create_course(
+            name=request.form['name'],
+            description=request.form['description'],
+            image=image_url,
+            teacher_id=current_user.teacher_profile.id,
+            level=request.form.get('level'),
+            category_ids=request.form.getlist('category_ids')
+        )
+
+        if course:
+            outcomes = request.form.getlist('outcomes')
+            for content in outcomes:
+                if content.strip():
+                    dao.create_outcome(course_id=course.id, content=content.strip())
+            return redirect(url_for('courses'))
+
+    categories = dao.get_categories()
+    return render_template('course/course_form.html', categories=categories, course=None)
 
 
+@app.route('/courses/<int:course_id>/update', methods=['GET', 'POST'])
+@login_required
+@teacher_required
+def update_course(course_id):
+    course = dao.get_course_details(course_id, teacher_id=current_user.teacher_profile.id)
+    if not course:
+        return redirect(url_for('my_courses'))
+
+    if request.method == 'POST':
+        image = request.files.get('image')
+        image_url = None
+        if image and image.filename:
+            res = cloudinary.uploader.upload(image)
+            image_url = res['secure_url']
+
+        dao.update_course(
+            course_id=course_id,
+            teacher_id=current_user.teacher_profile.id,
+            name=request.form.get('name'),
+            description=request.form.get('description'),
+            image=image_url,
+            level=request.form.get('level'),
+            category_ids=request.form.getlist('category_ids')
+        )
+        return redirect(url_for('update_course', course_id=course_id))
+
+    categories = dao.get_categories()
+    chapters = dao.get_chapters(course_id)
+    return render_template('course/course_form.html', categories=categories, course=course, chapters=chapters)
+
+@app.route('/courses/<int:course_id>/delete', methods=['POST'])
+@login_required
+@teacher_required
+def delete_course(course_id):
+    dao.delete_course(course_id, teacher_id=current_user.teacher_profile.id)
+    return redirect(url_for('my_courses'))
+
+@app.route('/courses/<int:course_id>/content', methods=['GET', 'POST'])
+@login_required
+@teacher_required
+def manage_content(course_id):
+    course = dao.get_course_details(course_id, teacher_id=current_user.teacher_profile.id)
+    if not course:
+        return redirect(url_for('my_courses'))
+
+    action = request.form.get('action')
+
+    if action == 'add_chapter':
+        dao.create_chapter(
+            course_id=course_id,
+            teacher_id=current_user.teacher_profile.id,
+            name=request.form.get('chapter_name'),
+            description=request.form.get('chapter_description', '')
+        )
+    elif action == 'add_lesson':
+        dao.create_lesson(
+            teacher_id=current_user.teacher_profile.id,
+            chapter_id=request.form.get('chapter_id'),
+            name=request.form.get('lesson_name'),
+            description=request.form.get('lesson_description', ''),
+            lesson_type=request.form.get('lesson_type')
+        )
+
+    return redirect(url_for('update_course', course_id=course_id) + '#cc-content')
+
+@app.route('/chapters/<int:chapter_id>/delete', methods=['POST'])
+@login_required
+@teacher_required
+def delete_chapter(chapter_id):
+    course_id = request.form.get('course_id')
+    dao.delete_chapter(chapter_id, teacher_id=current_user.teacher_profile.id)
+    return redirect(url_for('manage_content', course_id=course_id))
+
+
+@app.route('/lessons/<int:lesson_id>/delete', methods=['POST'])
+@login_required
+@teacher_required
+def delete_lesson(lesson_id):
+    course_id = request.form.get('course_id')
+    dao.delete_lesson(lesson_id, teacher_id=current_user.teacher_profile.id)
+    return redirect(url_for('manage_content', course_id=course_id))
 # forum
 
 @app.route("/forum")
