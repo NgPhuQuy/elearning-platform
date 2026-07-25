@@ -3,185 +3,250 @@
 {% block title %}Trang chủ{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column flex-xl-row gap-4 p-3 p-lg-4 mx-auto" style="max-width:1152px;">
+    <div class="d-flex flex-column flex-xl-row gap-4 p-3 p-lg-4 mx-auto" style="max-width:1152px;">
 
-  <section class="flex-grow-1" style="min-width:0;" aria-label="Nội dung chính">
+        <section class="flex-grow-1" style="min-width:0;" aria-label="Nội dung chính">
 
-    <section class="ef-hero p-4 p-lg-5 mb-4" aria-label="Lời chào">
-      <div class="position-relative" style="z-index:1;">
-        <p class="d-flex align-items-center gap-2 mb-2">
-          <i class="bi bi-fire" style="color:var(--ef-amber-300);" aria-hidden="true"></i>
-          <span class="small fw-semibold" style="color:var(--ef-amber-300);">Cộng đồng học tập #1 Việt Nam</span>
-        </p>
-        <h2 class="font-display fs-3 text-white mb-2">Chào buổi sáng, {{ current_user.first_name }} {{ current_user.last_name }}!</h2>
-        <p class="small mb-4" style="color:#c7d2fe;">Hôm nay có {{ new_questions_today }} câu hỏi mới và {{ courses_on_sale }} khóa học vừa mở sale.</p>
-        <a href="{{ url_for('courses') }}" class="btn btn-sm text-white fw-semibold" style="background:rgba(99,102,241,.5); border:1px solid rgba(129,140,248,.5);">Khám phá khóa học</a>
-      </div>
-      <i class="bi bi-mortarboard-fill position-absolute d-none d-md-block" style="right:1.5rem; top:50%; transform:translateY(-50%); font-size:8rem; opacity:.15;" aria-hidden="true"></i>
-    </section>
-
-    <section class="row g-3 mb-4" aria-label="Thống kê nhanh">
-      <div class="col-4">
-        <div class="card-ef p-3 d-flex flex-row align-items-center gap-3">
-          <div class="rounded-3 d-flex align-items-center justify-content-center bg-indigo-50 text-indigo" style="width:40px;height:40px;"><i class="bi bi-chat-square-text-fill" aria-hidden="true"></i></div>
-          <p class="mb-0"><span class="font-display fs-5 d-block">{{ new_questions_today }}</span><span class="text-muted-ef small">Câu hỏi hôm nay</span></p>
-        </div>
-      </div>
-      <div class="col-4">
-        <div class="card-ef p-3 d-flex flex-row align-items-center gap-3">
-          <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px; background:var(--ef-emerald-50); color:var(--ef-emerald-600);"><i class="bi bi-people-fill" aria-hidden="true"></i></div>
-          <p class="mb-0"><span class="font-display fs-5 d-block">1987</span><span class="text-muted-ef small">Thành viên online</span></p>
-        </div>
-      </div>
-      <div class="col-4">
-        <div class="card-ef p-3 d-flex flex-row align-items-center gap-3">
-          <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px; background:var(--ef-amber-100); color:var(--ef-amber-600);"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></div>
-          <p class="mb-0"><span class="font-display fs-5 d-block">{{ courses_on_sale }}</span><span class="text-muted-ef small">Khóa học đang sale</span></p>
-        </div>
-      </div>
-    </section>
-
-    <section class="card-ef overflow-hidden" aria-label="Bài viết diễn đàn">
-      <nav aria-label="Lọc bài viết">
-        <ul class="nav nav-ef-tabs px-3 pt-2 list-unstyled" role="tablist">
-          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-hot" type="button">Nổi bật</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-new" type="button">Mới nhất</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-follow" type="button">Theo dõi</button></li>
-        </ul>
-      </nav>
-
-      <div class="tab-content">
-        <div class="tab-pane fade show active" id="tab-hot" role="tabpanel">
-          {% for post in posts.hot %}
-          <article class="p-4 border-top">
-            <div class="d-flex gap-3">
-              <span class="ef-avatar ef-avatar-{{ post.author.color }}" style="width:38px;height:38px;font-size:14.44px;">{{ post.author.initials }}</span>
-              <div style="min-width:0;" class="flex-grow-1">
-                <p class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                  <span class="small fw-semibold text-dark">{{ post.author.name }}</span>
-                  <span class="text-muted-ef">·</span>
-                  <span class="small text-muted-ef">{{ post.posted_at }}</span>
-                  <span class="badge-ef badge-ef-{{ post.badge_style }}">{{ post.badge_label }}</span>
-                </p>
-                <h3 class="font-display fs-6 mb-2 line-clamp-2"><a href="{{ url_for('post_detail', id=post.id) }}" class="text-dark text-decoration-none">{{ post.title }}</a></h3>
-                <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.excerpt }}</p>
-                {% if post.image_url %}
-                <div class="rounded-3 overflow-hidden mb-3 bg-slate-100" style="height:144px;">
-                  <img src="{{ post.image_url }}" alt="" class="w-100 h-100" style="object-fit:cover;">
+            <section class="ef-hero p-4 p-lg-5 mb-4" aria-label="Lời chào">
+                <div class="position-relative" style="z-index:1;">
+                    <p class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-fire" style="color:var(--ef-amber-300);" aria-hidden="true"></i>
+                        <span class="small fw-semibold"
+                              style="color:var(--ef-amber-300);">Cộng đồng học tập #1 Việt Nam</span>
+                    </p>
+                    <h2 class="font-display fs-3 text-white mb-2">Chào buổi
+                        sáng, {{ current_user.first_name }} {{ current_user.last_name }}!</h2>
+                    <p class="small mb-4" style="color:#c7d2fe;">Hôm nay có {{ new_questions_today }} câu hỏi mới
+                        và {{ courses_on_sale }} khóa học vừa mở sale.</p>
+                    <a href="{{ url_for('courses') }}" class="btn btn-sm text-white fw-semibold"
+                       style="background:rgba(99,102,241,.5); border:1px solid rgba(129,140,248,.5);">Khám phá khóa
+                        học</a>
                 </div>
-                {% endif %}
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <ul class="d-flex gap-2 list-unstyled mb-0">
-                    {% for tag in post.tags %}<li><span class="badge-ef badge-ef-default">{{ tag }}</span></li>{% endfor %}
-                  </ul>
-                  <p class="ms-auto d-flex align-items-center gap-3 text-muted-ef mb-0">
-                    <span class="small d-flex align-items-center gap-1"><i class="bi bi-heart" aria-hidden="true"></i> {{ post.likes }}</span>
-                    <span class="small d-flex align-items-center gap-1"><i class="bi bi-chat" aria-hidden="true"></i> {{ post.comments }}</span>
-                    <button type="button" class="btn btn-sm p-0 border-0 small" aria-label="Chia sẻ"><i class="bi bi-share" aria-hidden="true"></i></button>
-                    <button type="button" class="btn btn-sm p-0 border-0 small" aria-label="Lưu bài viết"><i class="bi bi-bookmark" aria-hidden="true"></i></button>
-                  </p>
+                <i class="bi bi-mortarboard-fill position-absolute d-none d-md-block"
+                   style="right:1.5rem; top:50%; transform:translateY(-50%); font-size:8rem; opacity:.15;"
+                   aria-hidden="true"></i>
+            </section>
+
+            <section class="row g-3 mb-4" aria-label="Thống kê nhanh">
+                <div class="col-4">
+                    <div class="card-ef p-3 d-flex flex-row align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-indigo-50 text-indigo"
+                             style="width:40px;height:40px;"><i class="bi bi-chat-square-text-fill"
+                                                                aria-hidden="true"></i></div>
+                        <p class="mb-0"><span class="font-display fs-5 d-block">{{ new_questions_today }}</span><span
+                                class="text-muted-ef small">Câu hỏi hôm nay</span></p>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </article>
-          {% endfor %}
-        </div>
-
-        <div class="tab-pane fade" id="tab-new" role="tabpanel">
-          {% for post in posts %}
-          <article class="p-4 border-top">
-            <div class="d-flex gap-3">
-              <span class="ef-avatar ef-avatar-{{ post.author.color }}" style="width:38px;height:38px;font-size:14.44px;">{{ post.author.initials }}</span>
-              <div style="min-width:0;" class="flex-grow-1">
-                <p class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                  <span class="small fw-semibold text-dark">{{ post.author.name }}</span>
-                  <span class="text-muted-ef">·</span>
-                  <span class="small text-muted-ef">{{ post.posted_at }}</span>
-                  <span class="badge-ef badge-ef-{{ post.badge_style }}">{{ post.badge_label }}</span>
-                </p>
-                <h3 class="font-display fs-6 mb-2 line-clamp-2"><a href="{{ url_for('post_detail', id=post.id) }}" class="text-dark text-decoration-none">{{ post.title }}</a></h3>
-                <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.excerpt }}</p>
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <ul class="d-flex gap-2 list-unstyled mb-0">
-                    {% for tag in post.tags %}<li><span class="badge-ef badge-ef-default">{{ tag }}</span></li>{% endfor %}
-                  </ul>
-                  <p class="ms-auto d-flex align-items-center gap-3 text-muted-ef mb-0">
-                    <span class="small d-flex align-items-center gap-1"><i class="bi bi-heart" aria-hidden="true"></i> {{ post.likes }}</span>
-                    <span class="small d-flex align-items-center gap-1"><i class="bi bi-chat" aria-hidden="true"></i> {{ post.comments }}</span>
-                  </p>
+                <div class="col-4">
+                    <div class="card-ef p-3 d-flex flex-row align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center"
+                             style="width:40px;height:40px; background:var(--ef-emerald-50); color:var(--ef-emerald-600);">
+                            <i class="bi bi-people-fill" aria-hidden="true"></i></div>
+                        <p class="mb-0"><span class="font-display fs-5 d-block">1987</span><span
+                                class="text-muted-ef small">Thành viên online</span></p>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </article>
-          {% endfor %}
-        </div>
+                <div class="col-4">
+                    <div class="card-ef p-3 d-flex flex-row align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center"
+                             style="width:40px;height:40px; background:var(--ef-amber-100); color:var(--ef-amber-600);">
+                            <i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></div>
+                        <p class="mb-0"><span class="font-display fs-5 d-block">{{ courses_on_sale }}</span><span
+                                class="text-muted-ef small">Khóa học đang sale</span></p>
+                    </div>
+                </div>
+            </section>
 
-        <div class="tab-pane fade" id="tab-follow" role="tabpanel">
-          {% for post in posts.following %}
-          <article class="p-4 border-top">
-            <div class="d-flex gap-3">
-              <span class="ef-avatar ef-avatar-{{ post.author.color }}" style="width:38px;height:38px;font-size:14.44px;">{{ post.author.initials }}</span>
-              <div style="min-width:0;" class="flex-grow-1">
-                <p class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                  <span class="small fw-semibold text-dark">{{ post.author.name }}</span>
-                  <span class="text-muted-ef">·</span>
-                  <span class="small text-muted-ef">{{ post.posted_at }}</span>
-                  <span class="badge-ef badge-ef-{{ post.badge_style }}">{{ post.badge_label }}</span>
-                </p>
-                <h3 class="font-display fs-6 mb-2 line-clamp-2"><a href="{{ url_for('post_detail', id=post.id) }}" class="text-dark text-decoration-none">{{ post.title }}</a></h3>
-                <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.excerpt }}</p>
-              </div>
-            </div>
-          </article>
-          {% else %}
-          <p class="p-4 border-top text-muted-ef small mb-0">Bạn chưa theo dõi ai. Hãy khám phá diễn đàn để tìm người dùng thú vị.</p>
-          {% endfor %}
-        </div>
-      </div>
-    </section>
-  </section>
+            <section class="card-ef overflow-hidden" aria-label="Bài viết diễn đàn">
+                <nav aria-label="Lọc bài viết">
+                    <ul class="nav nav-ef-tabs px-3 pt-2 list-unstyled" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-hot"
+                                    type="button">Nổi bật
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-new" type="button">Mới
+                                nhất
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-follow" type="button">
+                                Theo dõi
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
 
-  <aside style="width:288px; flex-shrink:0;" class="d-flex flex-column gap-4">
-    <section class="card-ef p-4" aria-label="Bảng xếp hạng">
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <h3 class="font-display fs-6 mb-0">Bảng xếp hạng</h3>
-        <i class="bi bi-graph-up-arrow text-indigo" aria-hidden="true"></i>
-      </div>
-      <ol class="list-unstyled mb-0">
-        {% for member in leaderboard %}
-        <li class="d-flex align-items-center gap-2 mb-3">
-          <span class="rounded-circle d-flex align-items-center justify-content-center fw-bold bg-body-secondary" style="width:20px;height:20px;font-size:.65rem;">{{ loop.index }}</span>
-          <span class="ef-avatar ef-avatar-{{ member.color }}" style="width:30px;height:30px;font-size:11.4px;">{{ member.initials }}</span>
-          <p class="flex-grow-1 mb-0" style="min-width:0;">
-            <span class="d-block small fw-semibold text-truncate">{{ member.name }}</span>
-            <span class="d-block text-muted-ef" style="font-size:.72rem;">{{ member.points }} điểm</span>
-          </p>
-          <span class="badge-ef badge-ef-{{ member.rank_style }}">{{ member.rank_label }}</span>
-        </li>
-        {% endfor %}
-      </ol>
-    </section>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="tab-hot" role="tabpanel">
+{#                        {% for post in posts.hot %}#}
+{#                            <article class="p-4 border-top">#}
+{#                                <div class="d-flex gap-3">#}
+{#                                    <span class="ef-avatar ef-avatar-{{ post.author.color }}"#}
+{#                                          style="width:38px;height:38px;font-size:14.44px;">{{ post.author.initials }}</span>#}
+{#                                    <div style="min-width:0;" class="flex-grow-1">#}
+{#                                        <p class="d-flex align-items-center gap-2 mb-2 flex-wrap">#}
+{#                                            <span class="small fw-semibold text-dark">{{ post.author.name }}</span>#}
+{#                                            <span class="text-muted-ef">·</span>#}
+{#                                            <span class="small text-muted-ef">{{ post.posted_at }}</span>#}
+{#                                            <span class="badge-ef badge-ef-{{ post.badge_style }}">{{ post.badge_label }}</span>#}
+{#                                        </p>#}
+{#                                        <h3 class="font-display fs-6 mb-2 line-clamp-2"><a#}
+{#                                                href="{{ url_for('post_detail', id=post.id) }}"#}
+{#                                                class="text-dark text-decoration-none">{{ post.title }}</a></h3>#}
+{#                                        <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.excerpt }}</p>#}
+{#                                        {% if post.image_url %}#}
+{#                                            <div class="rounded-3 overflow-hidden mb-3 bg-slate-100"#}
+{#                                                 style="height:144px;">#}
+{#                                                <img src="{{ post.image_url }}" alt="" class="w-100 h-100"#}
+{#                                                     style="object-fit:cover;">#}
+{#                                            </div>#}
+{#                                        {% endif %}#}
+{#                                        <div class="d-flex align-items-center gap-2 flex-wrap">#}
+{#                                            <ul class="d-flex gap-2 list-unstyled mb-0">#}
+{#                                                {% for tag in post.tags %}#}
+{#                                                    <li><span class="badge-ef badge-ef-default">{{ tag }}</span>#}
+{#                                                    </li>{% endfor %}#}
+{#                                            </ul>#}
+{#                                            <p class="ms-auto d-flex align-items-center gap-3 text-muted-ef mb-0">#}
+{#                                                <span class="small d-flex align-items-center gap-1"><i#}
+{#                                                        class="bi bi-heart"#}
+{#                                                        aria-hidden="true"></i> {{ post.likes }}</span>#}
+{#                                                <span class="small d-flex align-items-center gap-1"><i#}
+{#                                                        class="bi bi-chat"#}
+{#                                                        aria-hidden="true"></i> {{ post.comments }}</span>#}
+{#                                                <button type="button" class="btn btn-sm p-0 border-0 small"#}
+{#                                                        aria-label="Chia sẻ"><i class="bi bi-share"#}
+{#                                                                                aria-hidden="true"></i></button>#}
+{#                                                <button type="button" class="btn btn-sm p-0 border-0 small"#}
+{#                                                        aria-label="Lưu bài viết"><i class="bi bi-bookmark"#}
+{#                                                                                     aria-hidden="true"></i></button>#}
+{#                                            </p>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </article>#}
+{#                        {% endfor %}#}
+                    </div>
 
-    <section class="card-ef p-4" aria-label="Tags phổ biến">
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <h3 class="font-display fs-6 mb-0">Tags phổ biến</h3>
-        <i class="bi bi-tag text-muted-ef" aria-hidden="true"></i>
-      </div>
-      <ul class="d-flex flex-wrap gap-2 list-unstyled mb-0">
-        {% for tag in popular_tags %}
-        <li><a href="{{ url_for('forum', tag=tag) }}" class="badge-ef badge-ef-default">#{{ tag }}</a></li>
-        {% endfor %}
-      </ul>
-    </section>
+                    <div class="tab-pane fade" id="tab-new" role="tabpanel">
+{#                        {% for post in posts %}#}
+{#                            <article class="p-4 border-top">#}
+{#                                <div class="d-flex gap-3">#}
+{#                                    <span class="ef-avatar ef-avatar-{{ post.author.color }}"#}
+{#                                          style="width:38px;height:38px;font-size:14.44px;">{{ post.author.initials }}</span>#}
+{#                                    <div style="min-width:0;" class="flex-grow-1">#}
+{#                                        <p class="d-flex align-items-center gap-2 mb-2 flex-wrap">#}
+{#                                            <span class="small fw-semibold text-dark">{{ post.author.name }}</span>#}
+{#                                            <span class="text-muted-ef">·</span>#}
+{#                                            <span class="small text-muted-ef">{{ post.posted_at }}</span>#}
+{#                                            <span class="badge-ef badge-ef-{{ post.badge_style }}">{{ post.badge_label }}</span>#}
+{#                                        </p>#}
+{#                                        <h3 class="font-display fs-6 mb-2 line-clamp-2"><a#}
+{#                                                href="{{ url_for('post_detail', id=post.id) }}"#}
+{#                                                class="text-dark text-decoration-none">{{ post.title }}</a></h3>#}
+{#                                        <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.excerpt }}</p>#}
+{#                                        <div class="d-flex align-items-center gap-2 flex-wrap">#}
+{#                                            <ul class="d-flex gap-2 list-unstyled mb-0">#}
+{#                                                {% for tag in post.tags %}#}
+{#                                                    <li><span class="badge-ef badge-ef-default">{{ tag }}</span>#}
+{#                                                    </li>{% endfor %}#}
+{#                                            </ul>#}
+{#                                            <p class="ms-auto d-flex align-items-center gap-3 text-muted-ef mb-0">#}
+{#                                                <span class="small d-flex align-items-center gap-1"><i#}
+{#                                                        class="bi bi-heart"#}
+{#                                                        aria-hidden="true"></i> {{ post.likes }}</span>#}
+{#                                                <span class="small d-flex align-items-center gap-1"><i#}
+{#                                                        class="bi bi-chat"#}
+{#                                                        aria-hidden="true"></i> {{ post.comments }}</span>#}
+{#                                            </p>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </article>#}
+{#                        {% endfor %}#}
+                    </div>
 
-    {% if promo %}
-    <section class="rounded-ef-lg p-4 text-white" style="background:linear-gradient(135deg, var(--ef-amber-400), #f97316);" aria-label="Khuyến mãi">
-      <p class="d-flex align-items-center gap-2 mb-2"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i><span class="small fw-bold">{{ promo.label }}</span></p>
-      <p class="font-display fs-5 text-white mb-1">{{ promo.headline }}</p>
-      <p class="small mb-3" style="color:#fef3c7;">{{ promo.subtext }}</p>
-      <a href="{{ url_for('courses') }}" class="btn btn-light btn-sm fw-bold w-100" style="color:var(--ef-amber-600);">Xem ngay</a>
-    </section>
-    {% endif %}
-  </aside>
-</div>
+                    <div class="tab-pane fade" id="tab-follow" role="tabpanel">
+                        {% for post in posts.following %}
+                            <article class="p-4 border-top">
+                                <div class="d-flex gap-3">
+{#                                    <span class="ef-avatar ef-avatar-{{ post.author.color }}"#}
+{#                                          style="width:38px;height:38px;font-size:14.44px;">{{ post.author.initials }}</span>#}
+                                    <div style="min-width:0;" class="flex-grow-1">
+                                        <p class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                            <span class="small fw-semibold text-dark">{{ post.author.name }}</span>
+                                            <span class="text-muted-ef">·</span>
+                                            <span class="small text-muted-ef">{{ post.posted_at }}</span>
+                                            <span class="badge-ef badge-ef-{{ post.badge_style }}">{{ post.badge_label }}</span>
+                                        </p>
+                                        <h3 class="font-display fs-6 mb-2 line-clamp-2"><a
+                                                href="{{ url_for('post_detail', id=post.id) }}"
+                                                class="text-dark text-decoration-none">{{ post.title }}</a></h3>
+                                        <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.excerpt }}</p>
+                                    </div>
+                                </div>
+                            </article>
+                        {% else %}
+                            <p class="p-4 border-top text-muted-ef small mb-0">Bạn chưa theo dõi ai. Hãy khám phá diễn
+                                đàn để tìm người dùng thú vị.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <aside style="width:288px; flex-shrink:0;" class="d-flex flex-column gap-4">
+            <section class="card-ef p-4" aria-label="Bảng xếp hạng">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h3 class="font-display fs-6 mb-0">Bảng xếp hạng</h3>
+                    <i class="bi bi-graph-up-arrow text-indigo" aria-hidden="true"></i>
+                </div>
+                <ol class="list-unstyled mb-0">
+                    {% for member in leaderboard %}
+                        <li class="d-flex align-items-center gap-2 mb-3">
+                            <span class="rounded-circle d-flex align-items-center justify-content-center fw-bold bg-body-secondary"
+                                  style="width:20px;height:20px;font-size:.65rem;">{{ loop.index }}</span>
+                            <span class="ef-avatar ef-avatar-{{ member.color }}"
+                                  style="width:30px;height:30px;font-size:11.4px;">{{ member.initials }}</span>
+                            <p class="flex-grow-1 mb-0" style="min-width:0;">
+                                <span class="d-block small fw-semibold text-truncate">{{ member.name }}</span>
+                                <span class="d-block text-muted-ef"
+                                      style="font-size:.72rem;">{{ member.points }} điểm</span>
+                            </p>
+                            <span class="badge-ef badge-ef-{{ member.rank_style }}">{{ member.rank_label }}</span>
+                        </li>
+                    {% endfor %}
+                </ol>
+            </section>
+
+            <section class="card-ef p-4" aria-label="Tags phổ biến">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h3 class="font-display fs-6 mb-0">Tags phổ biến</h3>
+                    <i class="bi bi-tag text-muted-ef" aria-hidden="true"></i>
+                </div>
+                <ul class="d-flex flex-wrap gap-2 list-unstyled mb-0">
+                    {% for tag in popular_tags %}
+                        <li><a href="{{ url_for('forum', tag=tag) }}" class="badge-ef badge-ef-default">#{{ tag }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            {% if promo %}
+                <section class="rounded-ef-lg p-4 text-white"
+                         style="background:linear-gradient(135deg, var(--ef-amber-400), #f97316);"
+                         aria-label="Khuyến mãi">
+                    <p class="d-flex align-items-center gap-2 mb-2"><i class="bi bi-lightning-charge-fill"
+                                                                       aria-hidden="true"></i><span
+                            class="small fw-bold">{{ promo.label }}</span></p>
+                    <p class="font-display fs-5 text-white mb-1">{{ promo.headline }}</p>
+                    <p class="small mb-3" style="color:#fef3c7;">{{ promo.subtext }}</p>
+                    <a href="{{ url_for('courses') }}" class="btn btn-light btn-sm fw-bold w-100"
+                       style="color:var(--ef-amber-600);">Xem ngay</a>
+                </section>
+            {% endif %}
+        </aside>
+    </div>
 {% endblock %}
