@@ -242,17 +242,6 @@ if __name__ == '__main__':
         cate9 = Category(name="Phát triển Web")
         cate10 = Category(name="Phát triển Mobile")
 
-        db.session.add_all([
-            cate1,
-            cate2,
-            cate3,
-            cate4,
-            cate5,
-            cate6,
-            cate7,
-            cate8,
-            cate9,
-            cate10
-        ])
+        db.session.add_all([cate1, cate2, cate3, cate4, cate5, cate6, cate7, cate8, cate9, cate10])
 
         db.session.commit()

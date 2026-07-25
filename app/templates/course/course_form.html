@@ -1,0 +1,202 @@
+{% extends "layout/base.html" %}
+
+{% block title %}{{ 'Chỉnh sửa Khóa học' if course else 'Tạo Khóa học mới' }} · EduForum{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-3">
+  <div>
+    <h1 class="font-display fs-3 mb-0">{{ 'Chỉnh sửa khóa học' if course else 'Tạo khóa học mới' }}</h1>
+    <p class="text-muted-ef small mb-0">
+      {% if course %}{{ course.name }}{% else %}Xây dựng nội dung khóa học từng bước{% endif %}
+    </p>
+  </div>
+    {% if course %}
+
+    {% endif %}
+  </div>
+
+  <form method="POST" enctype="multipart/form-data">
+   <ul class="nav nav-ef-tabs card-ef px-3 pt-2">
+  <li class="nav-item"><button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#cc-info">Thông tin</button></li>
+  {% if course %}
+  <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#cc-content">Nội dung</button></li>
+  {% endif %}
+  <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#cc-settings">Cài đặt</button></li>
+</ul>
+
+    <div class="tab-content card-ef p-4">
+      <!-- TAB: Thông tin -->
+      <div class="tab-pane fade show active" id="cc-info">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Tên khóa học</label>
+          <input type="text" name="name" class="form-control"
+                 value="{{ course.name if course else '' }}"
+                 placeholder="Ví dụ: React & TypeScript từ cơ bản đến nâng cao" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Mô tả khóa học</label>
+          <textarea name="description" class="form-control" rows="4"
+                    placeholder="Mô tả khóa học: học viên sẽ học gì, đạt được gì..."
+                    required>{{ course.description if course else '' }}</textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Ảnh khóa học</label>
+          {% if course and course.image %}
+          <div class="mb-2">
+            <img src="{{ course.image }}" style="max-width:200px; border-radius:.5rem;">
+          </div>
+          {% endif %}
+          <input type="file" name="image" class="form-control" accept="image/*" {{ '' if course else 'required' }}>
+          {% if course %}
+          <span class="small text-muted-ef">Để trống nếu không muốn đổi ảnh</span>
+          {% endif %}
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Danh mục</label>
+            <div class="border rounded-3 p-2">
+              <input type="text" id="categorySearch" class="form-control form-control-sm mb-2"
+                     placeholder="Tìm danh mục...">
+              <div id="categoryList" style="max-height:180px; overflow-y:auto;">
+                {% set selected_ids = (course.course_category | map(attribute='category_id') | list) if course else [] %}
+                {% for c in categories %}
+                <div class="form-check category-item" data-name="{{ c.name|lower }}">
+                  <input class="form-check-input category-checkbox" type="checkbox"
+                         name="category_ids" value="{{ c.id }}" id="cate{{ c.id }}"
+                         {% if c.id in selected_ids %}checked{% endif %}>
+                  <label class="form-check-label small" for="cate{{ c.id }}">{{ c.name }}</label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Cấp độ</label>
+            <select name="level" class="form-select">
+              <option value="BASIC" {% if course and course.level.name == 'BASIC' %}selected{% endif %}>Cơ bản</option>
+              <option value="INTERMEDIATE" {% if course and course.level.name == 'INTERMEDIATE' %}selected{% endif %}>Trung cấp</option>
+              <option value="ADVANCED" {% if course and course.level.name == 'ADVANCED' %}selected{% endif %}>Nâng cao</option>
+            </select>
+          </div>
+        </div>
+
+        {% if not course %}
+        <label class="form-label small fw-semibold">Kết quả học tập</label>
+        <input type="text" name="outcomes" class="form-control mb-2" placeholder="Kết quả học tập 1...">
+        <input type="text" name="outcomes" class="form-control mb-2" placeholder="Kết quả học tập 2...">
+        <input type="text" name="outcomes" class="form-control mb-2" placeholder="Kết quả học tập 3...">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addOutcomeInput()">
+          <i class="bi bi-plus"></i> Thêm kết quả học tập
+        </button>
+        {% endif %}
+      </div>
+        {% if course %}
+<div class="tab-pane fade" id="cc-content">
+  <div id="chapterList">
+  {% for chapter in chapters %}
+  <div class="border rounded-3 mb-3 chapter-block" data-chapter-id="{{ chapter.id }}">
+    <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom">
+      <div>
+        <span class="small fw-semibold chapter-name">{{ chapter.name }}</span>
+        <span class="small text-muted-ef chapter-description d-none">{{ chapter.description if chapter.description is defined else '' }}</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <button type="button" class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-chapter"><i class="bi bi-pencil"></i></button>
+        <form method="POST" action="{{ url_for('delete_chapter', chapter_id=chapter.id) }}"
+              onsubmit="return confirm('Xóa chương này và toàn bộ bài học bên trong?');" class="d-inline">
+          <input type="hidden" name="course_id" value="{{ course.id }}">
+          <button type="submit" class="btn btn-sm p-0 border-0 text-muted-ef"><i class="bi bi-trash"></i></button>
+        </form>
+      </div>
+    </div>
+    <div class="p-2">
+      <div class="lesson-list">
+      {% for lesson in chapter.lessons %}
+      <div class="d-flex align-items-center gap-2 px-2 py-2 border-bottom lesson-row" data-lesson-id="{{ lesson.id }}">
+        <i class="bi bi-grip-vertical text-muted-ef"></i>
+        <i class="bi {{ 'bi-camera-video' if lesson.type.name == 'VIDEO' else 'bi-file-earmark-text' }} text-indigo lesson-type-icon"></i>
+        <span class="small flex-grow-1 lesson-name">{{ lesson.name }}</span>
+        <span class="small text-muted-ef lesson-description d-none">{{ lesson.description if lesson.description is defined else '' }}</span>
+        <select class="form-select form-select-sm w-auto lesson-type-select" style="max-width:110px;">
+          <option value="VIDEO" {{ 'selected' if lesson.type.name == 'VIDEO' else '' }}>Video</option>
+          <option value="DOCUMENT" {{ 'selected' if lesson.type.name == 'DOCUMENT' else '' }}>Doc</option>
+        </select>
+        <button type="button" class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-lesson"><i class="bi bi-pencil"></i></button>
+        <form method="POST" action="{{ url_for('delete_lesson', lesson_id=lesson.id) }}"
+              onsubmit="return confirm('Xóa bài học này?');">
+          <input type="hidden" name="course_id" value="{{ course.id }}">
+          <button type="submit" class="btn btn-sm p-0 border-0 text-muted-ef"><i class="bi bi-x-lg"></i></button>
+        </form>
+      </div>
+      {% else %}
+      <p class="text-muted-ef small px-2 py-2 mb-0 empty-lesson-msg">Chưa có bài học nào.</p>
+      {% endfor %}
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary mt-2 d-flex align-items-center gap-1 btn-add-lesson">
+        <i class="bi bi-plus"></i> Thêm bài học
+      </button>
+    </div>
+  </div>
+  {% else %}
+  <p class="text-muted-ef empty-chapter-msg">Khóa học chưa có chương nào.</p>
+  {% endfor %}
+  </div>
+
+  <button type="button" id="btnAddChapter" class="btn btn-outline-indigo d-flex align-items-center gap-2">
+    <i class="bi bi-plus-circle"></i> Thêm chương mới
+  </button>
+</div>
+{% endif %}
+      <!-- TAB: Cài đặt -->
+      <div class="tab-pane fade" id="cc-settings">
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="publicCourse" checked>
+          <label class="form-check-label small" for="publicCourse">Công khai trong kho khóa học</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-3">
+      <a href="{{ url_for('my_courses') if course else url_for('courses') }}" class="btn btn-outline-secondary">Hủy</a>
+      <button type="submit" class="btn btn-indigo d-flex align-items-center gap-2">
+        <i class="bi {{ 'bi-check-circle' if course else 'bi-send' }}"></i>
+        {{ 'Lưu thay đổi' if course else 'Tạo khóa học' }}
+      </button>
+    </div>
+  </form>
+</div>
+
+{% if course %}
+<!-- Modal dùng chung để sửa tên + mô tả (chương hoặc bài học) -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fs-6" id="editModalTitle">Chỉnh sửa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold" id="editModalNameLabel">Tên</label>
+          <input type="text" id="editModalName" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Mô tả</label>
+          <textarea id="editModalDescription" class="form-control" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-indigo" id="editModalSave">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/course_form.js') }}"></script>
+
+{% endblock %}
