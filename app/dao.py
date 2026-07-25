@@ -5,8 +5,7 @@ from flask_login import current_user
 
 
 from app import db, login
-from app.models import User, Post, ReactionPost, ReactionComment, Comment, VoteType, Course ,Lesson, Chapter,  Category, CourseCategory,CourseOutcome, VoteType
-
+from app.models import Category, Chapter, Comment, Course, CourseCategory, CourseOutcome, Lesson, Post, PostCate, ReactionComment, ReactionPost, Teacher, User, VoteType
 
 @login.user_loader
 def load_user(user_id):
@@ -73,6 +72,18 @@ def change_password(new_password):
     return True, None
 
 
+
+
+def register_teacher(user_id, note=""):
+    teacher = Teacher(user_id=user_id, note=note)
+    try:
+        db.session.add(teacher)
+        db.session.commit()
+        return teacher
+    except Exception:
+        db.session.rollback()
+        return None
+
 def get_categories():
     return Category.query.order_by(Category.name).all()
 
@@ -82,13 +93,13 @@ def create_course(name,
                   teacher_id,
                   level,
                   category_ids,
-                  promo_video=None):
+                  ):
 
     course = Course(
         name=name,
         description=description,
         image=image,
-        promo_video=promo_video,
+
         teacher_id=teacher_id,
         level=level
     )
@@ -217,7 +228,18 @@ def create_outcome(course_id, content):
         db.session.rollback()
         return None
 
-
+def replace_outcomes(course_id, contents):
+    CourseOutcome.query.filter_by(course_id=course_id).delete()
+    for content in contents:
+        content = content.strip()
+        if content:
+            db.session.add(CourseOutcome(course_id=course_id, content=content))
+    try:
+        db.session.commit()
+        return True
+    except Exception:
+        db.session.rollback()
+        return False
 def delete_outcome(outcome_id):
     outcome = CourseOutcome.query.get(outcome_id)
 
@@ -233,7 +255,7 @@ def delete_outcome(outcome_id):
         db.session.rollback()
         return False
 # forum
-def get_posts(keyword=None, solved=None):
+def get_posts(keyword=None, solved=None,category_id=None):
     query = Post.query
 
     if keyword:
@@ -241,6 +263,10 @@ def get_posts(keyword=None, solved=None):
 
     if solved is not None:
         query = query.filter(Post.is_solved == solved)
+
+
+    if category_id:
+        query = query.filter(Post.category_id == category_id)
 
     return query.order_by(Post.created_date.desc()).all()
 
@@ -272,8 +298,8 @@ def add_comment(post_id, user_id, content, parent_comment_id=None):
 def get_courses_by_teacher_id(teacher_id):
     return Course.query.filter_by(
         teacher_id=teacher_id
-    ).all()
-def update_course (course_id, teacher_id, name=None, description=None, image=None,  promo_video=None, level=None,category_ids=None):
+    ).order_by(Course.created_date.desc()).all()
+def update_course (course_id, teacher_id, name=None, description=None, image=None, level=None,category_ids=None):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
         if  name:
@@ -282,8 +308,6 @@ def update_course (course_id, teacher_id, name=None, description=None, image=Non
             course.description = description
         if image:
             course.image = image
-        if promo_video is not None:
-            course.promo_video = promo_video
 
         if level:
             course.level = level
@@ -459,7 +483,7 @@ def get_post_score(post):
     for r in post.reactions:
         score += r.vote_type.value
 
-    return False
+    return score
 
 
 
@@ -480,6 +504,9 @@ def get_comment_score(comment):
 
     return score
 
+
+def get_post_categories():
+    return PostCate.query.order_by(PostCate.name).all()
 
 def get_related_posts(post_id, category_id, limit=5):
     return (

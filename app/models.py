@@ -78,7 +78,7 @@ class Course(BaseModel):
 
     description = Column(String(1000), nullable=False)
     image = Column(String(500), nullable=False, default="")
-    promo_video = Column(String(500), nullable=True)
+
     teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
 
     chapters = relationship(

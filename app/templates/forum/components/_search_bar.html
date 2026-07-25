@@ -1,22 +1,30 @@
-<div class="forum-filter-box">
+<form action="{{ url_for('forum') }}" method="get">
 
-    <form method="get">
+    <section class="input-group shadow-sm">
 
-        <div class="input-group">
+        <span class="input-group-text bg-white border-end-0">
 
-            <input
-                type="text"
+            <i class="bi bi-search text-secondary"></i>
+
+        </span>
+
+        <input
+                type="search"
+                class="form-control border-start-0"
                 name="kw"
-                class="form-control"
-                placeholder="Tìm kiếm câu hỏi, khóa học..."
-            >
+                value="{{ request.args.get('kw','') }}"
+                placeholder="Tìm kiếm câu hỏi...">
 
-            <button class="btn btn-outline-secondary">
-                Tìm kiếm
-            </button>
+        {% if request.args.get('solved') %}
+            <input type="hidden" name="solved" value="{{ request.args.get('solved') }}">
+        {% endif %}
 
-        </div>
+        <button class="btn btn-primary">
 
-    </form>
+            Tìm
 
-</div>
+        </button>
+
+    </section>
+
+</form>
