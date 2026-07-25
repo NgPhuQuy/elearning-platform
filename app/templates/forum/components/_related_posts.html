@@ -1,0 +1,47 @@
+<section class="card shadow-sm border-0">
+
+    <header class="card-header bg-white">
+
+        <h5 class="mb-0">
+
+            Câu hỏi liên quan
+
+        </h5>
+
+    </header>
+
+    <nav class="list-group list-group-flush">
+
+        {% for p in related_posts %}
+
+            <a href="{{ url_for('forum_detail',post_id=p.id) }}" class="list-group-item list-group-item-action">
+
+                <strong>
+                    {{ p.title }}
+                </strong>
+
+                <br>
+
+                <small class="text-muted">
+
+                    {{ p.comments|length }}
+
+                    trả lời
+
+                </small>
+
+            </a>
+
+        {% else %}
+
+            <span class="list-group-item">
+
+                Không có câu hỏi liên quan.
+
+            </span>
+
+        {% endfor %}
+
+    </nav>
+
+</section>
