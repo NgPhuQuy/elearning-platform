@@ -146,6 +146,9 @@ def privacy():
     pass
 
 @app.route('/register-teacher', methods=['GET', 'POST'])
+@login_required
+def register_teacher():
+    return render_template("teacher/register-teacher.html")
 
 @app.route('/profile')
 @login_required
