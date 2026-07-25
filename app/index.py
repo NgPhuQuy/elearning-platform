@@ -1,7 +1,7 @@
 import cloudinary.uploader
 from flask import redirect, render_template, request, url_for, flash, jsonify
 from flask_login import login_user, current_user, logout_user
-from decorator import login_required, teacher_required, anonymous_required
+from app.decorator import login_required, teacher_required, anonymous_required
 from app import app, dao, db, oauth
 from app.dao import register_user
 from app.models import PostCate, VoteType, Comment, Post, Course, User
@@ -101,9 +101,6 @@ def login():
 def logout():
     logout_user()
     return redirect("/")
-
-from flask import redirect, url_for
-from flask_login import login_user
 
 @app.route("/login/google")
 def google_login():
