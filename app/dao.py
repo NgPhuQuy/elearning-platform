@@ -5,7 +5,7 @@ from flask_login import current_user
 
 
 from app import db, login
-from app.models import User, Post, ReactionPost, ReactionComment, Comment, VoteType, Course ,Lesson, Chapter,  Category, CourseCategory,CourseOutcome, VoteType
+from app.models import User, Post, ReactionPost, ReactionComment, Comment,PostCate, VoteType, Course ,Lesson, Chapter,  Category, CourseCategory,CourseOutcome, VoteType
 
 
 @login.user_loader
@@ -233,7 +233,7 @@ def delete_outcome(outcome_id):
         db.session.rollback()
         return False
 # forum
-def get_posts(keyword=None, solved=None):
+def get_posts(keyword=None, solved=None,category_id=None):
     query = Post.query
 
     if keyword:
@@ -241,6 +241,10 @@ def get_posts(keyword=None, solved=None):
 
     if solved is not None:
         query = query.filter(Post.is_solved == solved)
+
+
+    if category_id:
+        query = query.filter(Post.category_id == category_id)
 
     return query.order_by(Post.created_date.desc()).all()
 
@@ -459,7 +463,7 @@ def get_post_score(post):
     for r in post.reactions:
         score += r.vote_type.value
 
-    return False
+    return score
 
 
 
@@ -480,6 +484,9 @@ def get_comment_score(comment):
 
     return score
 
+
+def get_post_categories():
+    return PostCate.query.order_by(PostCate.name).all()
 
 def get_related_posts(post_id, category_id, limit=5):
     return (
