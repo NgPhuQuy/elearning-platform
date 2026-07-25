@@ -138,6 +138,8 @@ def google_authorize():
     login_user(user)
     return redirect("/")
 
+
+
 @app.route('/terms')
 def terms():
     pass
@@ -201,10 +203,15 @@ def change_password():
 
     return render_template("profile/change-password.html", error=error)
 
-
+@app.route('/become-teacher', methods=['POST'])
+@login_required
+def become_teacher():
+    if not current_user.teacher_profile:
+        dao.register_teacher(user_id=current_user.id)
+    return redirect(request.referrer or url_for('profile'))
 @app.route("/courses")
 def courses():
-    courses = Course.query.all()
+    courses = Course.query.order_by(Course.id.desc()).all()
     return render_template("course/manage.html", courses=courses)
 
 @app.route('/courses/manage')
@@ -269,12 +276,19 @@ def update_course(course_id):
             level=request.form.get('level'),
             category_ids=request.form.getlist('category_ids')
         )
-        return redirect(url_for('update_course', course_id=course_id))
+
+        outcomes = request.form.getlist('outcomes')
+        dao.replace_outcomes(course_id, outcomes)
+
+        return redirect(url_for('my_courses'))
 
     categories = dao.get_categories()
     chapters = dao.get_chapters(course_id)
-    return render_template('course/course_form.html', categories=categories, course=course, chapters=chapters)
+    outcomes = dao.get_outcomes(course_id)
 
+
+    return render_template('course/course_form.html', categories=categories,
+                            course=course, chapters=chapters, outcomes=outcomes)
 @app.route('/courses/<int:course_id>/delete', methods=['POST'])
 @login_required
 @teacher_required

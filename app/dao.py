@@ -5,7 +5,7 @@ from flask_login import current_user
 
 
 from app import db, login
-from app.models import User, Post, ReactionPost, ReactionComment, Comment, VoteType, Course ,Lesson, Chapter,  Category, CourseCategory,CourseOutcome, VoteType
+from app.models import User,Teacher, Post, ReactionPost, ReactionComment, Comment, VoteType, Course ,Lesson, Chapter,  Category, CourseCategory,CourseOutcome, VoteType
 
 
 @login.user_loader
@@ -72,6 +72,18 @@ def change_password(new_password):
         return False, str(e)
     return True, None
 
+
+
+
+def register_teacher(user_id, note=""):
+    teacher = Teacher(user_id=user_id, note=note)
+    try:
+        db.session.add(teacher)
+        db.session.commit()
+        return teacher
+    except Exception:
+        db.session.rollback()
+        return None
 
 def get_categories():
     return Category.query.order_by(Category.name).all()
@@ -217,7 +229,18 @@ def create_outcome(course_id, content):
         db.session.rollback()
         return None
 
-
+def replace_outcomes(course_id, contents):
+    CourseOutcome.query.filter_by(course_id=course_id).delete()
+    for content in contents:
+        content = content.strip()
+        if content:
+            db.session.add(CourseOutcome(course_id=course_id, content=content))
+    try:
+        db.session.commit()
+        return True
+    except Exception:
+        db.session.rollback()
+        return False
 def delete_outcome(outcome_id):
     outcome = CourseOutcome.query.get(outcome_id)
 
@@ -272,7 +295,7 @@ def add_comment(post_id, user_id, content, parent_comment_id=None):
 def get_courses_by_teacher_id(teacher_id):
     return Course.query.filter_by(
         teacher_id=teacher_id
-    ).all()
+    ).order_by(Course.created_date.desc()).all()
 def update_course (course_id, teacher_id, name=None, description=None, image=None,  promo_video=None, level=None,category_ids=None):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
