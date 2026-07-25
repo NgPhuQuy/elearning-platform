@@ -1,0 +1,67 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Đăng ký - Academix{% endblock %}
+{% block description %}Đăng ký vào tài khoản Academix để tiếp tục học tập.{% endblock %}
+
+{% block content %}
+    <section class="auth-section" aria-labelledby="login-heading">
+        <h1 id="login-heading">Đăng ký</h1>
+
+        {% if error %}
+            <p role="alert" class="form-error">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data">
+            <fieldset>
+                <legend>Thông tin đăng ký</legend>
+
+                <p>
+                    <label for="first_name">Họ</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </p>
+
+                <p>
+                    <label for="last_name">Tên</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </p>
+
+                <p>
+                    <label for="username">Tên đăng nhập</label>
+                    <input type="text" id="username" name="username" minlength="4" required>
+                </p>
+
+                <p>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </p>
+
+                <p>
+                    <label for="phone">Số điện thoại</label>
+                    <input type="tel" id="phone" name="phone" pattern="[0-9]{10,11}" required>
+                </p>
+
+                <p>
+                    <label for="password">Mật khẩu</label>
+                    <input type="password" id="password" name="password" minlength="6" required>
+                </p>
+
+                <p>
+                    <label for="confirm">Xác nhận mật khẩu</label>
+                    <input type="password" id="confirm" name="confirm" minlength="6" required>
+                </p>
+
+                <p>
+                    <label for="avatar">Ảnh đại diện</label>
+                    <input type="file" id="avatar" name="avatar" accept="image/*">
+                </p>
+            </fieldset>
+
+            <button type="submit">Đăng ký</button>
+        </form>
+
+        <p>
+            Đã có tài khoản?
+            <a href="/login">Đăng nhập</a>
+        </p>
+    </section>
+{% endblock %}

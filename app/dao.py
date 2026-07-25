@@ -76,8 +76,22 @@ def change_password(new_password):
 def get_categories():
     return Category.query.order_by(Category.name).all()
 
-def create_course(name, description, image, teacher_id, level, category_ids, promo_video=None):
-    course = Course(name=name, description=description, image=image, promo_video=promo_video, teacher_id=teacher_id, level=level)
+def create_course(name,
+                  description,
+                  image,
+                  teacher_id,
+                  level,
+                  category_ids,
+                  ):
+
+    course = Course(
+        name=name,
+        description=description,
+        image=image,
+
+        teacher_id=teacher_id,
+        level=level
+    )
 
     try:
         db.session.add(course)
@@ -125,7 +139,11 @@ def delete_course(course_id, teacher_id):
         db.session.rollback()
         return False
 
-def update_lesson(lesson_id, teacher_id, name=None, description=None, lesson_type=None):
+def update_lesson(lesson_id,
+                  teacher_id,
+                  name=None,
+                  description=None,
+                  lesson_type=None):
 
     lesson = Lesson.query.join(Chapter).join(Course).filter(
         Lesson.id == lesson_id,
@@ -185,7 +203,10 @@ def get_outcomes(course_id):
 
 
 def create_outcome(course_id, content):
-    outcome = CourseOutcome(course_id=course_id, content=content)
+    outcome = CourseOutcome(
+        course_id=course_id,
+        content=content
+    )
 
     try:
         db.session.add(outcome)
@@ -252,7 +273,7 @@ def get_courses_by_teacher_id(teacher_id):
     return Course.query.filter_by(
         teacher_id=teacher_id
     ).all()
-def update_course (course_id, teacher_id, name=None, description=None, image=None,  promo_video=None, level=None,category_ids=None):
+def update_course (course_id, teacher_id, name=None, description=None, image=None, level=None,category_ids=None):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
         if  name:
@@ -261,8 +282,7 @@ def update_course (course_id, teacher_id, name=None, description=None, image=Non
             course.description = description
         if image:
             course.image = image
-        if promo_video is not None:
-            course.promo_video = promo_video
+
 
         if level:
             course.level = level

@@ -1,0 +1,37 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Đăng nhập - Academix{% endblock %}
+{% block description %}Đăng nhập vào tài khoản Academix để tiếp tục học tập.{% endblock %}
+
+{% block content %}
+    <section class="auth-section" aria-labelledby="login-heading">
+        <h1 id="login-heading">Đăng nhập</h1>
+
+        {% if error %}
+            <p role="alert" class="form-error">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST">
+            <fieldset>
+                <legend>Thông tin đăng nhập</legend>
+
+                <p>
+                    <label for="username">Tên đăng nhập</label>
+                    <input type="text" id="username" name="username" autocomplete="username" required>
+                </p>
+
+                <p>
+                    <label for="password">Mật khẩu</label>
+                    <input type="password" id="password" name="password" autocomplete="current-password" required>
+                </p>
+            </fieldset>
+
+            <button type="submit">Đăng nhập</button>
+        </form>
+
+        <p>
+            Chưa có tài khoản?
+            <a href="/register">Đăng ký</a>
+        </p>
+    </section>
+{% endblock %}
