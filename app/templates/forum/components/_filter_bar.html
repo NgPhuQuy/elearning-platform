@@ -1,0 +1,47 @@
+<section class="card-ef p-3 d-flex flex-row align-items-center gap-3 mb-3 flex-wrap ef-pill-toggle">
+
+    <i class="bi bi-funnel text-muted-ef"></i>
+
+    <div class="btn-group" role="group">
+
+        <a href="{{ url_for('forum') }}"
+           class="btn btn-sm
+           {% if request.args.get('solved') is none %}
+                btn-indigo
+           {% else %}
+                btn-outline-secondary
+           {% endif %}">
+
+            Tất cả
+
+        </a>
+
+        <a href="{{ url_for('forum', solved='false') }}"
+           class="btn btn-sm
+           {% if request.args.get('solved') == 'false' %}
+                btn-indigo
+           {% else %}
+                btn-outline-secondary
+           {% endif %}">
+
+            Chưa giải quyết
+
+        </a>
+
+        <a href="{{ url_for('forum', solved='true') }}"
+           class="btn btn-sm
+           {% if request.args.get('solved') == 'true' %}
+                btn-indigo
+           {% else %}
+                btn-outline-secondary
+           {% endif %}">
+
+            <i class="bi bi-check-lg"></i>
+
+            Đã giải quyết
+
+        </a>
+
+    </div>
+
+</section>

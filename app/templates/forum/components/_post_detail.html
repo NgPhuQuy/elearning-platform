@@ -1,0 +1,205 @@
+<article class="card-ef p-4">
+
+    <header class="mb-4">
+
+        <div class="d-flex justify-content-between align-items-start gap-3">
+
+            <div class="flex-grow-1">
+
+                <h1 class="font-display fs-3 mb-3">
+
+                    {{ post.title }}
+
+                </h1>
+
+                <div class="d-flex flex-wrap gap-4 text-muted-ef small">
+
+                    <span>
+
+                        <i class="bi bi-eye"></i>
+
+                        {{ post.view_count }} lượt xem
+
+                    </span>
+
+                    <span>
+
+                        <i class="bi bi-clock"></i>
+
+                        {{ post.created_date.strftime("%d/%m/%Y %H:%M") }}
+
+                    </span>
+
+                    <span>
+
+                        <i class="bi bi-chat-left-text"></i>
+
+                        {{ post.comments|length }} trả lời
+
+                    </span>
+
+                </div>
+
+            </div>
+
+            {% if post.is_solved %}
+
+                <span class="badge bg-success">
+
+                    <i class="bi bi-check-circle-fill"></i>
+
+                    Đã giải quyết
+
+                </span>
+
+            {% endif %}
+
+        </div>
+
+    </header>
+
+
+    <section class="row">
+
+        <!-- Vote -->
+
+        <aside class="col-auto pe-4">
+
+            <div class="d-flex flex-column align-items-center">
+
+                <form
+                        action="{{ url_for('upvote_post', post_id=post.id) }}"
+                        method="post">
+
+                    <button
+                            class="btn btn-light rounded-circle border
+                            {% if user_vote and user_vote.vote_type.value == 1 %}
+                                border-primary
+                            {% endif %}">
+
+                        <i class="bi bi-chevron-up fs-4"></i>
+
+                    </button>
+
+                </form>
+
+
+                <h2 class="fw-bold my-3">
+
+                    {{ dao.get_post_score(post) }}
+
+                </h2>
+
+
+                <form
+                        action="{{ url_for('downvote_post', post_id=post.id) }}"
+                        method="post">
+
+                    <button
+                            class="btn btn-light rounded-circle border
+                            {% if user_vote and user_vote.vote_type.value == -1 %}
+                                border-danger
+                            {% endif %}">
+
+                        <i class="bi bi-chevron-down fs-4"></i>
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </aside>
+
+
+        <!-- Nội dung -->
+
+        <section class="col">
+
+            <article class="lh-lg fs-6">
+
+                {{ post.content|replace('\n','<br>')|safe }}
+
+            </article>
+
+
+            {% if post.image %}
+
+                <figure class="mt-4">
+
+                    <img
+                            src="{{ post.image }}"
+                            class="img-fluid rounded shadow-sm">
+
+                </figure>
+
+            {% endif %}
+
+
+            <footer class="border-top mt-4 pt-4">
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                    <div>
+
+                        <span class="badge-ef badge-ef-default">
+
+                            #{{ post.category.name }}
+
+                        </span>
+
+                    </div>
+
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        {% if post.user.avatar %}
+
+                            <img
+                                    src="{{ post.user.avatar }}"
+                                    class="rounded-circle"
+                                    width="45"
+                                    height="45">
+
+                        {% else %}
+
+                            <span
+                                    class="ef-avatar ef-avatar-indigo">
+
+                                {{ post.user.first_name[0] }}{{ post.user.last_name[0] }}
+
+                            </span>
+
+                        {% endif %}
+
+                        <div>
+
+                            <div class="fw-semibold">
+
+                                {{ post.user.first_name }}
+
+                                {{ post.user.last_name }}
+
+                            </div>
+
+                            <small class="text-muted-ef">
+
+                                Đã đăng vào
+
+                                {{ post.created_date.strftime("%d/%m/%Y") }}
+
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </footer>
+
+        </section>
+
+    </section>
+
+</article>
