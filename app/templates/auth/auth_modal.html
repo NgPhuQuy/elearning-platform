@@ -1,0 +1,38 @@
+<div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-ef-lg overflow-hidden border-0 shadow-lg">
+            <div class="ef-modal-top-bar"></div>
+            <div class="p-4 p-md-5">
+                <div class="d-flex align-items-center gap-2 mb-4">
+                    <div class="ef-brand-icon" style="width:36px;height:36px;"><i class="bi bi-mortarboard-fill"></i>
+                    </div>
+                    <span class="font-display fs-4">EduForum</span>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+                </div>
+
+                <ul class="nav nav-pills nav-fill bg-slate-100 p-1 rounded-3 mb-4" id="authTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-3 fw-semibold" id="login-tab" data-bs-toggle="pill"
+                                data-bs-target="#login-pane" type="button">Đăng nhập
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-3 fw-semibold" id="register-tab" data-bs-toggle="pill"
+                                data-bs-target="#register-pane" type="button">Đăng ký
+                        </button>
+                    </li>
+                </ul>
+
+                <main class="tab-content">
+                    {% block login %}
+                        {% include 'auth/login_form.html' %}
+                    {% endblock %}
+
+                    {% block register %}
+                        {% include 'auth/register_form.html' %}
+                    {% endblock %}
+                </main>
+            </div>
+        </div>
+    </div>
+</div>
