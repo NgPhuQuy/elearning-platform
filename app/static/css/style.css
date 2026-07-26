@@ -598,3 +598,48 @@ a {
 .ef-teacher-reg .file-drop {
     border-radius: .75rem;
 }
+
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: .35rem .9rem;
+    border-radius: .75rem;
+    border: 1.5px solid var(--ef-slate-200);
+    color: var(--ef-slate-600);
+    font-size: .875rem;
+    font-weight: 500;
+    background: #fff;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+
+.tag-chip:hover {
+    border-color: var(--ef-slate-300);
+}
+
+.btn-check:checked + .tag-chip {
+    border-color: var(--ef-indigo-500);
+    background-color: var(--ef-indigo-50);
+    color: var(--ef-indigo-700);
+}
+
+.ef-step-line {
+    height: 2px;
+    border-radius: 999px;
+    margin: 17px .5rem 0;
+    background-color: var(--ef-slate-200);
+    transition: background-color .2s ease;
+}
+
+.ef-step-line.done {
+    background-color: var(--ef-emerald-400);
+}
+
+.ef-teacher-reg .agree-box {
+    transition: border-color .15s ease;
+}
+
+.ef-teacher-reg .agree-box:hover {
+    border-color: var(--ef-indigo-200);
+}

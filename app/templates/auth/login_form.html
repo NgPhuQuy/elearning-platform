@@ -1,0 +1,58 @@
+<!-- LOGIN SECTION -->
+<section class="tab-pane fade show active" id="login-pane" aria-labelledby="login-tab">
+    <header class="mb-4">
+        <h2 class="font-display fs-3">Chào mừng trở lại!</h2>
+        <p class="text-muted-ef small mb-0">Đăng nhập để tiếp tục học tập</p>
+    </header>
+
+    <!-- Social Login Buttons -->
+    <menu class="row g-2 mb-3 p-0 list-unstyled">
+        <li class="col-6">
+            <a href="/login/google"
+               class="btn btn-outline-secondary w-100 btn-sm py-2">
+                <i class="bi bi-google me-1" aria-hidden="true"></i> Google
+            </a>
+        </li>
+        <li class="col-6">
+            <a href="" {# {{ url_for('auth.facebook_login') }} #}
+               class="btn btn-outline-secondary w-100 btn-sm py-2">
+                <i class="bi bi-facebook me-1" aria-hidden="true"></i> Facebook
+            </a>
+        </li>
+    </menu>
+
+    <section class="d-flex align-items-center gap-2 mb-3" aria-label="Phương thức đăng nhập khác">
+        <hr class="flex-grow-1 my-0">
+        <span class="small text-muted-ef">hoặc</span>
+        <hr class="flex-grow-1 my-0">
+    </section>
+
+    <!-- Login Form -->
+    <form action="{{ url_for('login') }}" method="POST">
+
+        <fieldset class="mb-3 border-0 p-0">
+            <label for="username" class="form-label small fw-semibold">Email</label>
+            <input type="text" id="username" name="username" class="form-control"
+                   placeholder="Tài khoản" required>
+        </fieldset>
+
+        <fieldset class="mb-3 border-0 p-0">
+            <label for="password" class="form-label small fw-semibold">Mật khẩu</label>
+            <input type="password" id="password" name="password" class="form-control"
+                   placeholder="Mật khẩu" required>
+        </fieldset>
+
+        <fieldset class="d-flex justify-content-between align-items-center mb-3 border-0 p-0">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="rememberMe" name="remember_me">
+                <label class="form-check-label small" for="rememberMe">Ghi nhớ đăng nhập</label>
+            </div>
+            <a href="{{ url_for('forgot_password') }}"
+               class="small fw-semibold text-indigo-700">Quên mật khẩu?</a>
+        </fieldset>
+
+        <button type="submit" class="btn btn-indigo w-100 py-2">
+            <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i> Đăng nhập
+        </button>
+    </form>
+</section>
