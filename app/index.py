@@ -1,9 +1,10 @@
 import cloudinary.uploader
-from flask import redirect, render_template, request, url_for, flash, jsonify
+from flask import redirect, render_template, request, url_for, jsonify
 from flask_login import login_user, current_user, logout_user
-from app.decorator import login_required, teacher_required, anonymous_required
+
 from app import app, dao, db, oauth
 from app.dao import register_user
+from app.decorator import login_required, teacher_required, anonymous_required
 from app.models import PostCate, VoteType, Comment, Post, Course, User
 
 
@@ -15,13 +16,14 @@ def inject_common():
         "new_question_today": len(new_question_today),
         "course_on_sale": len(course_on_sale),
         "posts": dao.get_posts(),
-        "dao":dao
+        "dao": dao
     }
 
 
 @app.route('/')
 def index():
     return render_template("index.html")
+
 
 @app.route('/register', methods=["GET", "POST"])
 @anonymous_required
@@ -75,7 +77,7 @@ def register():
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
-    #TODO
+    # TODO
     pass
 
 
@@ -86,14 +88,17 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
 
+        if not all([username, password]):
+            return jsonify({"success": False, "error": "Vui lòng nhập đầy đủ tài khoản và mật khẩu!"}), 400
+
         user = dao.auth_user(username=username, password=password)
 
-        if user:
-            login_user(user)
-            return redirect("/")
-        else:
-            flash("Tài khoản hoặc mật khẩu không đúng!")
-    return redirect(request.referrer)
+        if not user:
+            return jsonify({"success": False, "error": "Tài khoản hoặc mật khẩu không đúng!"}), 401
+
+        login_user(user)
+
+    return render_template("index.html")
 
 
 @app.route('/logout')
@@ -102,11 +107,13 @@ def logout():
     logout_user()
     return redirect("/")
 
+
 @app.route("/login/google")
 def google_login():
     redirect_uri = url_for("google_authorize", _external=True)
     print(repr(redirect_uri))
     return oauth.google.authorize_redirect(redirect_uri)
+
 
 @app.route("/authorize/google")
 def google_authorize():
@@ -140,14 +147,17 @@ def google_authorize():
 def terms():
     pass
 
+
 @app.route('/privacy')
 def privacy():
     pass
+
 
 @app.route('/register-teacher', methods=['GET', 'POST'])
 @login_required
 def register_teacher():
     return render_template("teacher/register-teacher.html")
+
 
 @app.route('/profile')
 @login_required
@@ -204,16 +214,20 @@ def change_password():
 
     return render_template("profile/change-password.html", error=error)
 
+
 @app.route('/become-teacher', methods=['POST'])
 @login_required
 def become_teacher():
     if not current_user.teacher_profile:
         dao.register_teacher(user_id=current_user.id)
     return redirect(request.referrer or url_for('profile'))
+
+
 @app.route("/courses")
 def courses():
     courses = Course.query.order_by(Course.id.desc()).all()
     return render_template("course/manage.html", courses=courses)
+
 
 @app.route('/courses/manage')
 @login_required
@@ -221,6 +235,7 @@ def courses():
 def my_courses():
     courses = dao.get_courses_by_teacher_id(current_user.teacher_profile.id)
     return render_template('course/manage.html', courses=courses)
+
 
 @app.route('/courses/create', methods=['GET', 'POST'])
 @login_required
@@ -287,15 +302,17 @@ def update_course(course_id):
     chapters = dao.get_chapters(course_id)
     outcomes = dao.get_outcomes(course_id)
 
-
     return render_template('course/course_form.html', categories=categories,
-                            course=course, chapters=chapters, outcomes=outcomes)
+                           course=course, chapters=chapters, outcomes=outcomes)
+
+
 @app.route('/courses/<int:course_id>/delete', methods=['POST'])
 @login_required
 @teacher_required
 def delete_course(course_id):
     dao.delete_course(course_id, teacher_id=current_user.teacher_profile.id)
     return redirect(url_for('my_courses'))
+
 
 @app.route('/courses/<int:course_id>/content', methods=['GET', 'POST'])
 @login_required
@@ -325,6 +342,7 @@ def manage_content(course_id):
 
     return redirect(url_for('update_course', course_id=course_id) + '#cc-content')
 
+
 @app.route('/chapters/<int:chapter_id>/delete', methods=['POST'])
 @login_required
 @teacher_required
@@ -341,6 +359,8 @@ def delete_lesson(lesson_id):
     course_id = request.form.get('course_id')
     dao.delete_lesson(lesson_id, teacher_id=current_user.teacher_profile.id)
     return redirect(url_for('manage_content', course_id=course_id))
+
+
 # forum
 
 @app.route("/forum")
@@ -356,7 +376,7 @@ def forum():
     else:
         solved = None
 
-    posts = dao.get_posts(keyword=keyword, solved=solved,category_id=category)
+    posts = dao.get_posts(keyword=keyword, solved=solved, category_id=category)
 
     return render_template("forum/index.html", posts=posts)
 
