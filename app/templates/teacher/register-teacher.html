@@ -1,0 +1,266 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Đăng ký Giảng viên · EduForum{% endblock %}
+
+{% block content %}
+<main class="flex-grow-1">
+  <div class="ef-teacher-reg p-3 p-lg-4 mx-auto">
+    <header class="text-center mb-5">
+      <div class="d-inline-flex align-items-center justify-content-center rounded-4 mb-3"
+           style="width: 64px; height: 64px; background-color: var(--ef-violet-100, #EEF2FF); color: var(--ef-violet-600, #4F46E5);">
+        <i class="bi bi-mortarboard-fill fs-2"></i>
+      </div>
+      <h1 class="font-display fs-3 fw-bold mb-2">Đăng ký trở thành Giảng viên</h1>
+      <p class="text-muted-ef small mb-0">Chia sẻ kiến thức, truyền cảm hứng và tạo thu nhập từ đam mê của bạn</p>
+    </header>
+
+    <!-- Progress Indicator / Multi-step Bar -->
+    <nav aria-label="Tiến trình đăng ký" class="d-flex justify-content-between mb-4">
+      <div class="text-center flex-fill" data-step-indicator="1">
+        <div class="step-circle rounded-circle mx-auto d-flex align-items-center justify-content-center fw-bold bg-primary text-white" style="width:36px;height:36px;">1</div>
+        <p class="step-label small mt-2 mb-0 text-indigo fw-semibold">Thông tin</p>
+      </div>
+      <div class="text-center flex-fill" data-step-indicator="2">
+        <div class="step-circle rounded-circle mx-auto d-flex align-items-center justify-content-center fw-bold bg-body-secondary text-muted-ef" style="width:36px;height:36px;">2</div>
+        <p class="step-label small mt-2 mb-0 text-muted-ef">Chuyên môn</p>
+      </div>
+      <div class="text-center flex-fill" data-step-indicator="3">
+        <div class="step-circle rounded-circle mx-auto d-flex align-items-center justify-content-center fw-bold bg-body-secondary text-muted-ef" style="width:36px;height:36px;">3</div>
+        <p class="step-label small mt-2 mb-0 text-muted-ef">Xác minh</p>
+      </div>
+      <div class="text-center flex-fill" data-step-indicator="4">
+        <div class="step-circle rounded-circle mx-auto d-flex align-items-center justify-content-center fw-bold bg-body-secondary text-muted-ef" style="width:36px;height:36px;">4</div>
+        <p class="step-label small mt-2 mb-0 text-muted-ef">Xác nhận</p>
+      </div>
+    </nav>
+
+    <!-- Main Registration Form Card -->
+    <article class="card-ef">
+      <header class="mb-4">
+        <h1 class="font-display fs-4 mb-1">Đăng ký trở thành Giảng viên</h1>
+        <p class="text-muted-ef small mb-0">Chia sẻ kiến thức của bạn với hơn 50.000 học viên trên EduForum</p>
+      </header>
+
+      <form action="{{ url_for('register_teacher') }}" method="POST" enctype="multipart/form-data" id="teacherRegForm" novalidate>
+
+        <!-- STEP 1: Thông tin cá nhân -->
+        <fieldset class="reg-step border-0 p-0" data-step="1">
+          <legend class="font-display fs-6 mb-3 float-none w-auto p-0 fw-bold">1. Thông tin cá nhân</legend>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="fullName" class="form-label small fw-semibold">Họ và tên</label>
+              <input type="text" id="fullName" name="full_name" class="form-control" value="{{ current_user }}" required>
+            </div>
+            <div class="col-md-6">
+              <label for="email" class="form-label small fw-semibold">Email</label>
+              <input type="email" id="email" name="email" class="form-control" value="{{ current_user.email }}" required>
+            </div>
+            <div class="col-md-6">
+              <label for="phone" class="form-label small fw-semibold">Số điện thoại</label>
+              <input type="tel" id="phone" name="phone" class="form-control" value="{{ current_user.phone }}" required>
+            </div>
+            <div class="col-md-6">
+              <label for="workplace" class="form-label small fw-semibold">Trường / Đơn vị công tác</label>
+              <input type="text" id="workplace" name="workplace" class="form-control" placeholder="Đại học Bách Khoa Hà Nội">
+            </div>
+            <div class="col-md-6">
+              <label for="degree" class="form-label small fw-semibold">Bằng cấp cao nhất</label>
+              <select id="degree" name="degree" class="form-select" required>
+                <option value="">Chọn bằng cấp</option>
+                <option value="college">Cao đẳng</option>
+                <option value="bachelor">Đại học</option>
+                <option value="master">Thạc sĩ</option>
+                <option value="doctorate">Tiến sĩ</option>
+                <option value="cert">Chứng chỉ chuyên ngành</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="major" class="form-label small fw-semibold">Chuyên ngành</label>
+              <input type="text" id="major" name="major" class="form-control" placeholder="Công nghệ Thông tin" required>
+            </div>
+          </div>
+          <div class="mb-1">
+            <label for="bio" class="form-label small fw-semibold">Giới thiệu bản thân</label>
+            <textarea id="bio" name="bio" class="form-control" rows="4" maxlength="500" placeholder="Mô tả ngắn gọn về bạn, kinh nghiệm và phong cách giảng dạy. Học viên sẽ thấy phần này trên trang giảng viên của bạn..." required></textarea>
+          </div>
+        </fieldset>
+
+        <!-- STEP 2: Hồ sơ chuyên môn -->
+        <fieldset class="reg-step border-0 p-0 d-none" data-step="2">
+          <legend class="font-display fs-6 mb-3 float-none w-auto p-0 fw-bold">2. Hồ sơ chuyên môn</legend>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold d-block">Lĩnh vực chuyên môn (chọn nhiều)</label>
+            <div class="d-flex flex-wrap gap-2">
+              {% for tag in ['React','Python','Node.js','UI/UX Design','Machine Learning','DevOps','SQL','TypeScript','Java','AWS','Figma','Flutter'] %}
+              <input type="checkbox" class="btn-check" id="tag-{{ loop.index }}" name="expertise" value="{{ tag }}" autocomplete="off">
+              <label class="btn btn-outline-primary rounded-pill btn-sm" for="tag-{{ loop.index }}">{{ tag }}</label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="experience" class="form-label small fw-semibold">Số năm kinh nghiệm trong ngành</label>
+            <select id="experience" name="experience" class="form-select" required>
+              <option value="">Chọn số năm kinh nghiệm</option>
+              <option>Dưới 1 năm</option>
+              <option>1-2 năm</option>
+              <option>3-5 năm</option>
+              <option>5-10 năm</option>
+              <option>Trên 10 năm</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold d-block">Phong cách giảng dạy của bạn</label>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="option-card d-flex gap-2 p-3 border rounded-3 h-100 mb-0" for="style-practical">
+                  <input type="radio" class="form-check-input mt-1 flex-shrink-0" name="teach_style" id="style-practical" value="practical" required>
+                  <span><span class="d-block fw-semibold small">🛠️ Thực hành dự án thực tế</span><span class="d-block text-muted-ef" style="font-size:.75rem;">Học qua làm, ít lý thuyết</span></span>
+                </label>
+              </div>
+              <div class="col-md-6">
+                <label class="option-card d-flex gap-2 p-3 border rounded-3 h-100 mb-0" for="style-theory">
+                  <input type="radio" class="form-check-input mt-1 flex-shrink-0" name="teach_style" id="style-theory" value="theory">
+                  <span><span class="d-block fw-semibold small">📚 Lý thuyết nền tảng</span><span class="d-block text-muted-ef" style="font-size:.75rem;">Hiểu sâu từ gốc</span></span>
+                </label>
+              </div>
+              <div class="col-md-6">
+                <label class="option-card d-flex gap-2 p-3 border rounded-3 h-100 mb-0" for="style-mixed">
+                  <input type="radio" class="form-check-input mt-1 flex-shrink-0" name="teach_style" id="style-mixed" value="mixed">
+                  <span><span class="d-block fw-semibold small">⚖️ Kết hợp lý thuyết + thực hành</span><span class="d-block text-muted-ef" style="font-size:.75rem;">Cân bằng giữa hai phương pháp</span></span>
+                </label>
+              </div>
+              <div class="col-md-6">
+                <label class="option-card d-flex gap-2 p-3 border rounded-3 h-100 mb-0" for="style-qa">
+                  <input type="radio" class="form-check-input mt-1 flex-shrink-0" name="teach_style" id="style-qa" value="qa">
+                  <span><span class="d-block fw-semibold small">💬 Hỏi đáp tương tác</span><span class="d-block text-muted-ef" style="font-size:.75rem;">Giải đáp thắc mắc trực tiếp</span></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="linkedin" class="form-label small fw-semibold">LinkedIn</label>
+              <input type="url" id="linkedin" name="linkedin" class="form-control" placeholder="https://linkedin.com/in/...">
+            </div>
+            <div class="col-md-6">
+              <label for="website" class="form-label small fw-semibold">Website / Portfolio</label>
+              <input type="url" id="website" name="website" class="form-control" placeholder="https://...">
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- STEP 3: Hồ sơ xác minh -->
+        <fieldset class="reg-step border-0 p-0 d-none" data-step="3">
+          <legend class="font-display fs-6 mb-3 float-none w-auto p-0 fw-bold">3. Tài liệu pháp lý &amp; xác minh</legend>
+
+          <div class="alert d-flex gap-2 mb-3" style="background-color: var(--ef-amber-50, #FFFBEB); border: 1px solid var(--ef-amber-200, #FDE68A);">
+            <i class="bi bi-exclamation-circle text-warning flex-shrink-0"></i>
+            <div class="small">
+              <p class="fw-semibold mb-1" style="color: var(--ef-amber-800, #92400E);">Tại sao cần tài liệu?</p>
+              <p class="mb-0" style="color: var(--ef-amber-700, #B45309);">Chúng tôi xác minh để bảo vệ học viên và đảm bảo chất lượng giảng dạy. Tài liệu được mã hóa và chỉ dùng cho mục đích xác minh.</p>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="idCardFile" class="form-label small fw-semibold mb-2">CCCD / Passport</label>
+              <div class="file-drop position-relative border border-2 border-dashed rounded-3 p-3 text-center text-muted-ef bg-light">
+                <i class="bi bi-cloud-upload fs-4 d-block mb-1"></i>
+                <span class="file-drop-text small d-block">Kéo thả hoặc click để chọn file</span>
+                <span class="text-muted-ef d-block" style="font-size:.7rem;">JPG, PNG hoặc PDF — tối đa 10MB</span>
+                <input type="file" id="idCardFile" name="id_card_file" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor:pointer;" accept="image/*,application/pdf" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="degreeFile" class="form-label small fw-semibold mb-2">Bằng cấp / Chứng chỉ chuyên ngành</label>
+              <div class="file-drop position-relative border border-2 border-dashed rounded-3 p-3 text-center text-muted-ef bg-light">
+                <i class="bi bi-cloud-upload fs-4 d-block mb-1"></i>
+                <span class="file-drop-text small d-block">Kéo thả hoặc click để chọn file</span>
+                <span class="text-muted-ef d-block" style="font-size:.7rem;">PDF, JPG tối đa 10MB</span>
+                <input type="file" id="degreeFile" name="degree_file" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor:pointer;" accept="image/*,application/pdf" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="cvFile" class="form-label small fw-semibold mb-2">CV / Hồ sơ năng lực</label>
+              <div class="file-drop position-relative border border-2 border-dashed rounded-3 p-3 text-center text-muted-ef bg-light">
+                <i class="bi bi-cloud-upload fs-4 d-block mb-1"></i>
+                <span class="file-drop-text small d-block">Kéo thả hoặc click để chọn file</span>
+                <span class="text-muted-ef d-block" style="font-size:.7rem;">PDF hoặc Word — tối đa 5MB</span>
+                <input type="file" id="cvFile" name="cv_file" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor:pointer;" accept=".pdf,.doc,.docx" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="extraCertFile" class="form-label small fw-semibold mb-2">Chứng chỉ bổ sung (không bắt buộc)</label>
+              <div class="file-drop position-relative border border-2 border-dashed rounded-3 p-3 text-center text-muted-ef bg-light">
+                <i class="bi bi-cloud-upload fs-4 d-block mb-1"></i>
+                <span class="file-drop-text small d-block">AWS, Google, Meta... hoặc chứng chỉ liên quan</span>
+                <span class="text-muted-ef d-block" style="font-size:.7rem;">PDF, JPG tối đa 10MB</span>
+                <input type="file" id="extraCertFile" name="extra_cert_file" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor:pointer;" accept="image/*,application/pdf">
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label for="videoFile" class="form-label small fw-semibold mb-2">Video giới thiệu bản thân (không bắt buộc)</label>
+            <div class="file-drop position-relative border border-2 border-dashed rounded-3 p-4 text-center text-muted-ef bg-light">
+              <i class="bi bi-camera-video fs-4 d-block mb-1"></i>
+              <span class="file-drop-text small d-block">Tải lên video 1-2 phút giới thiệu bạn — video giúp tăng tỷ lệ phê duyệt!</span>
+              <span class="text-muted-ef d-block" style="font-size:.7rem;">MP4, MOV — tối đa 100MB</span>
+              <input type="file" id="videoFile" name="video_file" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor:pointer;" accept="video/*">
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- STEP 4: Xác nhận & Điều khoản -->
+        <fieldset class="reg-step border-0 p-0 d-none" data-step="4">
+          <legend class="font-display fs-6 mb-3 float-none w-auto p-0 fw-bold">4. Xác nhận và gửi đơn</legend>
+          <p class="text-muted-ef small mb-3">Kiểm tra lại thông tin trước khi gửi. Đơn sẽ được xét duyệt trong 3-5 ngày làm việc.</p>
+
+          <dl class="row small mb-0 border rounded-3 p-3 bg-light">
+            <dt class="col-5 col-md-4 text-muted-ef fw-normal">Họ tên</dt><dd class="col-7 col-md-8 fw-semibold text-end" id="sumName">—</dd>
+            <dt class="col-5 col-md-4 text-muted-ef fw-normal">Email</dt><dd class="col-7 col-md-8 fw-semibold text-end" id="sumEmail">—</dd>
+            <dt class="col-5 col-md-4 text-muted-ef fw-normal">Bằng cấp</dt><dd class="col-7 col-md-8 fw-semibold text-end" id="sumDegree">—</dd>
+            <dt class="col-5 col-md-4 text-muted-ef fw-normal">Chuyên ngành</dt><dd class="col-7 col-md-8 fw-semibold text-end" id="sumMajor">—</dd>
+            <dt class="col-5 col-md-4 text-muted-ef fw-normal">Kinh nghiệm</dt><dd class="col-7 col-md-8 fw-semibold text-end" id="sumExperience">—</dd>
+            <dt class="col-5 col-md-4 text-muted-ef fw-normal mb-0">Lĩnh vực</dt><dd class="col-7 col-md-8 fw-semibold text-end mb-0" id="sumExpertise">—</dd>
+          </dl>
+
+          <div class="mt-3 mb-3">
+            <p class="small fw-semibold mb-2">Tài liệu đã tải lên:</p>
+            <ul class="list-unstyled small mb-0">
+              <li class="mb-1"><i id="chkIdCard" class="bi bi-circle text-muted-ef me-2"></i>CCCD / Passport</li>
+              <li class="mb-1"><i id="chkDegree" class="bi bi-circle text-muted-ef me-2"></i>Bằng cấp</li>
+              <li class="mb-1"><i id="chkCv" class="bi bi-circle text-muted-ef me-2"></i>CV</li>
+              <li class="mb-0"><i id="chkVideo" class="bi bi-circle text-muted-ef me-2"></i>Video giới thiệu</li>
+            </ul>
+          </div>
+
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="agreeInstructor" name="agree_terms" required>
+            <label class="form-check-label small" for="agreeInstructor">
+              Tôi xác nhận rằng tất cả thông tin cung cấp là chính xác và đồng ý với
+              <a href="#" class="text-indigo-700 fw-semibold text-decoration-none">Điều khoản Giảng viên</a>,
+              <a href="#" class="text-indigo-700 fw-semibold text-decoration-none">Chính sách chia sẻ doanh thu</a> và
+              <a href="#" class="text-indigo-700 fw-semibold text-decoration-none">Quy tắc chất lượng khóa học</a> của EduForum.
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Action Buttons -->
+        <footer class="d-flex align-items-center justify-content-between pt-3 mt-4 border-top">
+          <button type="button" class="btn btn-outline-secondary" id="btnBack" disabled>Quay lại</button>
+          <span class="small text-muted-ef" id="stepCounter">Bước 1/4</span>
+          <button type="button" class="btn btn-indigo" id="btnNext">Tiếp theo</button>
+          <button type="submit" class="btn btn-indigo d-none" id="btnSubmit">Gửi đơn đăng ký</button>
+        </footer>
+      </form>
+    </article>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/teacher-register.js') }}"></script>
+{% endblock %}
