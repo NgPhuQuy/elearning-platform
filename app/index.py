@@ -136,7 +136,6 @@ def google_authorize():
     return redirect("/")
 
 
-
 @app.route('/terms')
 def terms():
     pass

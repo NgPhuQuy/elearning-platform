@@ -9,12 +9,12 @@ from flask_sqlalchemy import SQLAlchemy
 
 load_dotenv()
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "KNJBJku f<j ]f2;w]r[jnofpmc,snKZD l12sa,lm2njwqd"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DB_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
-cloudinary.config(cloud_name='dtvg4cpoq',
-                  api_key='211564137488191',
-                  api_secret='otiD0T9BFzzg9UyKGcTb6MHi3Ow')
+cloudinary.config(cloud_name=os.environ.get("CLOUD_NAME"),
+                  api_key=os.environ.get("CLOUD_KEY"),
+                  api_secret=os.environ.get("CLOUD_SECRET"))
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
