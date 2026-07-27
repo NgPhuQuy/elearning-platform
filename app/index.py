@@ -284,7 +284,7 @@ def change_password():
 @app.route("/courses")
 def courses():
     courses = Course.query.order_by(Course.id.desc()).all()
-    return render_template("course/manage.html", courses=courses)
+    return render_template("course/courses.html", courses=courses)
 
 
 @app.route("/courses/manage")
@@ -324,6 +324,13 @@ def create_course():
 
     categories = dao.get_categories()
     return render_template("course/course_form.html", categories=categories, course=None)
+
+@app.route('/courses/<int:course_id>')
+def course_detail(course_id):
+    course = dao.get_course_details(course_id)
+    if not course:
+        return redirect(url_for('courses'))
+    return render_template('course/course_detail.html', course=course)
 
 
 @app.route("/courses/<int:course_id>/update", methods=["GET", "POST"])
