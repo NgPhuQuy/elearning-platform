@@ -1,5 +1,5 @@
 import cloudinary.uploader
-from flask import jsonify, redirect, render_template, request, url_for
+from flask import jsonify, redirect, render_template, request, url_for,session
 from flask_login import current_user, login_user, logout_user
 
 from app import admin, app, dao, db, oauth  # noqa: F401  # Register admin routes.
@@ -111,7 +111,10 @@ def login():
             return jsonify({"success": False, "error": "Tài khoản hoặc mật khẩu không đúng!"}), 401
 
         login_user(user)
-        return jsonify({"success": True, "error": ""}), 200
+
+        redirect_url = session.pop("next_url", "/")
+
+        return jsonify({"success": True, "redirect": redirect_url}), 200
 
     return render_template("index.html")
 
@@ -422,7 +425,7 @@ def delete_lesson(lesson_id):
 
 
 @app.route("/forum")
-@login_required
+
 def forum():
     keyword = request.args.get("kw")
     solved = request.args.get("solved")

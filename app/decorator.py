@@ -1,6 +1,6 @@
 from functools import wraps
 
-from flask import redirect
+from flask import redirect,url_for,request,session
 from flask_login import current_user
 
 
@@ -19,7 +19,8 @@ def login_required(func):
     def wrapper(*args, **kwargs):
         if not current_user.is_authenticated:
             # hien thi trang dang nhap todo
-            return None
+            session["next_url"] = request.url
+            return redirect(url_for("index", login=1))
         return func(*args, **kwargs)
 
     return wrapper
