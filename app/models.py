@@ -3,7 +3,16 @@ from datetime import datetime
 from enum import Enum as MyEnum
 
 from flask_login import UserMixin
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import backref, relationship
 
 from app import app, db
@@ -24,20 +33,24 @@ class User(BaseModel, UserMixin):
     google_sub = Column(String(255))
     first_name = Column(String(255))
     last_name = Column(String(255))
-    avatar = Column(String(255), default='')
+    avatar = Column(String(255), default="")
     email = Column(String(255), nullable=False, unique=True)
     phone = Column(String(255))
     teacher_profile = relationship("Teacher", backref="user", uselist=False, lazy=True)
-    bio = Column(String(255), default='')
+    bio = Column(String(255), default="")
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
 
 class Teacher(BaseModel):
-    user_id = Column(Integer, ForeignKey('user.id'), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("user.id"), unique=True, nullable=False)
     note = Column(String(255), default="")
-    courses = relationship("Course", backref="teacher", lazy=True, )
+    courses = relationship(
+        "Course",
+        backref="teacher",
+        lazy=True,
+    )
 
 
 class Chapter(BaseModel):
@@ -45,15 +58,10 @@ class Chapter(BaseModel):
 
     order = Column(Integer, default=1)
 
-    course_id = Column(Integer,
-                       ForeignKey("course.id"),
-                       nullable=False)
+    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
 
     lessons = relationship(
-        "Lesson",
-        backref="chapter",
-        cascade="all, delete-orphan",
-        lazy=True
+        "Lesson", backref="chapter", cascade="all, delete-orphan", lazy=True
     )
 
 
@@ -63,8 +71,10 @@ class Category(BaseModel):
 
 class CourseCategory(db.Model):
     __tablename__ = "course_category"
-    course_id = Column(Integer, ForeignKey('course.id', ondelete="CASCADE"), primary_key=True)
-    category_id = Column(Integer, ForeignKey('category.id'), primary_key=True)
+    course_id = Column(
+        Integer, ForeignKey("course.id", ondelete="CASCADE"), primary_key=True
+    )
+    category_id = Column(Integer, ForeignKey("category.id"), primary_key=True)
 
 
 class CourseLevel(MyEnum):
@@ -79,15 +89,14 @@ class Course(BaseModel):
     description = Column(String(1000), nullable=False)
     image = Column(String(500), nullable=False, default="")
 
-    teacher_id = Column(Integer, ForeignKey('teacher.id'), nullable=False)
+    teacher_id = Column(Integer, ForeignKey("teacher.id"), nullable=False)
 
     chapters = relationship(
-        "Chapter",
-        backref="course",
-        cascade="all, delete-orphan",
-        lazy=True
+        "Chapter", backref="course", cascade="all, delete-orphan", lazy=True
     )
-    course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True)
+    course_category = relationship(
+        "CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True
+    )
     level = Column(Enum(CourseLevel), nullable=False, default=CourseLevel.BASIC)
 
 
@@ -95,6 +104,7 @@ class LessonType(MyEnum):
     VIDEO = "Video"
     NONE = "Chưa chọn"
     DOCUMENT = "Doc"
+
 
 class VideoContent(db.Model):
     lesson_id = Column(Integer, ForeignKey("lesson.id"), primary_key=True)
@@ -107,23 +117,17 @@ class DocContent(db.Model):
     content_text = Column(Text)
     file_url = Column(String(500))
 
+
 class Lesson(BaseModel):
-    type = Column(
-        Enum(LessonType),
-        nullable=False,
-
-        default=LessonType.NONE
-    )
-    chapter_id = Column(
-        Integer,
-        ForeignKey("chapter.id"),
-        nullable=False
-    )
+    type = Column(Enum(LessonType), nullable=False, default=LessonType.NONE)
+    chapter_id = Column(Integer, ForeignKey("chapter.id"), nullable=False)
     description = Column(String(255), nullable=False)
-    video_content = relationship("VideoContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
-    doc_content = relationship("DocContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
-
-
+    video_content = relationship(
+        "VideoContent", backref="lesson", uselist=False, cascade="all, delete-orphan"
+    )
+    doc_content = relationship(
+        "DocContent", backref="lesson", uselist=False, cascade="all, delete-orphan"
+    )
 
 
 class CourseOutcome(BaseModel):
@@ -151,8 +155,12 @@ class Post(BaseModel):
     is_solved = Column(Boolean, default=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     category_id = Column(Integer, ForeignKey(PostCate.id), nullable=False)
-    comments = relationship("Comment", backref="post", cascade="all, delete-orphan", lazy=True)
-    reactions = relationship("ReactionPost", backref="post", cascade="all, delete-orphan", lazy=True)
+    comments = relationship(
+        "Comment", backref="post", cascade="all, delete-orphan", lazy=True
+    )
+    reactions = relationship(
+        "ReactionPost", backref="post", cascade="all, delete-orphan", lazy=True
+    )
     user = relationship("User", backref="posts")
 
 
@@ -164,8 +172,12 @@ class Comment(BaseModel):
     post_id = Column(Integer, ForeignKey(Post.id), nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     parent_comment_id = Column(Integer, ForeignKey("comment.id"))
-    replies = relationship("Comment", backref=backref("parent", remote_side="Comment.id"))
-    reactions = relationship("ReactionComment", backref="comment", cascade="all, delete-orphan")
+    replies = relationship(
+        "Comment", backref=backref("parent", remote_side="Comment.id")
+    )
+    reactions = relationship(
+        "ReactionComment", backref="comment", cascade="all, delete-orphan"
+    )
     user = relationship("User", backref="comments")
 
 
@@ -226,58 +238,80 @@ class TeacherApplication(BaseModel):
     video_file = Column(String(500))
 
     # Duyệt
-    status = Column(Enum(ApplicationStatus), nullable=False, default=ApplicationStatus.PENDING)
+    status = Column(
+        Enum(ApplicationStatus), nullable=False, default=ApplicationStatus.PENDING
+    )
     reject_reason = Column(String(500))
     reviewed_by = Column(Integer, ForeignKey("user.id"))
     reviewed_at = Column(DateTime)
 
-    user = relationship("User", foreign_keys="TeacherApplication.user_id", backref="teacher_applications")
+    user = relationship(
+        "User",
+        foreign_keys="TeacherApplication.user_id",
+        backref="teacher_applications",
+    )
     reviewer = relationship("User", foreign_keys="TeacherApplication.reviewed_by")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         db.session.commit()
-        password = hashlib.sha256(b'11111111').hexdigest()
-        admin = User(username='admin', password=password, first_name="Nguyen Tran Ad", last_name="Min", email='',
-                     phone='')
+        password = hashlib.sha256(b"11111111").hexdigest()
+        admin = User(
+            username="admin",
+            password=password,
+            first_name="Nguyen Tran Ad",
+            last_name="Min",
+            email="",
+            phone="",
+        )
         db.session.add(admin)
 
-        teacher_user1 = User(username='teacher01', password=password,
-                             first_name='Nguyen', last_name='An', email='an.teacher@gmail.com',
-                             phone='0911111111')
+        teacher_user1 = User(
+            username="teacher01",
+            password=password,
+            first_name="Nguyen",
+            last_name="An",
+            email="an.teacher@gmail.com",
+            phone="0911111111",
+        )
 
-        teacher_user2 = User(username='teacher02', password=password,
-                             first_name='Tran', last_name='Binh', email='binh.teacher@gmail.com',
-                             phone='0922222222')
+        teacher_user2 = User(
+            username="teacher02",
+            password=password,
+            first_name="Tran",
+            last_name="Binh",
+            email="binh.teacher@gmail.com",
+            phone="0922222222",
+        )
 
         user1 = User(
-            username='user01',
+            username="user01",
             password=password,
-            first_name='Le',
-            last_name='Nam',
-            email='nam@gmail.com',
-            phone='0933333333'
+            first_name="Le",
+            last_name="Nam",
+            email="nam@gmail.com",
+            phone="0933333333",
         )
 
         user2 = User(
-            username='user02',
+            username="user02",
             password=password,
-            first_name='Pham',
-            last_name='Hoa',
-            email='hoa@gmail.com',
-            phone='0944444444'
+            first_name="Pham",
+            last_name="Hoa",
+            email="hoa@gmail.com",
+            phone="0944444444",
         )
 
         db.session.add_all([user1, user2, teacher_user1, teacher_user2])
         db.session.commit()
 
-        teacher1 = Teacher(user_id=teacher_user1.id,
-                           note="Giảng viên lập trình Python và Flask")
+        teacher1 = Teacher(
+            user_id=teacher_user1.id, note="Giảng viên lập trình Python và Flask"
+        )
 
-        teacher2 = Teacher(user_id=teacher_user2.id,
-                           note="Giảng viên Java Spring Boot")
+        teacher2 = Teacher(user_id=teacher_user2.id, note="Giảng viên Java Spring Boot")
 
         db.session.add_all([teacher1, teacher2])
         db.session.commit()
@@ -299,6 +333,8 @@ if __name__ == '__main__':
         cate9 = Category(name="Phát triển Web")
         cate10 = Category(name="Phát triển Mobile")
 
-        db.session.add_all([cate1, cate2, cate3, cate4, cate5, cate6, cate7, cate8, cate9, cate10])
+        db.session.add_all(
+            [cate1, cate2, cate3, cate4, cate5, cate6, cate7, cate8, cate9, cate10]
+        )
 
         db.session.commit()

@@ -77,7 +77,13 @@ class UserAdmin(MyAuthenticatedView):
     column_filters = ("is_active",)
 
     can_delete = False
-    form_excluded_columns = ("password", "google_sub", "teacher_profile", "posts", "comments")
+    form_excluded_columns = (
+        "password",
+        "google_sub",
+        "teacher_profile",
+        "posts",
+        "comments",
+    )
 
 
 class TeacherAdmin(MyAuthenticatedView):
@@ -136,7 +142,11 @@ def _documents_formatter(view, context, model, name):
     ]:
         if url:
             parts.append(f'<a href="{url}" target="_blank" rel="noopener">{label}</a>')
-    return Markup(" &nbsp;|&nbsp; ".join(parts)) if parts else Markup('<span class="text-muted">—</span>')
+    return (
+        Markup(" &nbsp;|&nbsp; ".join(parts))
+        if parts
+        else Markup('<span class="text-muted">—</span>')
+    )
 
 
 def _status_formatter(view, context, model, name):
@@ -166,11 +176,27 @@ def _reject_application(application, reason=None):
 
 
 class TeacherApplicationAdmin(MyAuthenticatedView):
-    column_list = ("id", "user", "major", "degree", "experience", "documents", "status", "created_date")
+    column_list = (
+        "id",
+        "user",
+        "major",
+        "degree",
+        "experience",
+        "documents",
+        "status",
+        "created_date",
+    )
     column_filters = ("status", "degree", "experience")
     column_searchable_list = ("major", "workplace")
     column_default_sort = ("created_date", True)
-    column_sortable_list = ("id", "major", "degree", "experience", "status", "created_date")
+    column_sortable_list = (
+        "id",
+        "major",
+        "degree",
+        "experience",
+        "status",
+        "created_date",
+    )
 
     column_labels = {
         "user": "Người nộp",
@@ -224,7 +250,9 @@ class TeacherApplicationAdmin(MyAuthenticatedView):
 
     @action("approve", "Duyệt", "Bạn có chắc muốn DUYỆT các đơn đã chọn?")
     def action_approve(self, ids):
-        applications = TeacherApplication.query.filter(TeacherApplication.id.in_(ids)).all()
+        applications = TeacherApplication.query.filter(
+            TeacherApplication.id.in_(ids)
+        ).all()
         count = 0
         for application in applications:
             if application.status == ApplicationStatus.PENDING:
@@ -235,7 +263,9 @@ class TeacherApplicationAdmin(MyAuthenticatedView):
 
     @action("reject", "Từ chối", "Bạn có chắc muốn TỪ CHỐI các đơn đã chọn?")
     def action_reject(self, ids):
-        applications = TeacherApplication.query.filter(TeacherApplication.id.in_(ids)).all()
+        applications = TeacherApplication.query.filter(
+            TeacherApplication.id.in_(ids)
+        ).all()
         count = 0
         for application in applications:
             if application.status == ApplicationStatus.PENDING:
@@ -245,11 +275,18 @@ class TeacherApplicationAdmin(MyAuthenticatedView):
         flash(f"Đã từ chối {count} đơn.", "success")
 
 
-admin = Admin(app, name="Language Academy Manager", index_view=MyAdminIndexView(), theme=Bootstrap4Theme())
+admin = Admin(
+    app,
+    name="Language Academy Manager",
+    index_view=MyAdminIndexView(),
+    theme=Bootstrap4Theme(),
+)
 
 admin.add_view(UserAdmin(User, db.session, name="Users"))
 admin.add_view(TeacherAdmin(Teacher, db.session, name="Teachers"))
-admin.add_view(TeacherApplicationAdmin(TeacherApplication, db.session, name="Đơn đăng ký GV"))
+admin.add_view(
+    TeacherApplicationAdmin(TeacherApplication, db.session, name="Đơn đăng ký GV")
+)
 admin.add_view(CategoryAdmin(Category, db.session, name="Categories"))
 admin.add_view(CourseAdmin(Course, db.session, name="Courses"))
 admin.add_view(LessonAdmin(Lesson, db.session, name="Lessons"))

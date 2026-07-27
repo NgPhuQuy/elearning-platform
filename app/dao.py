@@ -34,7 +34,9 @@ def load_user(user_id):
 
 def auth_user(username, password):
     password = hash_password(password)
-    return User.query.filter(User.username.__eq__(username), User.password.__eq__(password)).first()
+    return User.query.filter(
+        User.username.__eq__(username), User.password.__eq__(password)
+    ).first()
 
 
 def register_user(username, password, email, phone, avatar, first_name, last_name):
@@ -98,7 +100,11 @@ def change_password(new_password):
 
 
 def get_latest_teacher_application(user_id):
-    return TeacherApplication.query.filter_by(user_id=user_id).order_by(TeacherApplication.created_date.desc()).first()
+    return (
+        TeacherApplication.query.filter_by(user_id=user_id)
+        .order_by(TeacherApplication.created_date.desc())
+        .first()
+    )
 
 
 def can_apply_teacher(user_id):
@@ -113,10 +119,15 @@ def can_apply_teacher(user_id):
         return False, "Bạn đã là giảng viên."
 
     # REJECTED -> áp dụng cooldown
-    next_allowed = latest.created_date + timedelta(days=TEACHER_APPLICATION_COOLDOWN_DAYS)
+    next_allowed = latest.created_date + timedelta(
+        days=TEACHER_APPLICATION_COOLDOWN_DAYS
+    )
     if datetime.now() < next_allowed:
         remaining = (next_allowed - datetime.now()).days + 1
-        return False, f"Đơn trước đã bị từ chối. Bạn cần đợi thêm {remaining} ngày nữa mới được nộp lại."
+        return (
+            False,
+            f"Đơn trước đã bị từ chối. Bạn cần đợi thêm {remaining} ngày nữa mới được nộp lại.",
+        )
 
     return True, None
 
@@ -126,7 +137,9 @@ def create_teacher_application(user_id, **kwargs):
     if not ok:
         return None, message
 
-    application = TeacherApplication(user_id=user_id, status=ApplicationStatus.PENDING, **kwargs)
+    application = TeacherApplication(
+        user_id=user_id, status=ApplicationStatus.PENDING, **kwargs
+    )
     try:
         db.session.add(application)
         db.session.commit()
@@ -166,7 +179,13 @@ def create_course(
     level,
     category_ids,
 ):
-    course = Course(name=name, description=description, image=image, teacher_id=teacher_id, level=level)
+    course = Course(
+        name=name,
+        description=description,
+        image=image,
+        teacher_id=teacher_id,
+        level=level,
+    )
 
     try:
         db.session.add(course)
@@ -195,7 +214,10 @@ def get_course_details(course_id, teacher_id=None):
 
 def save_video_for_lesson(lesson_id, teacher_id, video_url, duration=0):
     lesson = (
-        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+        Lesson.query.join(Chapter)
+        .join(Course)
+        .filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id)
+        .first()
     )
 
     if not lesson:
@@ -206,7 +228,9 @@ def save_video_for_lesson(lesson_id, teacher_id, video_url, duration=0):
         video.video_url = video_url
         video.duration = duration
     else:
-        video = VideoContent(lesson_id=lesson_id, video_url=video_url, duration=duration)
+        video = VideoContent(
+            lesson_id=lesson_id, video_url=video_url, duration=duration
+        )
         db.session.add(video)
 
     lesson.type = LessonType.VIDEO
@@ -221,7 +245,10 @@ def save_video_for_lesson(lesson_id, teacher_id, video_url, duration=0):
 
 def save_doc_for_lesson(lesson_id, teacher_id, file_url):
     lesson = (
-        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+        Lesson.query.join(Chapter)
+        .join(Course)
+        .filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id)
+        .first()
     )
 
     if not lesson:
@@ -246,7 +273,10 @@ def save_doc_for_lesson(lesson_id, teacher_id, file_url):
 
 def clear_video_content(lesson_id, teacher_id):
     lesson = (
-        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+        Lesson.query.join(Chapter)
+        .join(Course)
+        .filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id)
+        .first()
     )
     if not lesson:
         return False
@@ -264,7 +294,10 @@ def clear_video_content(lesson_id, teacher_id):
 
 def clear_doc_content(lesson_id, teacher_id):
     lesson = (
-        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+        Lesson.query.join(Chapter)
+        .join(Course)
+        .filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id)
+        .first()
     )
     if not lesson:
         return False
@@ -298,7 +331,10 @@ def delete_course(course_id, teacher_id):
 
 def update_lesson(lesson_id, teacher_id, name=None, description=None, lesson_type=None):
     lesson = (
-        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+        Lesson.query.join(Chapter)
+        .join(Course)
+        .filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id)
+        .first()
     )
 
     if not lesson:
@@ -343,14 +379,18 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files):
         description = (chapter_data.get("description") or "").strip()
 
         if chapter_id:
-            chapter = Chapter.query.filter_by(id=int(chapter_id), course_id=course_id).first()
+            chapter = Chapter.query.filter_by(
+                id=int(chapter_id), course_id=course_id
+            ).first()
             if not chapter:
                 continue
             chapter.name = name
             chapter.description = description
             chapter.order = order
         else:
-            chapter = Chapter(name=name, description=description, course_id=course_id, order=order)
+            chapter = Chapter(
+                name=name, description=description, course_id=course_id, order=order
+            )
             db.session.add(chapter)
             db.session.flush()  # để có chapter.id ngay
 
@@ -388,7 +428,9 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
             lesson_type = LessonType.NONE
 
         if lesson_id:
-            lesson = Lesson.query.filter_by(id=int(lesson_id), chapter_id=chapter.id).first()
+            lesson = Lesson.query.filter_by(
+                id=int(lesson_id), chapter_id=chapter.id
+            ).first()
             if not lesson:
                 continue
             lesson.name = name
@@ -396,7 +438,12 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
             lesson.type = lesson_type
             file_key_id = lesson.id
         else:
-            lesson = Lesson(name=name, description=description, type=lesson_type, chapter_id=chapter.id)
+            lesson = Lesson(
+                name=name,
+                description=description,
+                type=lesson_type,
+                chapter_id=chapter.id,
+            )
             db.session.add(lesson)
             db.session.flush()
             file_key_id = temp_id
@@ -423,7 +470,9 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
                 if existing_video:
                     existing_video.video_url = res["secure_url"]
                 else:
-                    db.session.add(VideoContent(lesson_id=lesson.id, video_url=res["secure_url"]))
+                    db.session.add(
+                        VideoContent(lesson_id=lesson.id, video_url=res["secure_url"])
+                    )
             except Exception:
                 pass
 
@@ -435,7 +484,9 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
                 if existing_doc:
                     existing_doc.file_url = res["secure_url"]
                 else:
-                    db.session.add(DocContent(lesson_id=lesson.id, file_url=res["secure_url"]))
+                    db.session.add(
+                        DocContent(lesson_id=lesson.id, file_url=res["secure_url"])
+                    )
             except Exception:
                 pass
 
@@ -447,7 +498,10 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
 
 def delete_lesson(lesson_id, teacher_id):
     lesson = (
-        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+        Lesson.query.join(Chapter)
+        .join(Course)
+        .filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id)
+        .first()
     )
 
     if not lesson:
@@ -564,18 +618,37 @@ def create_post(title, content, category_ids, user_id, image=None):
 
 
 def add_comment(post_id, user_id, content, parent_comment_id=None):
-    c = Comment(content=content, post_id=post_id, user_id=user_id, parent_comment_id=parent_comment_id)
+    c = Comment(
+        content=content,
+        post_id=post_id,
+        user_id=user_id,
+        parent_comment_id=parent_comment_id,
+    )
 
     db.session.add(c)
     db.session.commit()
 
 
 def get_courses_by_teacher_id(teacher_id):
-    return Course.query.filter_by(teacher_id=teacher_id).order_by(Course.created_date.desc()).all()
+    return (
+        Course.query.filter_by(teacher_id=teacher_id)
+        .order_by(Course.created_date.desc())
+        .all()
+    )
 
 
-def update_course(course_id, teacher_id, name=None, description=None, image=None, level=None, category_ids=None):
-    course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
+def update_course(
+    course_id,
+    teacher_id,
+    name=None,
+    description=None,
+    image=None,
+    level=None,
+    category_ids=None,
+):
+    course = Course.query.filter(
+        Course.id == course_id, Course.teacher_id == teacher_id
+    ).first()
     if course:
         if name:
             course.name = name
@@ -606,7 +679,9 @@ def accept_answer(comment_id):
     if post.user_id != current_user.id:
         return False
 
-    Comment.query.filter_by(post_id=post.id, is_accepted=True).update({"is_accepted": False})
+    Comment.query.filter_by(post_id=post.id, is_accepted=True).update(
+        {"is_accepted": False}
+    )
 
     comment.is_accepted = True
 
@@ -618,7 +693,9 @@ def accept_answer(comment_id):
 
 
 def create_chapter(course_id, teacher_id, name, description):
-    course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
+    course = Course.query.filter(
+        Course.id == course_id, Course.teacher_id == teacher_id
+    ).first()
 
     db.session.commit()
     if not course:
@@ -637,7 +714,11 @@ def create_chapter(course_id, teacher_id, name, description):
 
 
 def update_chapter(chapter_id, teacher_id, name=None, description=None):
-    chapter = Chapter.query.join(Course).filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id).first()
+    chapter = (
+        Chapter.query.join(Course)
+        .filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id)
+        .first()
+    )
 
     if not chapter:
         return None
@@ -658,7 +739,11 @@ def update_chapter(chapter_id, teacher_id, name=None, description=None):
 
 
 def delete_chapter(chapter_id, teacher_id):
-    chapter = Chapter.query.join(Course).filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id).first()
+    chapter = (
+        Chapter.query.join(Course)
+        .filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id)
+        .first()
+    )
 
     if not chapter:
         return False
@@ -674,11 +759,20 @@ def delete_chapter(chapter_id, teacher_id):
 
 
 def create_lesson(teacher_id, chapter_id, name, description, lesson_type):
-    chapter = Chapter.query.join(Course).filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id).first()
+    chapter = (
+        Chapter.query.join(Course)
+        .filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id)
+        .first()
+    )
 
     if not chapter:
         return None
-    lesson = Lesson(name=name, description=description, type=LessonType[lesson_type], chapter_id=chapter.id)
+    lesson = Lesson(
+        name=name,
+        description=description,
+        type=LessonType[lesson_type],
+        chapter_id=chapter.id,
+    )
     try:
         db.session.add(lesson)
         db.session.commit()
@@ -707,7 +801,9 @@ def vote_post(post_id, user_id, vote_type):
 
 
 def vote_comment(comment_id, user_id, vote_type):
-    reaction = ReactionComment.query.filter_by(comment_id=comment_id, user_id=user_id).first()
+    reaction = ReactionComment.query.filter_by(
+        comment_id=comment_id, user_id=user_id
+    ).first()
 
     if reaction:
         if reaction.vote_type == vote_type:
@@ -717,7 +813,9 @@ def vote_comment(comment_id, user_id, vote_type):
             reaction.vote_type = vote_type
 
     else:
-        reaction = ReactionComment(comment_id=comment_id, user_id=user_id, vote_type=vote_type)
+        reaction = ReactionComment(
+            comment_id=comment_id, user_id=user_id, vote_type=vote_type
+        )
 
         db.session.add(reaction)
 
