@@ -1,6 +1,7 @@
 import hashlib
 from datetime import datetime, timedelta
 
+import cloudinary.uploader
 from flask_login import current_user
 
 from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login
@@ -12,7 +13,9 @@ from app.models import (
     Course,
     CourseCategory,
     CourseOutcome,
+    DocContent,
     Lesson,
+    LessonType,
     Post,
     PostCate,
     ReactionComment,
@@ -20,6 +23,7 @@ from app.models import (
     Teacher,
     TeacherApplication,
     User,
+    VideoContent,
 )
 
 
@@ -189,6 +193,93 @@ def get_course_details(course_id, teacher_id=None):
     return query.first()
 
 
+def save_video_for_lesson(lesson_id, teacher_id, video_url, duration=0):
+    lesson = (
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+    )
+
+    if not lesson:
+        return None
+
+    video = VideoContent.query.filter_by(lesson_id=lesson_id).first()
+    if video:
+        video.video_url = video_url
+        video.duration = duration
+    else:
+        video = VideoContent(lesson_id=lesson_id, video_url=video_url, duration=duration)
+        db.session.add(video)
+
+    lesson.type = LessonType.VIDEO
+
+    try:
+        db.session.commit()
+        return video
+    except Exception:
+        db.session.rollback()
+        return None
+
+
+def save_doc_for_lesson(lesson_id, teacher_id, file_url):
+    lesson = (
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+    )
+
+    if not lesson:
+        return None
+
+    doc = DocContent.query.filter_by(lesson_id=lesson_id).first()
+    if doc:
+        doc.file_url = file_url
+    else:
+        doc = DocContent(lesson_id=lesson_id, file_url=file_url)
+        db.session.add(doc)
+
+    lesson.type = LessonType.DOCUMENT
+
+    try:
+        db.session.commit()
+        return doc
+    except Exception:
+        db.session.rollback()
+        return None
+
+
+def clear_video_content(lesson_id, teacher_id):
+    lesson = (
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+    )
+    if not lesson:
+        return False
+
+    video = VideoContent.query.filter_by(lesson_id=lesson_id).first()
+    if video:
+        db.session.delete(video)
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return False
+    return True
+
+
+def clear_doc_content(lesson_id, teacher_id):
+    lesson = (
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+    )
+    if not lesson:
+        return False
+
+    doc = DocContent.query.filter_by(lesson_id=lesson_id).first()
+    if doc:
+        db.session.delete(doc)
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return False
+    return True
+
+
 def delete_course(course_id, teacher_id):
     course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
 
@@ -229,6 +320,129 @@ def update_lesson(lesson_id, teacher_id, name=None, description=None, lesson_typ
     except Exception:
         db.session.rollback()
         return None
+
+
+def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files):
+    """
+    Đồng bộ chapters + lessons từ JSON (chapters_data) gửi lên khi bấm "Lưu thay đổi".
+    - Chapter/Lesson có id -> update
+    - Chapter/Lesson id=None -> tạo mới
+    - Chapter/Lesson đang có trong DB nhưng KHÔNG có trong chapters_data -> xóa (đồng bộ 2 chiều)
+    - files: request.files, dùng để lấy video_file_lesson_<id|temp_id> / doc_file_lesson_<id|temp_id>
+    """
+    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
+    if not course:
+        return False
+
+    existing_chapter_ids = {c.id for c in course.chapters}
+    kept_chapter_ids = set()
+
+    for order, chapter_data in enumerate(chapters_data, start=1):
+        chapter_id = chapter_data.get("id")
+        name = (chapter_data.get("name") or "").strip()
+        description = (chapter_data.get("description") or "").strip()
+
+        if chapter_id:
+            chapter = Chapter.query.filter_by(id=int(chapter_id), course_id=course_id).first()
+            if not chapter:
+                continue
+            chapter.name = name
+            chapter.description = description
+            chapter.order = order
+        else:
+            chapter = Chapter(name=name, description=description, course_id=course_id, order=order)
+            db.session.add(chapter)
+            db.session.flush()  # để có chapter.id ngay
+
+        kept_chapter_ids.add(chapter.id)
+        _sync_lessons_for_chapter(chapter, chapter_data.get("lessons", []), files)
+
+    # Xóa các chapter không còn xuất hiện trong dữ liệu gửi lên
+    for old_id in existing_chapter_ids - kept_chapter_ids:
+        old_chapter = Chapter.query.get(old_id)
+        if old_chapter:
+            db.session.delete(old_chapter)
+
+    try:
+        db.session.commit()
+        return True
+    except Exception:
+        db.session.rollback()
+        return False
+
+
+def _sync_lessons_for_chapter(chapter, lessons_data, files):
+    existing_lesson_ids = {lesson.id for lesson in chapter.lessons}
+    kept_lesson_ids = set()
+
+    for lesson_data in lessons_data:
+        lesson_id = lesson_data.get("id")
+        temp_id = lesson_data.get("temp_id")
+        name = (lesson_data.get("name") or "").strip() or "Bài học"
+        description = (lesson_data.get("description") or "").strip()
+        type_str = lesson_data.get("type") or "NONE"
+
+        try:
+            lesson_type = LessonType[type_str]
+        except KeyError:
+            lesson_type = LessonType.NONE
+
+        if lesson_id:
+            lesson = Lesson.query.filter_by(id=int(lesson_id), chapter_id=chapter.id).first()
+            if not lesson:
+                continue
+            lesson.name = name
+            lesson.description = description
+            lesson.type = lesson_type
+            file_key_id = lesson.id
+        else:
+            lesson = Lesson(name=name, description=description, type=lesson_type, chapter_id=chapter.id)
+            db.session.add(lesson)
+            db.session.flush()
+            file_key_id = temp_id
+
+        kept_lesson_ids.add(lesson.id)
+
+        # ---- Ép 1 lesson chỉ có 1 loại media: xóa media không khớp type hiện tại ----
+        existing_video = VideoContent.query.filter_by(lesson_id=lesson.id).first()
+        existing_doc = DocContent.query.filter_by(lesson_id=lesson.id).first()
+
+        if lesson_type != LessonType.VIDEO and existing_video:
+            db.session.delete(existing_video)
+            existing_video = None
+
+        if lesson_type != LessonType.DOCUMENT and existing_doc:
+            db.session.delete(existing_doc)
+            existing_doc = None
+
+        # Gắn video mới nếu type là VIDEO và có file gửi kèm
+        video_file = files.get(f"video_file_lesson_{file_key_id}")
+        if video_file and video_file.filename and lesson_type == LessonType.VIDEO:
+            try:
+                res = cloudinary.uploader.upload(video_file, resource_type="video")
+                if existing_video:
+                    existing_video.video_url = res["secure_url"]
+                else:
+                    db.session.add(VideoContent(lesson_id=lesson.id, video_url=res["secure_url"]))
+            except Exception:
+                pass
+
+        # Gắn tài liệu mới nếu type là DOCUMENT và có file gửi kèm
+        doc_file = files.get(f"doc_file_lesson_{file_key_id}")
+        if doc_file and doc_file.filename and lesson_type == LessonType.DOCUMENT:
+            try:
+                res = cloudinary.uploader.upload(doc_file, resource_type="raw")
+                if existing_doc:
+                    existing_doc.file_url = res["secure_url"]
+                else:
+                    db.session.add(DocContent(lesson_id=lesson.id, file_url=res["secure_url"]))
+            except Exception:
+                pass
+
+    for old_id in existing_lesson_ids - kept_lesson_ids:
+        old_lesson = Lesson.query.get(old_id)
+        if old_lesson:
+            db.session.delete(old_lesson)
 
 
 def delete_lesson(lesson_id, teacher_id):
@@ -464,7 +678,7 @@ def create_lesson(teacher_id, chapter_id, name, description, lesson_type):
 
     if not chapter:
         return None
-    lesson = Lesson(name=name, description=description, type=lesson_type, chapter_id=chapter.id)
+    lesson = Lesson(name=name, description=description, type=LessonType[lesson_type], chapter_id=chapter.id)
     try:
         db.session.add(lesson)
         db.session.commit()

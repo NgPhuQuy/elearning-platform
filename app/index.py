@@ -1,8 +1,10 @@
+import json
+
 import cloudinary.uploader
 from flask import jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user
 
-from app import admin, app, dao, db, oauth  # noqa: F401  # Register admin routes.
+from app import app, dao, db, oauth  # noqa: F401  # Register admin routes.
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
 from app.models import Comment, Course, Post, PostCate, User, VoteType
@@ -44,7 +46,10 @@ def register():
             return jsonify({"success": False, "error": "Mật khẩu không khớp!"}), 400
 
         if len(password) < 8:
-            return jsonify({"success": False, "error": "Mật khẩu phải từ 8 ký tự trở lên!"}), 400
+            return (
+                jsonify({"success": False, "error": "Mật khẩu phải từ 8 ký tự trở lên!"}),
+                400,
+            )
 
         if dao.is_username_exist(username=username):
             return jsonify({"success": False, "error": "Username đã tồn tại!"}), 400
@@ -53,7 +58,10 @@ def register():
             return jsonify({"success": False, "error": "Email đã được sử dụng!"}), 400
 
         if dao.is_phone_used(phone=phone):
-            return jsonify({"success": False, "error": "Số điện thoại này đã được đăng ký!"}), 400
+            return (
+                jsonify({"success": False, "error": "Số điện thoại này đã được đăng ký!"}),
+                400,
+            )
 
         avatar = request.files.get("avatar")
         file_path = None
@@ -70,7 +78,10 @@ def register():
             return jsonify({"success": True, "redirect": "/"})
         except Exception:
             db.session.rollback()
-            return jsonify({"success": False, "error": "Hệ thống lỗi, vui lòng quay lại sau!"}), 500
+            return (
+                jsonify({"success": False, "error": "Hệ thống lỗi, vui lòng quay lại sau!"}),
+                500,
+            )
 
     return render_template("index.html")
 
@@ -108,7 +119,10 @@ def login():
         user = dao.auth_user(username=username, password=password)
 
         if not user:
-            return jsonify({"success": False, "error": "Tài khoản hoặc mật khẩu không đúng!"}), 401
+            return (
+                jsonify({"success": False, "error": "Tài khoản hoặc mật khẩu không đúng!"}),
+                401,
+            )
 
         login_user(user)
         return jsonify({"success": True, "error": ""}), 200
@@ -352,6 +366,20 @@ def update_course(course_id):
         outcomes = request.form.getlist("outcomes")
         dao.replace_outcomes(course_id, outcomes)
 
+        chapters_data_raw = request.form.get("chapters_data")
+        if chapters_data_raw:
+            try:
+                chapters_data = json.loads(chapters_data_raw)
+            except (ValueError, TypeError):
+                chapters_data = []
+            if chapters_data:
+                dao.sync_chapters_and_lessons(
+                    course_id=course_id,
+                    teacher_id=current_user.teacher_profile.id,
+                    chapters_data=chapters_data,
+                    files=request.files,
+                )
+
         return redirect(url_for("my_courses"))
 
     categories = dao.get_categories()
@@ -446,7 +474,7 @@ def forum_detail(post_id):
 
     post.view_count += 1
     db.session.commit()
-    related_posts = dao.get_related_posts(post.id)
+    related_posts = dao.get_related_posts(post.id, post.category_id)
     user_vote = dao.get_user_post_vote(post.id, current_user.id)
     return render_template("forum/detail.html", post=post, related_posts=related_posts, user_vote=user_vote)
 
@@ -466,7 +494,7 @@ def create_question():
         dao.create_post(
             title=request.form["title"],
             content=request.form["content"],
-            category_ids=request.form.getlist("category_ids"),
+            category_id=request.form["category_id"],
             user_id=current_user.id,
             image=image_url,
         )
@@ -505,6 +533,7 @@ def downvote_post(post_id):
 @login_required
 def accept_answer(comment_id):
     dao.accept_answer(comment_id)
+
     return redirect(request.referrer)
 
 

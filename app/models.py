@@ -85,14 +85,28 @@ class Course(BaseModel):
 
 class LessonType(MyEnum):
     VIDEO = "Video"
-    EXERCISE = "Bài tập"
+    NONE = "Chưa chọn"
     DOCUMENT = "Doc"
 
 
+class VideoContent(db.Model):
+    lesson_id = Column(Integer, ForeignKey("lesson.id"), primary_key=True)
+    video_url = Column(String(500), nullable=False)
+    duration = Column(Integer, default=0)
+
+
+class DocContent(db.Model):
+    lesson_id = Column(Integer, ForeignKey("lesson.id"), primary_key=True)
+    content_text = Column(Text)
+    file_url = Column(String(500))
+
+
 class Lesson(BaseModel):
+    type = Column(Enum(LessonType), nullable=False, default=LessonType.NONE)
     chapter_id = Column(Integer, ForeignKey("chapter.id"), nullable=False)
-    type = Column(Enum(LessonType), nullable=False, default=LessonType.VIDEO)
     description = Column(String(255), nullable=False)
+    video_content = relationship("VideoContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
+    doc_content = relationship("DocContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
 
 
 class CourseOutcome(BaseModel):
@@ -107,7 +121,7 @@ class PostCate(BaseModel):
     __tablename__ = "post_cate"
 
     description = Column(String(255), nullable=True)
-    posts = relationship("Post", secondary="post_category", back_populates="categories", lazy=True)
+    posts = relationship("Post", backref="category", lazy=True)
 
 
 class Post(BaseModel):
@@ -119,20 +133,10 @@ class Post(BaseModel):
     view_count = Column(Integer, default=0)
     is_solved = Column(Boolean, default=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
-
+    category_id = Column(Integer, ForeignKey(PostCate.id), nullable=False)
     comments = relationship("Comment", backref="post", cascade="all, delete-orphan", lazy=True)
     reactions = relationship("ReactionPost", backref="post", cascade="all, delete-orphan", lazy=True)
-
-    categories = relationship("PostCate", secondary="post_category", back_populates="posts", lazy=True)
     user = relationship("User", backref="posts")
-
-
-class PostCategory(db.Model):
-    __tablename__ = "post_category"
-
-    post_id = Column(Integer, ForeignKey("post.id", ondelete="CASCADE"), primary_key=True)
-
-    category_id = Column(Integer, ForeignKey("post_cate.id", ondelete="CASCADE"), primary_key=True)
 
 
 class Comment(BaseModel):
