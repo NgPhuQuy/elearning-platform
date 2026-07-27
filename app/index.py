@@ -1,5 +1,5 @@
 import cloudinary.uploader
-from flask import jsonify, redirect, render_template, request, url_for,session
+from flask import jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user, logout_user
 
 from app import admin, app, dao, db, oauth  # noqa: F401  # Register admin routes.
@@ -425,7 +425,6 @@ def delete_lesson(lesson_id):
 
 
 @app.route("/forum")
-
 def forum():
     keyword = request.args.get("kw")
     solved = request.args.get("solved")

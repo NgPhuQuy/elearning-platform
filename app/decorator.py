@@ -1,6 +1,6 @@
 from functools import wraps
 
-from flask import redirect,url_for,request,session
+from flask import redirect, request, session, url_for
 from flask_login import current_user
 
 
