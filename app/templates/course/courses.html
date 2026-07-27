@@ -1,0 +1,70 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Kho khóa học · EduForum{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-3">
+
+  <div class="ef-hero-violet p-4 p-lg-5">
+    <p class="small fw-semibold mb-2" style="color:#ddd6fe;">🎓 Kho khóa học</p>
+    <h2 class="font-display fs-3 text-white mb-1">Học từ những chuyên gia hàng đầu</h2>
+    <p class="small mb-0" style="color:#ddd6fe;">{{ courses|length }} khóa học · Học mọi lúc mọi nơi</p>
+  </div>
+
+  <div class="card-ef p-3 d-flex flex-row align-items-center gap-3 flex-wrap">
+    <div class="position-relative flex-grow-1" style="min-width:200px;">
+      <i class="bi bi-search position-absolute text-muted-ef" style="left:.8rem; top:50%; transform:translateY(-50%); font-size:.8rem;"></i>
+      <input type="text" id="courseSearch" class="form-control form-control-sm bg-slate-50" style="padding-left:2.2rem;" placeholder="Tìm khóa học...">
+    </div>
+    <div class="btn-group" role="group">
+      <input type="radio" class="btn-check level-filter" name="level" id="l-all" value="ALL" checked>
+      <label class="btn btn-dark btn-sm" for="l-all">Mọi cấp độ</label>
+      <input type="radio" class="btn-check level-filter" name="level" id="l-basic" value="BASIC">
+      <label class="btn btn-outline-secondary btn-sm" for="l-basic">Cơ bản</label>
+      <input type="radio" class="btn-check level-filter" name="level" id="l-mid" value="INTERMEDIATE">
+      <label class="btn btn-outline-secondary btn-sm" for="l-mid">Trung cấp</label>
+      <input type="radio" class="btn-check level-filter" name="level" id="l-adv" value="ADVANCED">
+      <label class="btn btn-outline-secondary btn-sm" for="l-adv">Nâng cao</label>
+    </div>
+  </div>
+
+  <div class="row g-4" id="courseGrid">
+    {% for course in courses %}
+    <div class="col-md-6 col-lg-4 course-item" data-name="{{ course.name|lower }}" data-level="{{ course.level.name }}">
+      <a href="{{ url_for('course_detail', course_id=course.id) }}" class="card-ef ef-course-card d-block text-decoration-none text-reset overflow-hidden h-100">
+        <div class="position-relative bg-slate-100" style="height:160px; overflow:hidden;">
+          {% if course.image %}
+          <img src="{{ course.image }}" class="w-100 h-100" style="object-fit:cover;">
+          {% endif %}
+          {% if course.is_sale %}
+          <div class="position-absolute top-0 start-0 m-3 d-flex gap-1">
+            <span class="badge-ef badge-ef-accent"><i class="bi bi-fire"></i> Đang khuyến mãi</span>
+          </div>
+          {% endif %}
+          <div class="position-absolute top-0 end-0 m-3"><span class="badge-ef badge-ef-default">{{ course.level.value }}</span></div>
+        </div>
+        <div class="p-3">
+          <h3 class="font-display fs-6 line-clamp-2 mb-2" style="font-size:.92rem !important;">{{ course.name }}</h3>
+          <p class="text-muted-ef small mb-2">
+            {% if course.teacher and course.teacher.user %}{{ course.teacher.user.first_name }} {{ course.teacher.user.last_name }}{% endif %}
+          </p>
+          <div class="d-flex align-items-center gap-3 text-muted-ef small mb-3">
+            <span><i class="bi bi-layers"></i> {{ course.chapters|length }} chương</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-between pt-3 border-top">
+            <span class="text-muted-ef small line-clamp-1">{{ course.description }}</span>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% else %}
+    <div class="col-12 text-center text-muted-ef py-5">
+      <i class="bi bi-journal-x fs-1"></i>
+      <p class="mt-2">Chưa có khóa học nào.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/courses.js') }}"></script>
+{% endblock %}

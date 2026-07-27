@@ -57,35 +57,31 @@
 
                     <!-- CATEGORY -->
 
-                    <div class="mb-4">
+                <div class="mb-4">
 
                         <label class="form-label fw-semibold">
-
                             Danh mục
-
                         </label>
 
                         <select
-                            name="category_id"
-                            class="form-select"
-                            required>
-
-                            <option value="">
-                                Chọn danh mục
-                            </option>
+                                id="category-select"
+                                name="category_ids"
+                                multiple
+                                autocomplete="off">
 
                             {% for c in categories %}
-
-                            <option value="{{ c.id }}">
-                                {{ c.name }}
-                            </option>
-
+                                <option value="{{ c.id }}">
+                                    {{ c.name }}
+                                </option>
                             {% endfor %}
 
                         </select>
 
-                    </div>
+                        <div class="form-text">
+                            Có thể chọn nhiều danh mục.
+                        </div>
 
+                    </div>
                     <!-- CONTENT -->
 
                     <div class="mb-4">
