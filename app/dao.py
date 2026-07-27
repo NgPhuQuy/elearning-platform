@@ -3,9 +3,24 @@ from datetime import datetime, timedelta
 
 from flask_login import current_user
 
-from app import db, login, TEACHER_APPLICATION_COOLDOWN_DAYS
-from app.models import Category, Chapter, Comment, Course, CourseCategory, CourseOutcome, Lesson, Post, PostCate, \
-    ReactionComment, ReactionPost, Teacher, User, TeacherApplication, ApplicationStatus
+from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login
+from app.models import (
+    ApplicationStatus,
+    Category,
+    Chapter,
+    Comment,
+    Course,
+    CourseCategory,
+    CourseOutcome,
+    Lesson,
+    Post,
+    PostCate,
+    ReactionComment,
+    ReactionPost,
+    Teacher,
+    TeacherApplication,
+    User,
+)
 
 
 @login.user_loader

@@ -1,5 +1,5 @@
 target-version = "py312"
-line-length = 200
+line-length = 120
 
 extend-exclude = [".git", ".venv", "venv", "__pycache__", "migrations",]
 
