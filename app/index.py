@@ -2,7 +2,7 @@ import cloudinary.uploader
 from flask import jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user
 
-from app import admin, app, dao, db, oauth  # noqa: F401  # Register admin routes.
+from app import  app, dao, db, oauth  # noqa: F401  # Register admin routes.
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
 from app.models import Comment, Course, Post, PostCate, User, VoteType
