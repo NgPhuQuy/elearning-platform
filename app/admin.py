@@ -125,10 +125,10 @@ class PostCateAdmin(MyAuthenticatedView):
 class PostAdmin(MyAuthenticatedView):
     column_list = (
         "id", "title", "user",
-        "category", "view_count", "is_solved"
+        "categories", "view_count", "is_solved"
     )
     column_searchable_list = ("title",)
-    column_filters = ("is_solved", "category")
+    column_filters = ("is_solved", "categories")
 
 
 class CommentAdmin(MyAuthenticatedView):

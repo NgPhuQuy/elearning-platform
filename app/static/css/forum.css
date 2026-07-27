@@ -1,0 +1,116 @@
+/* ==========================
+   TOM SELECT
+========================== */
+
+.ts-wrapper {
+    width: 100%;
+}
+
+.ts-control {
+    min-height: 52px !important;
+    padding: .45rem .75rem !important;
+
+    border-radius: 12px !important;
+
+    border: 1px solid #ced4da !important;
+
+    box-shadow: none !important;
+
+    transition: .2s;
+}
+
+.ts-control.focus {
+    border-color: #4f46e5 !important;
+
+    box-shadow:
+        0 0 0 .2rem rgba(79,70,229,.12) !important;
+}
+
+.ts-control input {
+    font-size: 15px;
+}
+
+.ts-dropdown {
+
+    margin-top: 6px;
+
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    border: 1px solid #dee2e6;
+
+    box-shadow:
+        0 8px 24px rgba(0,0,0,.08);
+
+}
+
+.ts-dropdown .option {
+
+    padding: 10px 14px;
+
+    transition: .15s;
+
+}
+
+.ts-dropdown .option:hover {
+
+    background: #eef2ff;
+
+}
+
+.ts-dropdown .active {
+
+    background: #4f46e5;
+
+    color: white;
+
+}
+
+.ts-control>.item {
+
+    background: #4f46e5;
+
+    color: white;
+
+    border-radius: 999px;
+
+    padding: 6px 12px;
+
+    font-size: .875rem;
+
+    margin-right: 6px;
+
+    margin-bottom: 4px;
+
+}
+
+.ts-control>.item .remove {
+
+    color: white;
+
+    margin-left: 8px;
+
+    font-weight: bold;
+
+}
+
+.ts-control>.item .remove:hover {
+
+    color: #ffd4d4;
+
+}
+
+.ts-dropdown-content::-webkit-scrollbar {
+
+    width: 6px;
+
+}
+
+.ts-dropdown-content::-webkit-scrollbar-thumb {
+
+    background: #d0d0d0;
+
+    border-radius: 999px;
+
+}

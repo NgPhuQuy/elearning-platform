@@ -342,7 +342,7 @@ def get_posts(keyword=None, solved=None, category_id=None):
         query = query.filter(Post.is_solved == solved)
 
     if category_id:
-        query = query.filter(Post.category_id == category_id)
+        query = (query.join(Post.categories).filter(PostCate.id == category_id))
 
     return query.order_by(Post.created_date.desc()).all()
 
@@ -357,10 +357,16 @@ def get_post_by_id(post_id):
     return post
 
 
-def create_post(title, content, category_id, user_id, image=None):
-    post = Post(title=title, content=content, category_id=category_id, user_id=user_id, image=image)
+def create_post(title, content, category_ids, user_id, image=None):
+    post = Post(title=title,content=content,image=image,user_id=user_id)
 
     db.session.add(post)
+
+    for cid in category_ids:
+        category = PostCate.query.get(int(cid))
+        if category:
+            post.categories.append(category)
+
     db.session.commit()
 
     return post
@@ -404,8 +410,27 @@ def update_course(course_id, teacher_id, name=None, description=None, image=None
     return
 
 
-# def accept_answer(comment_id):
-#     comment = Comment.query.get(comment_id)
+def accept_answer(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    post = comment.post
+
+    if post.user_id != current_user.id:
+        return False
+
+    Comment.query.filter_by(
+        post_id=post.id,
+        is_accepted=True
+    ).update({
+        "is_accepted": False
+    })
+
+    comment.is_accepted = True
+
+    post.is_solved = True
+
+    db.session.commit()
+
+    return True
 
 
 def create_chapter(course_id, teacher_id, name, description):
@@ -569,17 +594,15 @@ def get_post_categories():
     return PostCate.query.order_by(PostCate.name).all()
 
 
-def get_related_posts(post_id, category_id, limit=5):
-    return (
-        Post.query.filter(
-            Post.category_id == category_id,
-            Post.id != post_id
-        )
-        .order_by(Post.created_date.desc())
-        .limit(limit)
-        .all()
-    )
+def get_related_posts(post_id,limit=5):
+    post = Post.query.get(post_id)
 
+    cate_ids = [c.id for c in post.categories]
+
+    return (
+        Post.query.join(Post.categories).filter(Post.id != post.id).
+        filter(PostCate.id.in_(cate_ids)).distinct().limit(limit).all()
+    )
 
 def get_user_post_vote(post_id, user_id):
     return ReactionPost.query.filter_by(
