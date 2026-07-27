@@ -112,12 +112,11 @@
 
                     <section>
 
-                        <span class="badge bg-primary">
-
-                            {{ post.category.name }}
-
+                        {% for cate in post.categories %}
+                        <span class="badge bg-primary me-1">
+                            {{ cate.name }}
                         </span>
-
+                    {% endfor %}
                     </section>
 
                     <section

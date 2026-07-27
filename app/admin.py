@@ -72,18 +72,12 @@ class MyLogoutView(BaseView):
 
 
 class UserAdmin(MyAuthenticatedView):
-    column_list = (
-        "id", "username", "first_name",
-        "last_name", "email", "phone"
-    )
+    column_list = ("id", "username", "first_name", "last_name", "email", "phone")
     column_searchable_list = ("username", "email", "phone")
     column_filters = ("is_active",)
 
     can_delete = False
-    form_excluded_columns = (
-        "password", "google_sub",
-        "teacher_profile", "posts", "comments"
-    )
+    form_excluded_columns = ("password", "google_sub", "teacher_profile", "posts", "comments")
 
 
 class TeacherAdmin(MyAuthenticatedView):
@@ -97,18 +91,13 @@ class CategoryAdmin(MyAuthenticatedView):
 
 
 class CourseAdmin(MyAuthenticatedView):
-    column_list = (
-        "name", "is_sale",
-        "teacher", "level"
-    )
+    column_list = ("name", "is_sale", "teacher", "level")
     column_searchable_list = ("name",)
     column_filters = ("level", "is_sale")
 
     can_export = True
     extra_js = ["//cdn.ckeditor.com/4.6.0/standard/ckeditor.js"]
-    form_overrides = {
-        "description": CKTextAreaField
-    }
+    form_overrides = {"description": CKTextAreaField}
     form_excluded_columns = ("chapters", "course_category", "outcomes")
 
 
@@ -123,12 +112,9 @@ class PostCateAdmin(MyAuthenticatedView):
 
 
 class PostAdmin(MyAuthenticatedView):
-    column_list = (
-        "id", "title", "user",
-        "category", "view_count", "is_solved"
-    )
+    column_list = ("id", "title", "user", "categories", "view_count", "is_solved")
     column_searchable_list = ("title",)
-    column_filters = ("is_solved", "category")
+    column_filters = ("is_solved", "categories")
 
 
 class CommentAdmin(MyAuthenticatedView):
@@ -137,6 +123,7 @@ class CommentAdmin(MyAuthenticatedView):
 
 
 # --- Đơn đăng ký giảng viên ---
+
 
 def _documents_formatter(view, context, model, name):
     parts = []
@@ -179,10 +166,7 @@ def _reject_application(application, reason=None):
 
 
 class TeacherApplicationAdmin(MyAuthenticatedView):
-    column_list = (
-        "id", "user", "major", "degree",
-        "experience", "documents", "status", "created_date"
-    )
+    column_list = ("id", "user", "major", "degree", "experience", "documents", "status", "created_date")
     column_filters = ("status", "degree", "experience")
     column_searchable_list = ("major", "workplace")
     column_default_sort = ("created_date", True)
@@ -204,9 +188,23 @@ class TeacherApplicationAdmin(MyAuthenticatedView):
     }
 
     column_details_list = (
-        "id", "user", "workplace", "degree", "major", "bio",
-        "expertise", "experience", "teach_style", "linkedin", "website",
-        "documents", "status", "reject_reason", "reviewer", "reviewed_at", "created_date"
+        "id",
+        "user",
+        "workplace",
+        "degree",
+        "major",
+        "bio",
+        "expertise",
+        "experience",
+        "teach_style",
+        "linkedin",
+        "website",
+        "documents",
+        "status",
+        "reject_reason",
+        "reviewer",
+        "reviewed_at",
+        "created_date",
     )
     can_view_details = True
     details_modal = True
@@ -224,7 +222,7 @@ class TeacherApplicationAdmin(MyAuthenticatedView):
             model.reviewed_by = current_user.id
             model.reviewed_at = datetime.now()
 
-    @action('approve', 'Duyệt', 'Bạn có chắc muốn DUYỆT các đơn đã chọn?')
+    @action("approve", "Duyệt", "Bạn có chắc muốn DUYỆT các đơn đã chọn?")
     def action_approve(self, ids):
         applications = TeacherApplication.query.filter(TeacherApplication.id.in_(ids)).all()
         count = 0
@@ -235,7 +233,7 @@ class TeacherApplicationAdmin(MyAuthenticatedView):
         db.session.commit()
         flash(f"Đã duyệt {count} đơn.", "success")
 
-    @action('reject', 'Từ chối', 'Bạn có chắc muốn TỪ CHỐI các đơn đã chọn?')
+    @action("reject", "Từ chối", "Bạn có chắc muốn TỪ CHỐI các đơn đã chọn?")
     def action_reject(self, ids):
         applications = TeacherApplication.query.filter(TeacherApplication.id.in_(ids)).all()
         count = 0
