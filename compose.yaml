@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      PORT: "8000"
+      GUNICORN_WORKERS: "1"
+      GUNICORN_THREADS: "8"
+      GUNICORN_TIMEOUT: "120"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: elearning
+      MYSQL_USER: elearning
+      MYSQL_PASSWORD: elearning
+      MYSQL_ROOT_PASSWORD: local-root-password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -u root -plocal-root-password"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  mysql_data:

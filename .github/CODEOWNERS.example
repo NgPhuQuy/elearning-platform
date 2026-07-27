@@ -1,0 +1,11 @@
+* @NgPhuQuy
+/.github/ @NgPhuQuy
+/Dockerfile @NgPhuQuy
+/compose.yaml @NgPhuQuy
+/.dockerignore @NgPhuQuy
+/.env.example @NgPhuQuy
+/requirements-devops.txt @NgPhuQuy
+/requirements-test.txt @NgPhuQuy
+/ruff.toml @NgPhuQuy
+/scripts/ @NgPhuQuy
+/docs/ @NgPhuQuy

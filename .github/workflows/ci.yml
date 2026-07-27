@@ -1,0 +1,184 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+  push:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  validate-pr-source:
+    name: Validate PR source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce production pull-request flow
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" != "pull_request" || "$BASE_REF" != "main" ]]; then
+            echo "Source-branch validation is not required for this event."
+            exit 0
+          fi
+          if [[ "$HEAD_REF" == "dev" || "$HEAD_REF" == hotfix/* ]]; then
+            echo "Allowed production source branch: $HEAD_REF"
+            exit 0
+          fi
+          echo "::error::Pull requests into main must originate from dev or hotfix/*."
+          exit 1
+
+  python-checks:
+    name: Python checks
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: elearning
+          MYSQL_USER: elearning
+          MYSQL_PASSWORD: elearning
+          MYSQL_ROOT_PASSWORD: root-ci-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot-ci-password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      SECRET_KEY: ci-only-secret-key
+      DB_URI: "mysql+pymysql://elearning:elearning@127.0.0.1:3306/elearning?charset=utf8mb4"
+      GOOGLE_CLIENT_ID: ci-client-id
+      GOOGLE_CLIENT_SECRET: ci-client-secret
+      CLOUD_NAME: ci-cloud-name
+      CLOUD_KEY: ci-cloud-key
+      CLOUD_SECRET: ci-cloud-secret
+
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-devops.txt
+            requirements-test.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            -r requirements.txt \
+            -r requirements-devops.txt \
+            -r requirements-test.txt
+
+      - name: Lint Python source
+        run: python -m ruff check .
+
+      - name: Check Python formatting
+        run: python -m ruff format --check .
+
+      - name: Compile Python source
+        run: python -m compileall -q app scripts tests
+
+      - name: Create CI database schema
+        run: python -m scripts.create_schema
+
+      - name: Run infrastructure tests
+        run: |
+          python -m pytest \
+            --cov=app \
+            --cov-report=term-missing \
+            --cov-report=xml
+
+      - name: Upload coverage report
+        if: ${{ always() && hashFiles('coverage.xml') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.run_id }}
+          path: coverage.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
+  docker-build:
+    name: Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Build application image
+        run: |
+          docker build \
+            --tag elearning:${{ github.sha }} \
+            .
+
+  container-smoke:
+    name: Container smoke
+    runs-on: ubuntu-latest
+    needs:
+      - python-checks
+      - docker-build
+
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Create CI runtime environment
+        shell: bash
+        run: |
+          cat > .env <<'ENVFILE'
+          SECRET_KEY=ci-container-only-secret
+          DB_URI=mysql+pymysql://elearning:elearning@db:3306/elearning?charset=utf8mb4
+          GOOGLE_CLIENT_ID=ci-client-id
+          GOOGLE_CLIENT_SECRET=ci-client-secret
+          CLOUD_NAME=ci-cloud-name
+          CLOUD_KEY=ci-cloud-key
+          CLOUD_SECRET=ci-cloud-secret
+          ENVFILE
+
+      - name: Start MySQL and application containers
+        run: docker compose up --build --detach db app
+
+      - name: Create container database schema
+        run: docker compose exec -T app python -m scripts.create_schema
+
+      - name: Run HTTP smoke test
+        run: |
+          docker compose exec -T app \
+            sh scripts/smoke_test.sh http://127.0.0.1:8000
+
+      - name: Print container diagnostics
+        if: failure()
+        run: |
+          docker compose ps || true
+          docker compose logs --no-color --tail=300 || true
+
+      - name: Stop containers
+        if: always()
+        run: |
+          docker compose down --volumes --remove-orphans || true
+          rm -f .env
