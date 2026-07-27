@@ -3,10 +3,10 @@ from datetime import datetime
 from enum import Enum as MyEnum
 
 from flask_login import UserMixin
-from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Enum, Text
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import backref, relationship
 
-from app import db, app
+from app import app, db
 
 
 class BaseModel(db.Model):

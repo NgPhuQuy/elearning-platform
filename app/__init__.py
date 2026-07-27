@@ -4,7 +4,6 @@ import cloudinary
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from flask import Flask
-from flask_admin import Admin
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 

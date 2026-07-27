@@ -1,19 +1,28 @@
 from datetime import datetime
 
-from flask import redirect, flash
-from flask_admin import Admin, AdminIndexView, expose, BaseView
+from flask import flash, redirect
+from flask_admin import Admin, AdminIndexView, BaseView, expose
 from flask_admin.actions import action
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.theme import Bootstrap4Theme
 from flask_login import current_user, logout_user
 from markupsafe import Markup
-from app import app, db
-from app.models import (
-    User, Teacher, Category, Course, Lesson, PostCate, Post, Comment,
-    TeacherApplication, ApplicationStatus
-)
 from wtforms import TextAreaField
 from wtforms.widgets import TextArea
+
+from app import app, db
+from app.models import (
+    ApplicationStatus,
+    Category,
+    Comment,
+    Course,
+    Lesson,
+    Post,
+    PostCate,
+    Teacher,
+    TeacherApplication,
+    User,
+)
 
 
 class CKTextAreaWidget(TextArea):

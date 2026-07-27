@@ -3,9 +3,24 @@ from datetime import datetime, timedelta
 
 from flask_login import current_user
 
-from app import db, login, TEACHER_APPLICATION_COOLDOWN_DAYS
-from app.models import Category, Chapter, Comment, Course, CourseCategory, CourseOutcome, Lesson, Post, PostCate, \
-    ReactionComment, ReactionPost, Teacher, User, TeacherApplication, ApplicationStatus
+from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login
+from app.models import (
+    ApplicationStatus,
+    Category,
+    Chapter,
+    Comment,
+    Course,
+    CourseCategory,
+    CourseOutcome,
+    Lesson,
+    Post,
+    PostCate,
+    ReactionComment,
+    ReactionPost,
+    Teacher,
+    TeacherApplication,
+    User,
+)
 
 
 @login.user_loader
@@ -382,9 +397,9 @@ def update_course(course_id, teacher_id, name=None, description=None, image=None
                 db.session.add(CourseCategory(course_id=course.id, category_id=cate_id))
         try:
             db.session.commit()
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            return None;
+            return None
 
     return
 
@@ -465,11 +480,9 @@ def create_lesson(teacher_id, chapter_id, name, description, lesson_type):
         db.session.add(lesson)
         db.session.commit()
         return lesson
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return None
-
-    return True
 
 
 def vote_post(post_id, user_id, vote_type):
