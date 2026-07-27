@@ -40,10 +40,7 @@ def register():
         last_name = request.form.get("last_name")
 
         if not all([password, confirm, username, email, phone, first_name, last_name]):
-            return (
-                jsonify({"success": False, "error": "Vui lòng nhập đầy đủ thông tin!"}),
-                400,
-            )
+            return jsonify({"success": False, "error": "Vui lòng nhập đầy đủ thông tin!"}), 400
 
         if password != confirm:
             return jsonify({"success": False, "error": "Mật khẩu không khớp!"}), 400
@@ -117,15 +114,7 @@ def login():
         password = request.form.get("password")
 
         if not all([username, password]):
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "error": "Vui lòng nhập đầy đủ tài khoản và mật khẩu!",
-                    }
-                ),
-                400,
-            )
+            return jsonify({"success": False, "error": "Vui lòng nhập đầy đủ tài khoản và mật khẩu!"}), 400
 
         user = dao.auth_user(username=username, password=password)
 
@@ -220,14 +209,10 @@ def register_teacher():
                     uploaded[field] = res["secure_url"]
                 except Exception:
                     return render_template(
-                        "teacher/register-teacher.html",
-                        error="Tải file thất bại, vui lòng thử lại!",
+                        "teacher/register-teacher.html", error="Tải file thất bại, vui lòng thử lại!"
                     )
             elif required:
-                return render_template(
-                    "teacher/register-teacher.html",
-                    error="Vui lòng tải đầy đủ tài liệu bắt buộc!",
-                )
+                return render_template("teacher/register-teacher.html", error="Vui lòng tải đầy đủ tài liệu bắt buộc!")
 
         application, error = dao.create_teacher_application(
             user_id=current_user.id,
@@ -402,11 +387,7 @@ def update_course(course_id):
     outcomes = dao.get_outcomes(course_id)
 
     return render_template(
-        "course/course_form.html",
-        categories=categories,
-        course=course,
-        chapters=chapters,
-        outcomes=outcomes,
+        "course/course_form.html", categories=categories, course=course, chapters=chapters, outcomes=outcomes
     )
 
 

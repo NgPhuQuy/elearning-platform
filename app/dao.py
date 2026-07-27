@@ -116,10 +116,7 @@ def can_apply_teacher(user_id):
     next_allowed = latest.created_date + timedelta(days=TEACHER_APPLICATION_COOLDOWN_DAYS)
     if datetime.now() < next_allowed:
         remaining = (next_allowed - datetime.now()).days + 1
-        return (
-            False,
-            f"Đơn trước đã bị từ chối. Bạn cần đợi thêm {remaining} ngày nữa mới được nộp lại.",
-        )
+        return False, f"Đơn trước đã bị từ chối. Bạn cần đợi thêm {remaining} ngày nữa mới được nộp lại."
 
     return True, None
 
@@ -169,13 +166,7 @@ def create_course(
     level,
     category_ids,
 ):
-    course = Course(
-        name=name,
-        description=description,
-        image=image,
-        teacher_id=teacher_id,
-        level=level,
-    )
+    course = Course(name=name, description=description, image=image, teacher_id=teacher_id, level=level)
 
     try:
         db.session.add(course)
@@ -405,12 +396,7 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
             lesson.type = lesson_type
             file_key_id = lesson.id
         else:
-            lesson = Lesson(
-                name=name,
-                description=description,
-                type=lesson_type,
-                chapter_id=chapter.id,
-            )
+            lesson = Lesson(name=name, description=description, type=lesson_type, chapter_id=chapter.id)
             db.session.add(lesson)
             db.session.flush()
             file_key_id = temp_id
@@ -578,12 +564,7 @@ def create_post(title, content, category_ids, user_id, image=None):
 
 
 def add_comment(post_id, user_id, content, parent_comment_id=None):
-    c = Comment(
-        content=content,
-        post_id=post_id,
-        user_id=user_id,
-        parent_comment_id=parent_comment_id,
-    )
+    c = Comment(content=content, post_id=post_id, user_id=user_id, parent_comment_id=parent_comment_id)
 
     db.session.add(c)
     db.session.commit()
@@ -593,15 +574,7 @@ def get_courses_by_teacher_id(teacher_id):
     return Course.query.filter_by(teacher_id=teacher_id).order_by(Course.created_date.desc()).all()
 
 
-def update_course(
-    course_id,
-    teacher_id,
-    name=None,
-    description=None,
-    image=None,
-    level=None,
-    category_ids=None,
-):
+def update_course(course_id, teacher_id, name=None, description=None, image=None, level=None, category_ids=None):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
         if name:
@@ -705,12 +678,7 @@ def create_lesson(teacher_id, chapter_id, name, description, lesson_type):
 
     if not chapter:
         return None
-    lesson = Lesson(
-        name=name,
-        description=description,
-        type=LessonType[lesson_type],
-        chapter_id=chapter.id,
-    )
+    lesson = Lesson(name=name, description=description, type=LessonType[lesson_type], chapter_id=chapter.id)
     try:
         db.session.add(lesson)
         db.session.commit()

@@ -3,16 +3,7 @@ from datetime import datetime
 from enum import Enum as MyEnum
 
 from flask_login import UserMixin
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Enum,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-)
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import backref, relationship
 
 from app import app, db
@@ -223,11 +214,7 @@ class TeacherApplication(BaseModel):
     reviewed_by = Column(Integer, ForeignKey("user.id"))
     reviewed_at = Column(DateTime)
 
-    user = relationship(
-        "User",
-        foreign_keys="TeacherApplication.user_id",
-        backref="teacher_applications",
-    )
+    user = relationship("User", foreign_keys="TeacherApplication.user_id", backref="teacher_applications")
     reviewer = relationship("User", foreign_keys="TeacherApplication.reviewed_by")
 
 
@@ -237,12 +224,7 @@ if __name__ == "__main__":
         db.session.commit()
         password = hashlib.sha256(b"11111111").hexdigest()
         admin = User(
-            username="admin",
-            password=password,
-            first_name="Nguyen Tran Ad",
-            last_name="Min",
-            email="",
-            phone="",
+            username="admin", password=password, first_name="Nguyen Tran Ad", last_name="Min", email="", phone=""
         )
         db.session.add(admin)
 
