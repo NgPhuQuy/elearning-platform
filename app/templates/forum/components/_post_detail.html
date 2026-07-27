@@ -142,11 +142,13 @@
 
                     <div>
 
-                        <span class="badge-ef badge-ef-default">
-
-                            #{{ post.category.name }}
-
-                        </span>
+                       <div class="mb-3">
+                            {% for cate in post.categories %}
+                                <span class="badge bg-primary me-1">
+                                    {{ cate.name }}
+                                </span>
+                            {% endfor %}
+                        </div>
 
                     </div>
 

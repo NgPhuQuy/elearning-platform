@@ -6,7 +6,7 @@ from app import admin, app, dao, db, oauth  # noqa: F401  # Register admin route
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
 from app.models import Comment, Course, Post, PostCate, User, VoteType
-import json
+
 
 @app.context_processor
 def inject_common():
@@ -282,14 +282,8 @@ def change_password():
 @app.route("/courses")
 def courses():
     courses = Course.query.order_by(Course.id.desc()).all()
-    return render_template("course/courses.html", courses=courses)
+    return render_template("course/manage.html", courses=courses)
 
-@app.route('/courses/<int:course_id>')
-def course_detail(course_id):
-    course = dao.get_course_details(course_id)
-    if not course:
-        return redirect(url_for('courses'))
-    return render_template('course/course_detail.html', course=course)
 
 @app.route('/courses/manage')
 @login_required
@@ -330,9 +324,7 @@ def create_course():
     return render_template('course/course_form.html', categories=categories, course=None)
 
 
-
-
-@app.route('/courses/<int:course_id>/update', methods=['GET', 'POST'])
+@app.route("/courses/<int:course_id>/update", methods=["GET", "POST"])
 @login_required
 @teacher_required
 def update_course(course_id):

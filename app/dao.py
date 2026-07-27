@@ -36,11 +36,17 @@ def auth_user(username, password):
     return User.query.filter(User.username.__eq__(username), User.password.__eq__(password)).first()
 
 
-def register_user(username, password, email,
-                  phone, avatar, first_name, last_name):
+def register_user(username, password, email, phone, avatar, first_name, last_name):
     hashed_password = hash_password(password)
-    user = User(username=username, password=hashed_password, email=email, phone=phone,
-                avatar=avatar, first_name=first_name, last_name=last_name)
+    user = User(
+        username=username,
+        password=hashed_password,
+        email=email,
+        phone=phone,
+        avatar=avatar,
+        first_name=first_name,
+        last_name=last_name,
+    )
     db.session.add(user)
     db.session.commit()
     return user
@@ -59,12 +65,11 @@ def is_phone_used(phone):
 
 
 def hash_password(password):
-    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
 def change_info(email, phone, file_path, first_name, last_name):
     if email != current_user.email:
-
         if is_email_used(email):
             return False, "Email đã được sử dụng bởi tài khoản khác."
 
@@ -92,8 +97,7 @@ def change_password(new_password):
 
 
 def get_latest_teacher_application(user_id):
-    return TeacherApplication.query.filter_by(user_id=user_id) \
-        .order_by(TeacherApplication.created_date.desc()).first()
+    return TeacherApplication.query.filter_by(user_id=user_id).order_by(TeacherApplication.created_date.desc()).first()
 
 
 def can_apply_teacher(user_id):
@@ -153,21 +157,15 @@ def get_categories():
     return Category.query.order_by(Category.name).all()
 
 
-def create_course(name,
-                  description,
-                  image,
-                  teacher_id,
-                  level,
-                  category_ids,
-                  ):
-    course = Course(
-        name=name,
-        description=description,
-        image=image,
-
-        teacher_id=teacher_id,
-        level=level
-    )
+def create_course(
+    name,
+    description,
+    image,
+    teacher_id,
+    level,
+    category_ids,
+):
+    course = Course(name=name, description=description, image=image, teacher_id=teacher_id, level=level)
 
     try:
         db.session.add(course)
@@ -175,12 +173,7 @@ def create_course(name,
 
         if category_ids:
             for cate_id in category_ids:
-                db.session.add(
-                    CourseCategory(
-                        course_id=course.id,
-                        category_id=cate_id
-                    )
-                )
+                db.session.add(CourseCategory(course_id=course.id, category_id=cate_id))
 
         db.session.commit()
         return course
@@ -287,10 +280,7 @@ def clear_doc_content(lesson_id, teacher_id):
 
 
 def delete_course(course_id, teacher_id):
-    course = Course.query.filter_by(
-        id=course_id,
-        teacher_id=teacher_id
-    ).first()
+    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
 
     if not course:
         return False
@@ -305,15 +295,10 @@ def delete_course(course_id, teacher_id):
         return False
 
 
-def update_lesson(lesson_id,
-                  teacher_id,
-                  name=None,
-                  description=None,
-                  lesson_type=None):
-    lesson = Lesson.query.join(Chapter).join(Course).filter(
-        Lesson.id == lesson_id,
-        Course.teacher_id == teacher_id
-    ).first()
+def update_lesson(lesson_id, teacher_id, name=None, description=None, lesson_type=None):
+    lesson = (
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+    )
 
     if not lesson:
         return None
@@ -459,10 +444,9 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
 
 
 def delete_lesson(lesson_id, teacher_id):
-    lesson = Lesson.query.join(Chapter).join(Course).filter(
-        Lesson.id == lesson_id,
-        Course.teacher_id == teacher_id
-    ).first()
+    lesson = (
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+    )
 
     if not lesson:
         return False
@@ -478,15 +462,11 @@ def delete_lesson(lesson_id, teacher_id):
 
 
 def get_chapters(course_id):
-    return Chapter.query.filter_by(
-        course_id=course_id
-    ).order_by(Chapter.order).all()
+    return Chapter.query.filter_by(course_id=course_id).order_by(Chapter.order).all()
 
 
 def get_lessons(chapter_id):
-    return Lesson.query.filter_by(
-        chapter_id=chapter_id
-    ).all()
+    return Lesson.query.filter_by(chapter_id=chapter_id).all()
 
 
 def get_lesson_details(lesson_id):
@@ -498,10 +478,7 @@ def get_outcomes(course_id):
 
 
 def create_outcome(course_id, content):
-    outcome = CourseOutcome(
-        course_id=course_id,
-        content=content
-    )
+    outcome = CourseOutcome(course_id=course_id, content=content)
 
     try:
         db.session.add(outcome)
@@ -554,7 +531,7 @@ def get_posts(keyword=None, solved=None, category_id=None):
         query = query.filter(Post.is_solved == solved)
 
     if category_id:
-        query = query.filter(Post.category_id == category_id)
+        query = query.join(Post.categories).filter(PostCate.id == category_id)
 
     return query.order_by(Post.created_date.desc()).all()
 
@@ -569,10 +546,16 @@ def get_post_by_id(post_id):
     return post
 
 
-def create_post(title, content, category_id, user_id, image=None):
-    post = Post(title=title, content=content, category_id=category_id, user_id=user_id, image=image)
+def create_post(title, content, category_ids, user_id, image=None):
+    post = Post(title=title, content=content, image=image, user_id=user_id)
 
     db.session.add(post)
+
+    for cid in category_ids:
+        category = PostCate.query.get(int(cid))
+        if category:
+            post.categories.append(category)
+
     db.session.commit()
 
     return post
@@ -586,9 +569,7 @@ def add_comment(post_id, user_id, content, parent_comment_id=None):
 
 
 def get_courses_by_teacher_id(teacher_id):
-    return Course.query.filter_by(
-        teacher_id=teacher_id
-    ).order_by(Course.created_date.desc()).all()
+    return Course.query.filter_by(teacher_id=teacher_id).order_by(Course.created_date.desc()).all()
 
 
 def update_course(course_id, teacher_id, name=None, description=None, image=None, level=None, category_ids=None):
@@ -616,8 +597,22 @@ def update_course(course_id, teacher_id, name=None, description=None, image=None
     return
 
 
-# def accept_answer(comment_id):
-#     comment = Comment.query.get(comment_id)
+def accept_answer(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    post = comment.post
+
+    if post.user_id != current_user.id:
+        return False
+
+    Comment.query.filter_by(post_id=post.id, is_accepted=True).update({"is_accepted": False})
+
+    comment.is_accepted = True
+
+    post.is_solved = True
+
+    db.session.commit()
+
+    return True
 
 
 def create_chapter(course_id, teacher_id, name, description):
@@ -661,10 +656,7 @@ def update_chapter(chapter_id, teacher_id, name=None, description=None):
 
 
 def delete_chapter(chapter_id, teacher_id):
-    chapter = Chapter.query.join(Course).filter(
-        Chapter.id == chapter_id,
-        Course.teacher_id == teacher_id
-    ).first()
+    chapter = Chapter.query.join(Course).filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id).first()
 
     if not chapter:
         return False
@@ -680,10 +672,7 @@ def delete_chapter(chapter_id, teacher_id):
 
 
 def create_lesson(teacher_id, chapter_id, name, description, lesson_type):
-    chapter = Chapter.query.join(Course).filter(
-        Chapter.id == chapter_id,
-        Course.teacher_id == teacher_id
-    ).first()
+    chapter = Chapter.query.join(Course).filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id).first()
 
     if not chapter:
         return None
@@ -698,13 +687,9 @@ def create_lesson(teacher_id, chapter_id, name, description, lesson_type):
 
 
 def vote_post(post_id, user_id, vote_type):
-    reaction = ReactionPost.query.filter_by(
-        post_id=post_id,
-        user_id=user_id
-    ).first()
+    reaction = ReactionPost.query.filter_by(post_id=post_id, user_id=user_id).first()
 
     if reaction:
-
         if reaction.vote_type == vote_type:
             db.session.delete(reaction)
 
@@ -712,11 +697,7 @@ def vote_post(post_id, user_id, vote_type):
             reaction.vote_type = vote_type
 
     else:
-        reaction = ReactionPost(
-            post_id=post_id,
-            user_id=user_id,
-            vote_type=vote_type
-        )
+        reaction = ReactionPost(post_id=post_id, user_id=user_id, vote_type=vote_type)
 
         db.session.add(reaction)
 
@@ -724,13 +705,9 @@ def vote_post(post_id, user_id, vote_type):
 
 
 def vote_comment(comment_id, user_id, vote_type):
-    reaction = ReactionComment.query.filter_by(
-        comment_id=comment_id,
-        user_id=user_id
-    ).first()
+    reaction = ReactionComment.query.filter_by(comment_id=comment_id, user_id=user_id).first()
 
     if reaction:
-
         if reaction.vote_type == vote_type:
             db.session.delete(reaction)
 
@@ -738,11 +715,7 @@ def vote_comment(comment_id, user_id, vote_type):
             reaction.vote_type = vote_type
 
     else:
-        reaction = ReactionComment(
-            comment_id=comment_id,
-            user_id=user_id,
-            vote_type=vote_type
-        )
+        reaction = ReactionComment(comment_id=comment_id, user_id=user_id, vote_type=vote_type)
 
         db.session.add(reaction)
 
@@ -781,23 +754,23 @@ def get_post_categories():
     return PostCate.query.order_by(PostCate.name).all()
 
 
-def get_related_posts(post_id, category_id, limit=5):
+def get_related_posts(post_id, limit=5):
+    post = Post.query.get(post_id)
+
+    cate_ids = [c.id for c in post.categories]
+
     return (
-        Post.query.filter(
-            Post.category_id == category_id,
-            Post.id != post_id
-        )
-        .order_by(Post.created_date.desc())
+        Post.query.join(Post.categories)
+        .filter(Post.id != post.id)
+        .filter(PostCate.id.in_(cate_ids))
+        .distinct()
         .limit(limit)
         .all()
     )
 
 
 def get_user_post_vote(post_id, user_id):
-    return ReactionPost.query.filter_by(
-        post_id=post_id,
-        user_id=user_id
-    ).first()
+    return ReactionPost.query.filter_by(post_id=post_id, user_id=user_id).first()
 
 
 def get_course_sale():
