@@ -19,4 +19,15 @@ document.addEventListener('DOMContentLoaded', function () {
   // Kích hoạt mọi tooltip Bootstrap (nếu có)
   var tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
   tooltipTriggerList.forEach(function (el) { new bootstrap.Tooltip(el); });
+
+
+  const params = new URLSearchParams(window.location.search);
+
+    if (params.get("login") === "1") {
+        const loginBtn = document.querySelector('[data-tab="login"]');
+
+        if (loginBtn) {
+            loginBtn.click();
+        }
+    }
 });
