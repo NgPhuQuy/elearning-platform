@@ -1,5 +1,5 @@
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from flask_login import current_user
 
@@ -20,6 +20,9 @@ from app.models import (
     Teacher,
     TeacherApplication,
     User,
+VideoContent,
+DocContent,
+LessonType,
 )
 
 
@@ -88,51 +91,6 @@ def change_password(new_password):
     return True, None
 
 
-def get_latest_teacher_application(user_id):
-    return TeacherApplication.query.filter_by(user_id=user_id) \
-        .order_by(TeacherApplication.created_date.desc()).first()
-
-
-def can_apply_teacher(user_id):
-    latest = get_latest_teacher_application(user_id)
-    if not latest:
-        return True, None
-
-    if latest.status == ApplicationStatus.PENDING:
-        return False, "Đơn của bạn đang chờ duyệt, vui lòng đợi kết quả."
-
-    if latest.status == ApplicationStatus.APPROVED:
-        return False, "Bạn đã là giảng viên."
-
-    # REJECTED -> áp dụng cooldown
-    next_allowed = latest.created_date + timedelta(days=TEACHER_APPLICATION_COOLDOWN_DAYS)
-    if datetime.now() < next_allowed:
-        remaining = (next_allowed - datetime.now()).days + 1
-        return False, f"Đơn trước đã bị từ chối. Bạn cần đợi thêm {remaining} ngày nữa mới được nộp lại."
-
-    return True, None
-
-
-def create_teacher_application(user_id, **kwargs):
-    ok, message = can_apply_teacher(user_id)
-    if not ok:
-        return None, message
-
-    application = TeacherApplication(user_id=user_id, status=ApplicationStatus.PENDING, **kwargs)
-    try:
-        db.session.add(application)
-        db.session.commit()
-        return application, None
-    except Exception:
-        db.session.rollback()
-        return None, "Hệ thống lỗi, vui lòng thử lại sau!"
-
-
-def get_teacher_applications(status=None):
-    query = TeacherApplication.query
-    if status:
-        query = query.filter(TeacherApplication.status == status)
-    return query.order_by(TeacherApplication.created_date.desc()).all()
 
 
 def register_teacher(user_id, note=""):
@@ -145,10 +103,8 @@ def register_teacher(user_id, note=""):
         db.session.rollback()
         return None
 
-
 def get_categories():
     return Category.query.order_by(Category.name).all()
-
 
 def create_course(name,
                   description,
@@ -157,6 +113,7 @@ def create_course(name,
                   level,
                   category_ids,
                   ):
+
     course = Course(
         name=name,
         description=description,
@@ -186,7 +143,6 @@ def create_course(name,
         db.session.rollback()
         return None
 
-
 def get_course_details(course_id, teacher_id=None):
     query = Course.query.filter_by(id=course_id)
 
@@ -195,7 +151,94 @@ def get_course_details(course_id, teacher_id=None):
 
     return query.first()
 
+def save_video_for_lesson(lesson_id, teacher_id, video_url, duration=0):
+    lesson = Lesson.query.join(Chapter).join(Course).filter(
+        Lesson.id == lesson_id,
+        Course.teacher_id == teacher_id
+    ).first()
 
+    if not lesson:
+        return None
+
+    video = VideoContent.query.filter_by(lesson_id=lesson_id).first()
+    if video:
+        video.video_url = video_url
+        video.duration = duration
+    else:
+        video = VideoContent(lesson_id=lesson_id, video_url=video_url, duration=duration)
+        db.session.add(video)
+
+    lesson.type = LessonType.VIDEO
+
+    try:
+        db.session.commit()
+        return video
+    except Exception:
+        db.session.rollback()
+        return None
+
+
+def save_doc_for_lesson(lesson_id, teacher_id, file_url):
+    lesson = Lesson.query.join(Chapter).join(Course).filter(
+        Lesson.id == lesson_id,
+        Course.teacher_id == teacher_id
+    ).first()
+
+    if not lesson:
+        return None
+
+    doc = DocContent.query.filter_by(lesson_id=lesson_id).first()
+    if doc:
+        doc.file_url = file_url
+    else:
+        doc = DocContent(lesson_id=lesson_id, file_url=file_url)
+        db.session.add(doc)
+
+    lesson.type = LessonType.DOCUMENT
+
+    try:
+        db.session.commit()
+        return doc
+    except Exception:
+        db.session.rollback()
+        return None
+
+def clear_video_content(lesson_id, teacher_id):
+    lesson = Lesson.query.join(Chapter).join(Course).filter(
+        Lesson.id == lesson_id,
+        Course.teacher_id == teacher_id
+    ).first()
+    if not lesson:
+        return False
+
+    video = VideoContent.query.filter_by(lesson_id=lesson_id).first()
+    if video:
+        db.session.delete(video)
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return False
+    return True
+
+
+def clear_doc_content(lesson_id, teacher_id):
+    lesson = Lesson.query.join(Chapter).join(Course).filter(
+        Lesson.id == lesson_id,
+        Course.teacher_id == teacher_id
+    ).first()
+    if not lesson:
+        return False
+
+    doc = DocContent.query.filter_by(lesson_id=lesson_id).first()
+    if doc:
+        db.session.delete(doc)
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return False
+    return True
 def delete_course(course_id, teacher_id):
     course = Course.query.filter_by(
         id=course_id,
@@ -214,12 +257,12 @@ def delete_course(course_id, teacher_id):
         db.session.rollback()
         return False
 
-
 def update_lesson(lesson_id,
                   teacher_id,
                   name=None,
                   description=None,
                   lesson_type=None):
+
     lesson = Lesson.query.join(Chapter).join(Course).filter(
         Lesson.id == lesson_id,
         Course.teacher_id == teacher_id
@@ -245,8 +288,8 @@ def update_lesson(lesson_id,
         db.session.rollback()
         return None
 
-
 def delete_lesson(lesson_id, teacher_id):
+
     lesson = Lesson.query.join(Chapter).join(Course).filter(
         Lesson.id == lesson_id,
         Course.teacher_id == teacher_id
@@ -263,8 +306,6 @@ def delete_lesson(lesson_id, teacher_id):
     except Exception:
         db.session.rollback()
         return False
-
-
 def get_chapters(course_id):
     return Chapter.query.filter_by(
         course_id=course_id
@@ -279,8 +320,6 @@ def get_lessons(chapter_id):
 
 def get_lesson_details(lesson_id):
     return Lesson.query.get(lesson_id)
-
-
 def get_outcomes(course_id):
     return CourseOutcome.query.filter_by(course_id=course_id).all()
 
@@ -300,7 +339,6 @@ def create_outcome(course_id, content):
         db.session.rollback()
         return None
 
-
 def replace_outcomes(course_id, contents):
     CourseOutcome.query.filter_by(course_id=course_id).delete()
     for content in contents:
@@ -313,8 +351,6 @@ def replace_outcomes(course_id, contents):
     except Exception:
         db.session.rollback()
         return False
-
-
 def delete_outcome(outcome_id):
     outcome = CourseOutcome.query.get(outcome_id)
 
@@ -329,10 +365,8 @@ def delete_outcome(outcome_id):
     except Exception:
         db.session.rollback()
         return False
-
-
 # forum
-def get_posts(keyword=None, solved=None, category_id=None):
+def get_posts(keyword=None, solved=None):
     query = Post.query
 
     if keyword:
@@ -340,9 +374,6 @@ def get_posts(keyword=None, solved=None, category_id=None):
 
     if solved is not None:
         query = query.filter(Post.is_solved == solved)
-
-    if category_id:
-        query = query.filter(Post.category_id == category_id)
 
     return query.order_by(Post.created_date.desc()).all()
 
@@ -371,20 +402,16 @@ def add_comment(post_id, user_id, content, parent_comment_id=None):
 
     db.session.add(c)
     db.session.commit()
-
-
 def get_courses_by_teacher_id(teacher_id):
     return Course.query.filter_by(
         teacher_id=teacher_id
     ).order_by(Course.created_date.desc()).all()
-
-
-def update_course(course_id, teacher_id, name=None, description=None, image=None, level=None, category_ids=None):
+def update_course (course_id, teacher_id, name=None, description=None, image=None, level=None,category_ids=None):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
-        if name:
+        if  name:
             course.name = name
-        if description:
+        if  description:
             course.description = description
         if image:
             course.image = image
@@ -397,25 +424,36 @@ def update_course(course_id, teacher_id, name=None, description=None, image=None
                 db.session.add(CourseCategory(course_id=course.id, category_id=cate_id))
         try:
             db.session.commit()
-        except Exception:
+        except Exception as e:
             db.session.rollback()
-            return None
+            return None;
 
     return
 
 
+def accept_answer(comment_id):
+    comment = Comment.query.get(comment_id)
+def create_chapter(course_id, teacher_id, name, description):
+
 # def accept_answer(comment_id):
 #     comment = Comment.query.get(comment_id)
 
+    course = Course.query.filter(
+        Course.id == course_id,
+        Course.teacher_id == teacher_id
+    ).first()
 
-def create_chapter(course_id, teacher_id, name, description):
-    course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
+
 
     db.session.commit()
     if not course:
         return None
 
-    chapter = Chapter(name=name, description=description, course_id=course.id)
+    chapter = Chapter(
+        name=name,
+        description=description,
+        course_id=course.id
+    )
 
     try:
         db.session.add(chapter)
@@ -426,9 +464,15 @@ def create_chapter(course_id, teacher_id, name, description):
         db.session.rollback()
         return None
 
+def update_chapter(chapter_id,
+                   teacher_id,
+                   name=None,
+                   description=None):
 
-def update_chapter(chapter_id, teacher_id, name=None, description=None):
-    chapter = Chapter.query.join(Course).filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id).first()
+    chapter = Chapter.query.join(Course).filter(
+        Chapter.id == chapter_id,
+        Course.teacher_id == teacher_id
+    ).first()
 
     if not chapter:
         return None
@@ -447,8 +491,8 @@ def update_chapter(chapter_id, teacher_id, name=None, description=None):
         db.session.rollback()
         return None
 
-
 def delete_chapter(chapter_id, teacher_id):
+
     chapter = Chapter.query.join(Course).filter(
         Chapter.id == chapter_id,
         Course.teacher_id == teacher_id
@@ -467,7 +511,7 @@ def delete_chapter(chapter_id, teacher_id):
         return False
 
 
-def create_lesson(teacher_id, chapter_id, name, description, lesson_type):
+def create_lesson(teacher_id,  chapter_id,name,  description, lesson_type):
     chapter = Chapter.query.join(Course).filter(
         Chapter.id == chapter_id,
         Course.teacher_id == teacher_id
@@ -475,14 +519,16 @@ def create_lesson(teacher_id, chapter_id, name, description, lesson_type):
 
     if not chapter:
         return None
-    lesson = Lesson(name=name, description=description, type=lesson_type, chapter_id=chapter.id)
+    lesson = Lesson(name=name, description=description,  type=LessonType[lesson_type],  chapter_id=chapter.id)
     try:
         db.session.add(lesson)
         db.session.commit()
         return lesson
-    except Exception:
+    except Exception as e:
         db.session.rollback()
         return None
+
+    return True
 
 
 def vote_post(post_id, user_id, vote_type):
@@ -546,16 +592,6 @@ def get_post_score(post):
     return score
 
 
-# def get_lessons(chapter_id):
-#     return Lesson.query.filter_by(
-#         chapter_id=chapter_id
-#     ).all()
-
-
-# def get_lesson_details(lesson_id):
-#     return Lesson.query.get(lesson_id)
-
-
 def get_comment_score(comment):
     score = 0
 
@@ -563,10 +599,6 @@ def get_comment_score(comment):
         score += r.vote_type.value
 
     return score
-
-
-def get_post_categories():
-    return PostCate.query.order_by(PostCate.name).all()
 
 
 def get_related_posts(post_id, category_id, limit=5):
@@ -590,7 +622,6 @@ def get_user_post_vote(post_id, user_id):
 
 def get_course_sale():
     return Course.query.filter_by(is_sale=True).all()
-
 
 def get_question_today():
     return Post.query.filter(Post.created_date == datetime.today()).all()
