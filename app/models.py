@@ -93,8 +93,19 @@ class Course(BaseModel):
 
 class LessonType(MyEnum):
     VIDEO = "Video"
-    EXERCISE = "Bài tập"
     DOCUMENT = "Doc"
+    NONE = "Chưa chọn"
+
+
+class VideoContent(db.Model):
+    lesson_id = Column(Integer, ForeignKey("lesson.id"), primary_key=True)
+    video_url = Column(String(500), nullable=False)
+    duration = Column(Integer, default=0)
+
+class DocContent(db.Model):
+    lesson_id = Column(Integer, ForeignKey("lesson.id"), primary_key=True)
+    content_text = Column(Text)
+    file_url = Column(String(500))
 
 
 class Lesson(BaseModel):
@@ -106,9 +117,11 @@ class Lesson(BaseModel):
     type = Column(
         Enum(LessonType),
         nullable=False,
-        default=LessonType.VIDEO
+        default=LessonType.NONE
     )
     description = Column(String(255), nullable=False)
+    video_content = relationship("VideoContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
+    doc_content = relationship("DocContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
 
 
 class CourseOutcome(BaseModel):
