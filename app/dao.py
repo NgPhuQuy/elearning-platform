@@ -382,9 +382,9 @@ def update_course(course_id, teacher_id, name=None, description=None, image=None
                 db.session.add(CourseCategory(course_id=course.id, category_id=cate_id))
         try:
             db.session.commit()
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            return None;
+            return None
 
     return
 
