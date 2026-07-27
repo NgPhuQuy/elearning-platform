@@ -50,9 +50,7 @@ def register():
 
         if len(password) < 8:
             return (
-                jsonify(
-                    {"success": False, "error": "Mật khẩu phải từ 8 ký tự trở lên!"}
-                ),
+                jsonify({"success": False, "error": "Mật khẩu phải từ 8 ký tự trở lên!"}),
                 400,
             )
 
@@ -64,9 +62,7 @@ def register():
 
         if dao.is_phone_used(phone=phone):
             return (
-                jsonify(
-                    {"success": False, "error": "Số điện thoại này đã được đăng ký!"}
-                ),
+                jsonify({"success": False, "error": "Số điện thoại này đã được đăng ký!"}),
                 400,
             )
 
@@ -80,17 +76,13 @@ def register():
                 return jsonify({"success": False, "error": "Tải file thất bại!"}), 500
 
         try:
-            user = register_user(
-                username, password, email, phone, file_path, first_name, last_name
-            )
+            user = register_user(username, password, email, phone, file_path, first_name, last_name)
             login_user(user)
             return jsonify({"success": True, "redirect": "/"})
         except Exception:
             db.session.rollback()
             return (
-                jsonify(
-                    {"success": False, "error": "Hệ thống lỗi, vui lòng quay lại sau!"}
-                ),
+                jsonify({"success": False, "error": "Hệ thống lỗi, vui lòng quay lại sau!"}),
                 500,
             )
 
@@ -139,9 +131,7 @@ def login():
 
         if not user:
             return (
-                jsonify(
-                    {"success": False, "error": "Tài khoản hoặc mật khẩu không đúng!"}
-                ),
+                jsonify({"success": False, "error": "Tài khoản hoặc mật khẩu không đúng!"}),
                 401,
             )
 
@@ -250,7 +240,7 @@ def register_teacher():
             teach_style=request.form.get("teach_style"),
             linkedin=request.form.get("linkedin"),
             website=request.form.get("website"),
-            **uploaded
+            **uploaded,
         )
 
         if error:
@@ -259,9 +249,7 @@ def register_teacher():
         return redirect(url_for("profile"))
 
     latest_application = dao.get_latest_teacher_application(current_user.id)
-    return render_template(
-        "teacher/register-teacher.html", latest_application=latest_application
-    )
+    return render_template("teacher/register-teacher.html", latest_application=latest_application)
 
 
 @app.route("/profile")
@@ -362,18 +350,14 @@ def create_course():
             return redirect(url_for("courses"))
 
     categories = dao.get_categories()
-    return render_template(
-        "course/course_form.html", categories=categories, course=None
-    )
+    return render_template("course/course_form.html", categories=categories, course=None)
 
 
 @app.route("/courses/<int:course_id>/update", methods=["GET", "POST"])
 @login_required
 @teacher_required
 def update_course(course_id):
-    course = dao.get_course_details(
-        course_id, teacher_id=current_user.teacher_profile.id
-    )
+    course = dao.get_course_details(course_id, teacher_id=current_user.teacher_profile.id)
     if not course:
         return redirect(url_for("my_courses"))
 
@@ -438,9 +422,7 @@ def delete_course(course_id):
 @login_required
 @teacher_required
 def manage_content(course_id):
-    course = dao.get_course_details(
-        course_id, teacher_id=current_user.teacher_profile.id
-    )
+    course = dao.get_course_details(course_id, teacher_id=current_user.teacher_profile.id)
     if not course:
         return redirect(url_for("my_courses"))
 
@@ -513,16 +495,13 @@ def forum_detail(post_id):
     db.session.commit()
     related_posts = dao.get_related_posts(post.id, post.category_id)
     user_vote = dao.get_user_post_vote(post.id, current_user.id)
-    return render_template(
-        "forum/detail.html", post=post, related_posts=related_posts, user_vote=user_vote
-    )
+    return render_template("forum/detail.html", post=post, related_posts=related_posts, user_vote=user_vote)
 
 
 @app.route("/forum/create", methods=["GET", "POST"])
 @login_required
 def create_question():
     if request.method == "POST":
-
         image = request.files.get("image")
 
         image_url = None
@@ -549,9 +528,7 @@ def create_question():
 @app.route("/forum/<int:post_id>/answer", methods=["POST"])
 @login_required
 def answer(post_id):
-    dao.add_comment(
-        post_id=post_id, user_id=current_user.id, content=request.form["content"]
-    )
+    dao.add_comment(post_id=post_id, user_id=current_user.id, content=request.form["content"])
 
     return redirect(url_for("forum_detail", post_id=post_id))
 

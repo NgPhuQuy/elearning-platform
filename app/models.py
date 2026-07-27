@@ -60,9 +60,7 @@ class Chapter(BaseModel):
 
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
 
-    lessons = relationship(
-        "Lesson", backref="chapter", cascade="all, delete-orphan", lazy=True
-    )
+    lessons = relationship("Lesson", backref="chapter", cascade="all, delete-orphan", lazy=True)
 
 
 class Category(BaseModel):
@@ -71,9 +69,7 @@ class Category(BaseModel):
 
 class CourseCategory(db.Model):
     __tablename__ = "course_category"
-    course_id = Column(
-        Integer, ForeignKey("course.id", ondelete="CASCADE"), primary_key=True
-    )
+    course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), primary_key=True)
     category_id = Column(Integer, ForeignKey("category.id"), primary_key=True)
 
 
@@ -91,12 +87,8 @@ class Course(BaseModel):
 
     teacher_id = Column(Integer, ForeignKey("teacher.id"), nullable=False)
 
-    chapters = relationship(
-        "Chapter", backref="course", cascade="all, delete-orphan", lazy=True
-    )
-    course_category = relationship(
-        "CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True
-    )
+    chapters = relationship("Chapter", backref="course", cascade="all, delete-orphan", lazy=True)
+    course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True)
     level = Column(Enum(CourseLevel), nullable=False, default=CourseLevel.BASIC)
 
 
@@ -122,12 +114,8 @@ class Lesson(BaseModel):
     type = Column(Enum(LessonType), nullable=False, default=LessonType.NONE)
     chapter_id = Column(Integer, ForeignKey("chapter.id"), nullable=False)
     description = Column(String(255), nullable=False)
-    video_content = relationship(
-        "VideoContent", backref="lesson", uselist=False, cascade="all, delete-orphan"
-    )
-    doc_content = relationship(
-        "DocContent", backref="lesson", uselist=False, cascade="all, delete-orphan"
-    )
+    video_content = relationship("VideoContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
+    doc_content = relationship("DocContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
 
 
 class CourseOutcome(BaseModel):
@@ -155,12 +143,8 @@ class Post(BaseModel):
     is_solved = Column(Boolean, default=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     category_id = Column(Integer, ForeignKey(PostCate.id), nullable=False)
-    comments = relationship(
-        "Comment", backref="post", cascade="all, delete-orphan", lazy=True
-    )
-    reactions = relationship(
-        "ReactionPost", backref="post", cascade="all, delete-orphan", lazy=True
-    )
+    comments = relationship("Comment", backref="post", cascade="all, delete-orphan", lazy=True)
+    reactions = relationship("ReactionPost", backref="post", cascade="all, delete-orphan", lazy=True)
     user = relationship("User", backref="posts")
 
 
@@ -172,12 +156,8 @@ class Comment(BaseModel):
     post_id = Column(Integer, ForeignKey(Post.id), nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     parent_comment_id = Column(Integer, ForeignKey("comment.id"))
-    replies = relationship(
-        "Comment", backref=backref("parent", remote_side="Comment.id")
-    )
-    reactions = relationship(
-        "ReactionComment", backref="comment", cascade="all, delete-orphan"
-    )
+    replies = relationship("Comment", backref=backref("parent", remote_side="Comment.id"))
+    reactions = relationship("ReactionComment", backref="comment", cascade="all, delete-orphan")
     user = relationship("User", backref="comments")
 
 
@@ -238,9 +218,7 @@ class TeacherApplication(BaseModel):
     video_file = Column(String(500))
 
     # Duyệt
-    status = Column(
-        Enum(ApplicationStatus), nullable=False, default=ApplicationStatus.PENDING
-    )
+    status = Column(Enum(ApplicationStatus), nullable=False, default=ApplicationStatus.PENDING)
     reject_reason = Column(String(500))
     reviewed_by = Column(Integer, ForeignKey("user.id"))
     reviewed_at = Column(DateTime)
@@ -307,9 +285,7 @@ if __name__ == "__main__":
         db.session.add_all([user1, user2, teacher_user1, teacher_user2])
         db.session.commit()
 
-        teacher1 = Teacher(
-            user_id=teacher_user1.id, note="Giảng viên lập trình Python và Flask"
-        )
+        teacher1 = Teacher(user_id=teacher_user1.id, note="Giảng viên lập trình Python và Flask")
 
         teacher2 = Teacher(user_id=teacher_user2.id, note="Giảng viên Java Spring Boot")
 
@@ -333,8 +309,6 @@ if __name__ == "__main__":
         cate9 = Category(name="Phát triển Web")
         cate10 = Category(name="Phát triển Mobile")
 
-        db.session.add_all(
-            [cate1, cate2, cate3, cate4, cate5, cate6, cate7, cate8, cate9, cate10]
-        )
+        db.session.add_all([cate1, cate2, cate3, cate4, cate5, cate6, cate7, cate8, cate9, cate10])
 
         db.session.commit()
