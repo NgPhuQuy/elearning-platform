@@ -4,6 +4,7 @@ import cloudinary
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from flask import Flask
+from flask_admin import Admin
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 
@@ -23,6 +24,8 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 db = SQLAlchemy(app)
 
 login = LoginManager(app)
+
+TEACHER_APPLICATION_COOLDOWN_DAYS = 14
 
 oauth = OAuth(app)
 

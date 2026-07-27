@@ -179,12 +179,54 @@ class ReactionComment(db.Model):
     created_date = Column(DateTime, default=datetime.now)
 
 
+class ApplicationStatus(MyEnum):
+    PENDING = "Chờ duyệt"
+    APPROVED = "Đã duyệt"
+    REJECTED = "Từ chối"
+
+
+class TeacherApplication(BaseModel):
+    __tablename__ = "teacher_application"
+
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
+    # Bước 1: thông tin cá nhân
+    workplace = Column(String(255))
+    degree = Column(String(50))
+    major = Column(String(255), nullable=False)
+    bio = Column(String(500), nullable=False)
+
+    # Bước 2: hồ sơ chuyên môn
+    expertise = Column(String(500))
+    experience = Column(String(50))
+    teach_style = Column(String(20))
+    linkedin = Column(String(255))
+    website = Column(String(255))
+
+    # Bước 3: tài liệu xác minh
+    id_card_file = Column(String(500), nullable=False)
+    degree_file = Column(String(500), nullable=False)
+    cv_file = Column(String(500), nullable=False)
+    extra_cert_file = Column(String(500))
+    video_file = Column(String(500))
+
+    # Duyệt
+    status = Column(Enum(ApplicationStatus), nullable=False, default=ApplicationStatus.PENDING)
+    reject_reason = Column(String(500))
+    reviewed_by = Column(Integer, ForeignKey("user.id"))
+    reviewed_at = Column(DateTime)
+
+    user = relationship("User", foreign_keys="TeacherApplication.user_id", backref="teacher_applications")
+    reviewer = relationship("User", foreign_keys="TeacherApplication.reviewed_by")
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         db.session.commit()
-        password = hashlib.sha256(b'123').hexdigest()
-        admin = User(username='admin', password=password, first_name="", last_name="", email='', phone='')
+        password = hashlib.sha256(b'11111111').hexdigest()
+        admin = User(username='admin', password=password, first_name="Nguyen Tran Ad", last_name="Min", email='',
+                     phone='')
         db.session.add(admin)
 
         teacher_user1 = User(username='teacher01', password=password,
