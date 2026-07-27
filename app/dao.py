@@ -465,11 +465,9 @@ def create_lesson(teacher_id, chapter_id, name, description, lesson_type):
         db.session.add(lesson)
         db.session.commit()
         return lesson
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return None
-
-    return True
 
 
 def vote_post(post_id, user_id, vote_type):
