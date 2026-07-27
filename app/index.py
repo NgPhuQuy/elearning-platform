@@ -2,7 +2,7 @@ import cloudinary.uploader
 from flask import redirect, render_template, request, url_for, jsonify
 from flask_login import login_user, current_user, logout_user
 
-from app import app, dao, db, oauth
+from app import app, dao, db, oauth, admin
 from app.dao import register_user
 from app.decorator import login_required, teacher_required, anonymous_required
 from app.models import PostCate, VoteType, Comment, Post, Course, User
@@ -81,6 +81,20 @@ def forgot_password():
     pass
 
 
+@app.route("/login-admin", methods=["POST"])
+def login_admin_process():
+    username = request.form.get("username")
+    password = request.form.get("password")
+
+    user = dao.auth_user(username, password)
+
+    if user:
+        login_user(user)
+        return redirect("/admin")
+    else:
+        return redirect("/admin")
+
+
 @app.route('/login', methods=["GET", "POST"])
 @anonymous_required
 def login():
@@ -97,6 +111,7 @@ def login():
             return jsonify({"success": False, "error": "Tài khoản hoặc mật khẩu không đúng!"}), 401
 
         login_user(user)
+        return jsonify({"success": True, "error": ""}), 200
 
     return render_template("index.html")
 
@@ -156,7 +171,56 @@ def privacy():
 @app.route('/register-teacher', methods=['GET', 'POST'])
 @login_required
 def register_teacher():
-    return render_template("teacher/register-teacher.html")
+    if current_user.teacher_profile:
+        return redirect(url_for('profile'))
+
+    if request.method == 'POST':
+        ok, message = dao.can_apply_teacher(current_user.id)
+        if not ok:
+            return render_template("teacher/register-teacher.html", error=message)
+
+        file_fields = {
+            "id_card_file": True,
+            "degree_file": True,
+            "cv_file": True,
+            "extra_cert_file": False,
+            "video_file": False,
+        }
+        uploaded = {}
+        for field, required in file_fields.items():
+            f = request.files.get(field)
+            if f and f.filename:
+                try:
+                    res = cloudinary.uploader.upload(f, resource_type="auto")
+                    uploaded[field] = res["secure_url"]
+                except Exception:
+                    return render_template("teacher/register-teacher.html",
+                                           error="Tải file thất bại, vui lòng thử lại!")
+            elif required:
+                return render_template("teacher/register-teacher.html",
+                                       error="Vui lòng tải đầy đủ tài liệu bắt buộc!")
+
+        application, error = dao.create_teacher_application(
+            user_id=current_user.id,
+            workplace=request.form.get('workplace'),
+            degree=request.form.get('degree'),
+            major=request.form.get('major'),
+            bio=request.form.get('bio'),
+            expertise=",".join(request.form.getlist('expertise')),
+            experience=request.form.get('experience'),
+            teach_style=request.form.get('teach_style'),
+            linkedin=request.form.get('linkedin'),
+            website=request.form.get('website'),
+            **uploaded
+        )
+
+        if error:
+            return render_template("teacher/register-teacher.html", error=error)
+
+        return redirect(url_for('profile'))
+
+    latest_application = dao.get_latest_teacher_application(current_user.id)
+    return render_template("teacher/register-teacher.html", latest_application=latest_application)
 
 
 @app.route('/profile')
@@ -213,14 +277,6 @@ def change_password():
         return redirect("/")
 
     return render_template("profile/change-password.html", error=error)
-
-
-@app.route('/become-teacher', methods=['POST'])
-@login_required
-def become_teacher():
-    if not current_user.teacher_profile:
-        dao.register_teacher(user_id=current_user.id)
-    return redirect(request.referrer or url_for('profile'))
 
 
 @app.route("/courses")
