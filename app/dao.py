@@ -1,6 +1,7 @@
 import hashlib
 from datetime import datetime, timedelta
 
+import cloudinary.uploader
 from flask_login import current_user
 
 from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login
@@ -12,7 +13,9 @@ from app.models import (
     Course,
     CourseCategory,
     CourseOutcome,
+    DocContent,
     Lesson,
+    LessonType,
     Post,
     PostCate,
     ReactionComment,
@@ -21,10 +24,8 @@ from app.models import (
     TeacherApplication,
     User,
     VideoContent,
-    DocContent,
-    LessonType,
 )
-import cloudinary.uploader
+
 
 @login.user_loader
 def load_user(user_id):
@@ -193,10 +194,9 @@ def get_course_details(course_id, teacher_id=None):
 
 
 def save_video_for_lesson(lesson_id, teacher_id, video_url, duration=0):
-    lesson = Lesson.query.join(Chapter).join(Course).filter(
-        Lesson.id == lesson_id,
-        Course.teacher_id == teacher_id
-    ).first()
+    lesson = (
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+    )
 
     if not lesson:
         return None
@@ -218,11 +218,11 @@ def save_video_for_lesson(lesson_id, teacher_id, video_url, duration=0):
         db.session.rollback()
         return None
 
+
 def save_doc_for_lesson(lesson_id, teacher_id, file_url):
-    lesson = Lesson.query.join(Chapter).join(Course).filter(
-        Lesson.id == lesson_id,
-        Course.teacher_id == teacher_id
-    ).first()
+    lesson = (
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+    )
 
     if not lesson:
         return None
@@ -243,11 +243,11 @@ def save_doc_for_lesson(lesson_id, teacher_id, file_url):
         db.session.rollback()
         return None
 
+
 def clear_video_content(lesson_id, teacher_id):
-    lesson = Lesson.query.join(Chapter).join(Course).filter(
-        Lesson.id == lesson_id,
-        Course.teacher_id == teacher_id
-    ).first()
+    lesson = (
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+    )
     if not lesson:
         return False
 
@@ -260,11 +260,12 @@ def clear_video_content(lesson_id, teacher_id):
             db.session.rollback()
             return False
     return True
+
+
 def clear_doc_content(lesson_id, teacher_id):
-    lesson = Lesson.query.join(Chapter).join(Course).filter(
-        Lesson.id == lesson_id,
-        Course.teacher_id == teacher_id
-    ).first()
+    lesson = (
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
+    )
     if not lesson:
         return False
 
@@ -320,6 +321,7 @@ def update_lesson(lesson_id, teacher_id, name=None, description=None, lesson_typ
         db.session.rollback()
         return None
 
+
 def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files):
     """
     Đồng bộ chapters + lessons từ JSON (chapters_data) gửi lên khi bấm "Lưu thay đổi".
@@ -336,9 +338,9 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files):
     kept_chapter_ids = set()
 
     for order, chapter_data in enumerate(chapters_data, start=1):
-        chapter_id = chapter_data.get('id')
-        name = (chapter_data.get('name') or '').strip()
-        description = (chapter_data.get('description') or '').strip()
+        chapter_id = chapter_data.get("id")
+        name = (chapter_data.get("name") or "").strip()
+        description = (chapter_data.get("description") or "").strip()
 
         if chapter_id:
             chapter = Chapter.query.filter_by(id=int(chapter_id), course_id=course_id).first()
@@ -353,7 +355,7 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files):
             db.session.flush()  # để có chapter.id ngay
 
         kept_chapter_ids.add(chapter.id)
-        _sync_lessons_for_chapter(chapter, chapter_data.get('lessons', []), files)
+        _sync_lessons_for_chapter(chapter, chapter_data.get("lessons", []), files)
 
     # Xóa các chapter không còn xuất hiện trong dữ liệu gửi lên
     for old_id in existing_chapter_ids - kept_chapter_ids:
@@ -370,15 +372,15 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files):
 
 
 def _sync_lessons_for_chapter(chapter, lessons_data, files):
-    existing_lesson_ids = {l.id for l in chapter.lessons}
+    existing_lesson_ids = {lesson.id for lesson in chapter.lessons}
     kept_lesson_ids = set()
 
     for lesson_data in lessons_data:
-        lesson_id = lesson_data.get('id')
-        temp_id = lesson_data.get('temp_id')
-        name = (lesson_data.get('name') or '').strip() or 'Bài học'
-        description = (lesson_data.get('description') or '').strip()
-        type_str = lesson_data.get('type') or 'NONE'
+        lesson_id = lesson_data.get("id")
+        temp_id = lesson_data.get("temp_id")
+        name = (lesson_data.get("name") or "").strip() or "Bài học"
+        description = (lesson_data.get("description") or "").strip()
+        type_str = lesson_data.get("type") or "NONE"
 
         try:
             lesson_type = LessonType[type_str]
@@ -414,26 +416,26 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
             existing_doc = None
 
         # Gắn video mới nếu type là VIDEO và có file gửi kèm
-        video_file = files.get(f'video_file_lesson_{file_key_id}')
+        video_file = files.get(f"video_file_lesson_{file_key_id}")
         if video_file and video_file.filename and lesson_type == LessonType.VIDEO:
             try:
                 res = cloudinary.uploader.upload(video_file, resource_type="video")
                 if existing_video:
-                    existing_video.video_url = res['secure_url']
+                    existing_video.video_url = res["secure_url"]
                 else:
-                    db.session.add(VideoContent(lesson_id=lesson.id, video_url=res['secure_url']))
+                    db.session.add(VideoContent(lesson_id=lesson.id, video_url=res["secure_url"]))
             except Exception:
                 pass
 
         # Gắn tài liệu mới nếu type là DOCUMENT và có file gửi kèm
-        doc_file = files.get(f'doc_file_lesson_{file_key_id}')
+        doc_file = files.get(f"doc_file_lesson_{file_key_id}")
         if doc_file and doc_file.filename and lesson_type == LessonType.DOCUMENT:
             try:
                 res = cloudinary.uploader.upload(doc_file, resource_type="raw")
                 if existing_doc:
-                    existing_doc.file_url = res['secure_url']
+                    existing_doc.file_url = res["secure_url"]
                 else:
-                    db.session.add(DocContent(lesson_id=lesson.id, file_url=res['secure_url']))
+                    db.session.add(DocContent(lesson_id=lesson.id, file_url=res["secure_url"]))
             except Exception:
                 pass
 
