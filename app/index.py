@@ -1,4 +1,5 @@
 import json
+import uuid
 
 import cloudinary.uploader
 from flask import jsonify, redirect, render_template, request, session, url_for
@@ -67,7 +68,7 @@ def register():
         file_path = None
         if avatar:
             try:
-                res = cloudinary.uploader.upload(avatar)
+                res = cloudinary.uploader.upload(avatar, folder="elearning-platform/avatars")
                 file_path = res["secure_url"]
             except Exception:
                 return jsonify({"success": False, "error": "Tải file thất bại!"}), 500
@@ -208,7 +209,13 @@ def register_teacher():
             f = request.files.get(field)
             if f and f.filename:
                 try:
-                    res = cloudinary.uploader.upload(f, resource_type="auto")
+                    res = cloudinary.uploader.upload(
+                        f,
+                        resource_type="auto",
+                        folder="elearning-platform/teacher-registrations",
+                        public_id=f"{field}_{uuid.uuid4().hex[:8]}",
+                    )
+
                     uploaded[field] = res["secure_url"]
                 except Exception:
                     return render_template(
@@ -260,7 +267,7 @@ def change_info():
 
         if avatar:
             try:
-                res = cloudinary.uploader.upload(avatar)
+                res = cloudinary.uploader.upload(avatar, folder="elearning-platform/avatars")
                 file_path = res["secure_url"]
             except Exception:
                 error = "Tải file thất bại!"
@@ -411,7 +418,7 @@ def create_course():
         image = request.files.get("image")
         image_url = None
         if image and image.filename:
-            res = cloudinary.uploader.upload(image)
+            res = cloudinary.uploader.upload(image, folder="elearning-platform/courses")
             image_url = res["secure_url"]
 
         course = dao.create_course(
@@ -446,7 +453,7 @@ def update_course(course_id):
         image = request.files.get("image")
         image_url = None
         if image and image.filename:
-            res = cloudinary.uploader.upload(image)
+            res = cloudinary.uploader.upload(image, folder="elearning-platform/courses")
             image_url = res["secure_url"]
 
         dao.update_course(
@@ -583,7 +590,7 @@ def create_question():
         image_url = None
 
         if image and image.filename:
-            res = cloudinary.uploader.upload(image)
+            res = cloudinary.uploader.upload(image, folder="elearning-platform/forum")
             image_url = res["secure_url"]
 
         dao.create_post(
