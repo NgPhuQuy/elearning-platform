@@ -530,13 +530,13 @@ def delete_outcome(outcome_id):
     except Exception:
         db.session.rollback()
         return False
+
+
 # enrollment
 
+
 def is_enrolled(user_id, course_id):
-    return (
-        Enrollment.query.filter_by(user_id=user_id, course_id=course_id).first()
-        is not None
-    )
+    return Enrollment.query.filter_by(user_id=user_id, course_id=course_id).first() is not None
 
 
 def enroll_course(user_id, course_id):
@@ -551,7 +551,6 @@ def enroll_course(user_id, course_id):
     enrollment = Enrollment(
         user_id=user_id,
         course_id=course_id,
-
     )
 
     try:
@@ -564,11 +563,7 @@ def enroll_course(user_id, course_id):
 
 
 def get_my_enrollments(user_id):
-    return (
-        Enrollment.query.filter_by(user_id=user_id)
-        .order_by(Enrollment.created_date.desc())
-        .all()
-    )
+    return Enrollment.query.filter_by(user_id=user_id).order_by(Enrollment.created_date.desc()).all()
 
 
 # forum

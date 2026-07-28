@@ -328,6 +328,8 @@ def course_detail(course_id):
         outcomes=outcomes,
         is_enrolled=is_enrolled,
     )
+
+
 @app.route("/courses/<int:course_id>/enroll", methods=["POST"])
 @login_required
 def enroll_course(course_id):
@@ -346,6 +348,7 @@ def enroll_course(course_id):
     except Exception:
         db.session.rollback()
         return jsonify({"success": False, "error": "Hệ thống lỗi, vui lòng thử lại sau!"}), 500
+
 
 # learning
 @app.route("/my-learning")
@@ -398,6 +401,7 @@ def get_doc_kind(ext):
     if ext in ("png", "jpg", "jpeg", "gif", "webp"):
         return "image"
     return "other"
+
 
 @app.route("/courses/create", methods=["GET", "POST"])
 @login_required

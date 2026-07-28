@@ -119,8 +119,8 @@ class CourseOutcome(BaseModel):
 
     course = relationship("Course", backref="outcomes")
 
-class Enrollment(BaseModel):
 
+class Enrollment(BaseModel):
     progress = Column(Integer, default=0)
     price = Column(Integer, nullable=False, default=0)  # snapshot giá đã trả, 0 nếu free
     completed_date = Column(DateTime, nullable=True)
@@ -128,9 +128,8 @@ class Enrollment(BaseModel):
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), nullable=False)
 
-    __table_args__ = (
-        db.UniqueConstraint("user_id", "course_id", name="uix_user_course_enrollment"),
-    )
+    __table_args__ = (db.UniqueConstraint("user_id", "course_id", name="uix_user_course_enrollment"),)
+
 
 class PostCate(BaseModel):
     __tablename__ = "post_cate"
