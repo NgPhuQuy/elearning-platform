@@ -1,0 +1,30 @@
+<form action="{{ url_for('forum') }}" method="get">
+
+    <section class="input-group shadow-sm">
+
+        <span class="input-group-text bg-white border-end-0">
+
+            <i class="bi bi-search text-secondary"></i>
+
+        </span>
+
+        <input
+                type="search"
+                class="form-control border-start-0"
+                name="kw"
+                value="{{ request.args.get('kw','') }}"
+                placeholder="Tìm kiếm câu hỏi...">
+
+        {% if request.args.get('solved') %}
+            <input type="hidden" name="solved" value="{{ request.args.get('solved') }}">
+        {% endif %}
+
+        <button class="btn btn-primary">
+
+            Tìm
+
+        </button>
+
+    </section>
+
+</form>

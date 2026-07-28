@@ -1,0 +1,62 @@
+<section class="card-ef p-4 mt-4">
+
+    <header class="mb-4">
+
+        <h4 class="font-display mb-1">
+
+            Viết câu trả lời
+
+        </h4>
+
+        <p class="text-muted-ef small mb-0">
+
+            Hãy đưa ra câu trả lời rõ ràng, đầy đủ và mang tính xây dựng.
+
+        </p>
+
+    </header>
+
+    <form action="{{ url_for('answer', post_id=post.id) }}" method="post">
+
+        <section class="mb-3">
+
+            <label for="content"
+                   class="form-label fw-semibold">
+
+                Nội dung
+
+            </label>
+
+            <textarea id="content"
+                      name="content"
+                      rows="8"
+                      class="form-control"
+                      placeholder="Nhập câu trả lời của bạn..."
+                      required></textarea>
+
+        </section>
+
+        <footer class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+            <small class="text-muted-ef">
+
+                <i class="bi bi-info-circle"></i>
+
+                Có thể sử dụng Markdown hoặc chèn đoạn code nếu hệ thống hỗ trợ.
+
+            </small>
+
+            <button type="submit"
+                    class="btn btn-indigo">
+
+                <i class="bi bi-send me-2"></i>
+
+                Gửi câu trả lời
+
+            </button>
+
+        </footer>
+
+    </form>
+
+</section>

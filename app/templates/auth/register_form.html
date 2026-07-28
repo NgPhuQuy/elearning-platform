@@ -1,0 +1,87 @@
+<!-- REGISTER SECTION -->
+<section class="tab-pane fade" id="register-pane" aria-labelledby="register-tab">
+    <header class="mb-4">
+        <h2 class="font-display fs-3">Tạo tài khoản miễn phí</h2>
+        <p class="text-muted-ef small mb-0">Tham gia cộng đồng 50.000+ học viên</p>
+    </header>
+
+    <!-- Register Form -->
+    <form id="registerForm" action="{{ url_for('register') }}" method="POST" novalidate>
+        {% if csrf_token %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% endif %}
+
+        <div id="registerServerError" class="alert alert-danger small py-2 px-3 mb-3 d-none"></div>
+
+        <fieldset class="mb-3 border-0 p-0">
+            <label for="first_name" class="form-label small fw-semibold">Họ</label>
+            <input type="text" id="first_name" name="first_name" class="form-control"
+                   placeholder="Nguyễn Văn" required>
+            <div class="invalid-feedback small">Vui lòng nhập họ.</div>
+        </fieldset>
+
+        <fieldset class="mb-3 border-0 p-0">
+            <label for="last_name" class="form-label small fw-semibold">Tên</label>
+            <input type="text" id="last_name" name="last_name" class="form-control"
+                   placeholder="A" required>
+            <div class="invalid-feedback small">Vui lòng nhập tên.</div>
+        </fieldset>
+
+        <fieldset class="mb-3 border-0 p-0">
+            <label for="username" class="form-label small fw-semibold">Tài khoản</label>
+            <input type="text" id="register_username" name="username" class="form-control"
+                   placeholder="Nhập tài khoản đăng nhập" required>
+            <div class="invalid-feedback small">Tài khoản tối thiểu 3 ký tự.</div>
+        </fieldset>
+
+        <fieldset class="mb-3 border-0 p-0">
+            <label for="email" class="form-label small fw-semibold">Email</label>
+            <input type="email" id="email" name="email" class="form-control"
+                   placeholder="Email của bạn" required>
+            <div class="invalid-feedback small">Vui lòng nhập đúng định dạng Email.</div>
+        </fieldset>
+
+        <fieldset class="mb-3 border-0 p-0">
+            <label for="phone" class="form-label small fw-semibold">Số điện thoại</label>
+            <input type="tel" id="phone" name="phone" class="form-control" placeholder="0912345678"
+                   required>
+            <div class="invalid-feedback small">Số điện thoại không hợp lệ.</div>
+        </fieldset>
+
+        <fieldset class="mb-3 border-0 p-0">
+            <label for="password" class="form-label small fw-semibold">Mật khẩu</label>
+            <input type="password" id="register_password" name="password" class="form-control"
+                   placeholder="Mật khẩu (tối thiểu 8 ký tự)" minlength="8" required>
+            <div class="invalid-feedback small">Mật khẩu phải từ 8 ký tự trở lên.</div>
+        </fieldset>
+
+        <fieldset class="mb-3 border-0 p-0">
+            <label for="confirm" class="form-label small fw-semibold">Xác nhận mật
+                khẩu</label>
+            <input type="password" id="register_confirm" name="confirm"
+                   class="form-control" placeholder="Xác nhận mật khẩu" required>
+            <div class="invalid-feedback small">Mật khẩu xác nhận không trùng khớp.</div>
+        </fieldset>
+
+        <fieldset class="form-check mb-3 border-0 p-0">
+            <input class="form-check-input" type="checkbox" id="agreeTerms" name="agree_terms"
+                   required>
+            <label class="form-check-label small" for="agreeTerms">
+                Tôi đồng ý với
+                <a href="{{ url_for('terms') }}"
+                   class="text-indigo-700 fw-semibold text-decoration-none">Điều khoản dịch vụ</a>
+                và
+                <a href="{{ url_for('privacy') }}"
+                   class="text-indigo-700 fw-semibold text-decoration-none">Chính sách bảo mật</a>
+            </label>
+        </fieldset>
+
+        <button type="submit" id="registerBtn" class="btn btn-indigo w-100 py-2" disabled>
+                                <span class="btn-text">
+                                    <i class="bi bi-person-plus me-1" aria-hidden="true"></i> Đăng ký ngay
+                                </span>
+            <span id="registerSpinner" class="spinner-border spinner-border-sm d-none" role="status"
+                  aria-hidden="true"></span>
+        </button>
+    </form>
+</section>

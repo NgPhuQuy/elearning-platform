@@ -1,0 +1,319 @@
+{% extends "layout/base.html" %}
+{% block title %}Trang cá nhân{% endblock %}
+{% block content %}
+    <main class="flex-grow-1">
+        <div class="p-3 p-lg-4 mx-auto d-flex flex-column gap-4" style="max-width:960px;">
+
+            <div class="card-ef overflow-hidden">
+                <div
+                        style="height:112px; background:linear-gradient(90deg, var(--ef-indigo-500), var(--ef-violet-500), #9333ea);">
+                </div>
+                <div class="px-4 pb-4">
+                    <div class="d-flex align-items-end justify-content-between mb-3" style="margin-top:-48px;">
+                        <div
+                                class="rounded-4 border border-4 border-white bg-white shadow d-flex align-items-center justify-content-center overflow-hidden"
+                                style="width:84px;height:84px;">
+                            <span class="ef-avatar ef-avatar-emerald" style="width:80px;height:80px;font-size:30.4px;">CU</span>
+
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="/profile/change-info"
+                               class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"><i
+                                    class="bi bi-pencil"></i> Chỉnh sửa</a>
+                            <a class="btn btn-indigo btn-sm d-flex align-items-center gap-1"><i class="bi bi-share"></i>
+                                Chia
+                                sẻ hồ sơ</a>
+                        </div>
+                    </div>
+                    <h2 class="font-display fs-3 mb-0">{{ current_user }}</h2>
+                    <p class="text-muted-ef small mb-1">@nguyenvanan · Frontend Developer tại TechCorp VN</p>
+                    <p class="small mb-3">{{ current_user.bio }}</p>
+                    <div class="row text-center border-top pt-3">
+                        <div class="col">
+                            <p class="font-display fs-5 mb-0">2.840</p>
+                            <p class="text-muted-ef small mb-0">Điểm uy tín</p>
+                        </div>
+                        <div class="col">
+                            <p class="font-display fs-5 mb-0">127</p>
+                            <p class="text-muted-ef small mb-0">Câu trả lời</p>
+                        </div>
+                        <div class="col">
+                            <p class="font-display fs-5 mb-0">43</p>
+                            <p class="text-muted-ef small mb-0">Câu hỏi</p>
+                        </div>
+                        <div class="col">
+                            <p class="font-display fs-5 mb-0">8</p>
+                            <p class="text-muted-ef small mb-0">Khóa học</p>
+                        </div>
+                        <div class="col">
+                            <p class="font-display fs-5 mb-0">312</p>
+                            <p class="text-muted-ef small mb-0">Người theo dõi</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <ul class="nav nav-pills bg-white border rounded-3 p-1 d-inline-flex" style="width:fit-content;"
+                id="profileTab">
+                <li class="nav-item">
+                    <button class="nav-link active rounded-3 fw-semibold small" data-bs-toggle="pill"
+                            data-bs-target="#pf-courses">📚 Khóa học
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link rounded-3 fw-semibold small" data-bs-toggle="pill"
+                            data-bs-target="#pf-posts">📝 Bài viết
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link rounded-3 fw-semibold small" data-bs-toggle="pill"
+                            data-bs-target="#pf-questions">❓ Câu hỏi
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link rounded-3 fw-semibold small" data-bs-toggle="pill"
+                            data-bs-target="#pf-achievements">🏅 Huy hiệu
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active d-flex flex-column gap-3" id="pf-courses">
+                    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-center">
+                        <div class="rounded-3 bg-slate-100 overflow-hidden flex-shrink-0"
+                             style="width:80px;height:64px;"><img
+                                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=340&fit=crop&auto=format"
+                                class="w-100 h-100" style="object-fit:cover;"></div>
+                        <div class="flex-grow-1" style="min-width:0;">
+                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                                <p class="font-display fs-6 mb-0 line-clamp-1" style="font-size:.9rem !important;">Khóa
+                                    học React &
+                                    TypeScript từ cơ bản đến nâng cao</p>
+                                <span class="badge-ef badge-ef-primary">Premium</span>
+                            </div>
+                            <p class="text-muted-ef small mb-2">Nguyễn Minh Khoa</p>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress-ef flex-grow-1">
+                                    <div class="progress-bar" style="width:42%;"></div>
+                                </div>
+                                <span class="text-muted-ef small">42%</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-indigo rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center"
+                                style="width:36px;height:36px;"><i class="bi bi-play-fill"></i></button>
+                    </div>
+                    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-center">
+                        <div class="rounded-3 bg-slate-100 overflow-hidden flex-shrink-0"
+                             style="width:80px;height:64px;"><img
+                                src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=340&fit=crop&auto=format"
+                                class="w-100 h-100" style="object-fit:cover;"></div>
+                        <div class="flex-grow-1" style="min-width:0;">
+                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                                <p class="font-display fs-6 mb-0 line-clamp-1" style="font-size:.9rem !important;">
+                                    Python & Machine
+                                    Learning: Ứng dụng thực tế với TensorFlow</p>
+                                <span class="badge-ef badge-ef-primary">Premium</span>
+                            </div>
+                            <p class="text-muted-ef small mb-2">Trần Thị Lan Anh</p>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress-ef flex-grow-1">
+                                    <div class="progress-bar" style="width:78%;"></div>
+                                </div>
+                                <span class="text-muted-ef small">78%</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-indigo rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center"
+                                style="width:36px;height:36px;"><i class="bi bi-play-fill"></i></button>
+                    </div>
+                    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-center">
+                        <div class="rounded-3 bg-slate-100 overflow-hidden flex-shrink-0"
+                             style="width:80px;height:64px;"><img
+                                src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=600&h=340&fit=crop&auto=format"
+                                class="w-100 h-100" style="object-fit:cover;"></div>
+                        <div class="flex-grow-1" style="min-width:0;">
+                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                                <p class="font-display fs-6 mb-0 line-clamp-1" style="font-size:.9rem !important;">HTML
+                                    & CSS Cơ
+                                    Bản: Xây dựng trang web đầu tiên</p>
+                                <span class="badge-ef badge-ef-success">Miễn phí</span>
+                            </div>
+                            <p class="text-muted-ef small mb-2">Phạm Đức Hùng</p>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress-ef flex-grow-1">
+                                    <div class="progress-bar" style="width:100%;"></div>
+                                </div>
+                                <span class="text-muted-ef small">100%</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-indigo rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center"
+                                style="width:36px;height:36px;"><i class="bi bi-play-fill"></i></button>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade d-flex flex-column gap-3" id="pf-posts">
+                    <div class="card-ef p-3 d-flex flex-row gap-3">
+                        <div class="rounded-3 bg-slate-100 overflow-hidden flex-shrink-0"
+                             style="width:96px;height:64px;"><img
+                                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=340&fit=crop&auto=format"
+                                class="w-100 h-100" style="object-fit:cover;"></div>
+                        <div class="flex-grow-1" style="min-width:0;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge-ef badge-ef-primary">Blog</span>
+                                <span class="text-muted-ef small">4 giờ trước</span>
+                            </div>
+                            <h3 class="font-display fs-6 line-clamp-1 mb-2">Review chi tiết: Sau 3 tháng học khóa React
+                                của thầy
+                                Khoa</h3>
+                            <div class="d-flex gap-3 text-muted-ef small">
+                                <span><i class="bi bi-heart"></i> 124</span>
+                                <span><i class="bi bi-chat"></i> 38</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-ef p-3 d-flex flex-row gap-3">
+                        <div class="flex-grow-1" style="min-width:0;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge-ef badge-ef-accent">Chia sẻ</span>
+                                <span class="text-muted-ef small">1 ngày trước</span>
+                            </div>
+                            <h3 class="font-display fs-6 line-clamp-1 mb-2">Tổng hợp 50 câu hỏi phỏng vấn Frontend
+                                thường gặp năm
+                                2025</h3>
+                            <div class="d-flex gap-3 text-muted-ef small">
+                                <span><i class="bi bi-heart"></i> 287</span>
+                                <span><i class="bi bi-chat"></i> 94</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-ef p-3 d-flex flex-row gap-3">
+                        <div class="flex-grow-1" style="min-width:0;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge-ef badge-ef-default">Thảo luận</span>
+                                <span class="text-muted-ef small">2 ngày trước</span>
+                            </div>
+                            <h3 class="font-display fs-6 line-clamp-1 mb-2">Năm 2025, nên học React hay Vue cho người
+                                mới vào
+                                nghề?</h3>
+                            <div class="d-flex gap-3 text-muted-ef small">
+                                <span><i class="bi bi-heart"></i> 156</span>
+                                <span><i class="bi bi-chat"></i> 72</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade d-flex flex-column gap-3" id="pf-questions">
+                    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-start">
+                        <div class="ef-vote-box solved">
+                            <span class="fw-bold small text-success">47</span>
+                            <span class="text-muted-ef" style="font-size:.6rem;">votes</span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge-ef badge-ef-success"><i class="bi bi-check-circle-fill"></i> Đã giải quyết</span>
+                                <span class="text-muted-ef small">2 giờ trước</span>
+                            </div>
+                            <h3 class="font-display fs-6 mb-0">Sự khác biệt giữa useEffect và useLayoutEffect trong
+                                React là gì?
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-start">
+                        <div class="ef-vote-box ">
+                            <span class="fw-bold small ">34</span>
+                            <span class="text-muted-ef" style="font-size:.6rem;">votes</span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="text-muted-ef small">5 giờ trước</span>
+                            </div>
+                            <h3 class="font-display fs-6 mb-0">Cách tối ưu truy vấn SQL khi JOIN nhiều bảng lớn?</h3>
+                        </div>
+                    </div>
+                    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-start">
+                        <div class="ef-vote-box solved">
+                            <span class="fw-bold small text-success">89</span>
+                            <span class="text-muted-ef" style="font-size:.6rem;">votes</span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge-ef badge-ef-success"><i class="bi bi-check-circle-fill"></i> Đã giải quyết</span>
+                                <span class="text-muted-ef small">1 ngày trước</span>
+                            </div>
+                            <h3 class="font-display fs-6 mb-0">Học Machine Learning thì nên bắt đầu từ đâu cho người
+                                mới?</h3>
+                        </div>
+                    </div>
+                    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-start">
+                        <div class="ef-vote-box ">
+                            <span class="fw-bold small ">28</span>
+                            <span class="text-muted-ef" style="font-size:.6rem;">votes</span>
+                        </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="text-muted-ef small">3 giờ trước</span>
+                    </div>
+                    <h3 class="font-display fs-6 mb-0">TypeScript: Generic types vs Union types - khi nào dùng cái nào?
+                    </h3>
+                </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="pf-achievements">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card-ef p-4 text-center h-100 "
+                                 style="background:var(--ef-indigo-50); border-color:var(--ef-indigo-200)!important;">
+                                <div class="mb-2" style="font-size:2.2rem;">🎯</div>
+                                <h4 class="font-display fs-6 mb-1">Người mới bắt đầu</h4>
+                                <p class="text-muted-ef small mb-2">Đặt câu hỏi đầu tiên</p>
+                                <span class="badge-ef badge-ef-success">Đã đạt được</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-ef p-4 text-center h-100 "
+                                 style="background:var(--ef-indigo-50); border-color:var(--ef-indigo-200)!important;">
+                                <div class="mb-2" style="font-size:2.2rem;">💡</div>
+                                <h4 class="font-display fs-6 mb-1">Người giải đáp</h4>
+                                <p class="text-muted-ef small mb-2">10 câu trả lời được chấp nhận</p>
+                                <span class="badge-ef badge-ef-success">Đã đạt được</span>
+                            </div>
+                </div>
+                        <div class="col-md-4">
+                            <div class="card-ef p-4 text-center h-100 "
+                                 style="background:var(--ef-indigo-50); border-color:var(--ef-indigo-200)!important;">
+                                <div class="mb-2" style="font-size:2.2rem;">🔥</div>
+                                <h4 class="font-display fs-6 mb-1">Streak 7 ngày</h4>
+                                <p class="text-muted-ef small mb-2">Hoạt động 7 ngày liên tiếp</p>
+                                <span class="badge-ef badge-ef-success">Đã đạt được</span>
+                            </div>
+                </div>
+                        <div class="col-md-4">
+                            <div class="card-ef p-4 text-center h-100 "
+                                 style="background:var(--ef-indigo-50); border-color:var(--ef-indigo-200)!important;">
+                                <div class="mb-2" style="font-size:2.2rem;">📚</div>
+                                <h4 class="font-display fs-6 mb-1">Học viên chăm chỉ</h4>
+                                <p class="text-muted-ef small mb-2">Hoàn thành 3 khóa học</p>
+                                <span class="badge-ef badge-ef-success">Đã đạt được</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-ef p-4 text-center h-100 opacity-50" style="">
+                                <div class="mb-2" style="font-size:2.2rem;">⭐</div>
+                                <h4 class="font-display fs-6 mb-1">Chuyên gia React</h4>
+                                <p class="text-muted-ef small mb-2">50 câu trả lời về React</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-ef p-4 text-center h-100 opacity-50" style="">
+                                <div class="mb-2" style="font-size:2.2rem;">🏆</div>
+                                <h4 class="font-display fs-6 mb-1">Top Contributor</h4>
+                                <p class="text-muted-ef small mb-2">Top 100 người dùng tháng</p>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}

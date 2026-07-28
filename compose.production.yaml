@@ -1,0 +1,69 @@
+services:
+  app:
+    image: ${APP_IMAGE:?APP_IMAGE must reference a published application image}
+    init: true
+    restart: unless-stopped
+
+    environment:
+      PORT: "8000"
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-8}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-120}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      DB_URI: ${DB_URI:?DB_URI is required}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      CLOUD_NAME: ${CLOUD_NAME:-}
+      CLOUD_KEY: ${CLOUD_KEY:-}
+      CLOUD_SECRET: ${CLOUD_SECRET:-}
+
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=5)\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+    security_opt:
+      - no-new-privileges:true
+
+  db:
+    image: mysql:8.0.46
+    restart: unless-stopped
+
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}
+      MYSQL_USER: ${MYSQL_USER:?MYSQL_USER is required}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  mysql_data:

@@ -1,0 +1,155 @@
+<article class="card border-0 shadow-sm mb-3">
+
+    <section class="card-body">
+
+        <section class="row">
+
+            <aside class="col-auto text-center border-end pe-4">
+
+                <h4
+                        class="
+                        {% if post.is_solved %}
+                            text-success
+                        {% endif %}
+                        mb-0">
+
+                    {{ dao.get_post_score(post) }}
+
+                </h4>
+
+                <small class="text-muted">
+
+                    votes
+
+                </small>
+
+                <hr>
+
+                <h5 class="mb-0">
+
+                    {{ post.comments|length }}
+
+                </h5>
+
+                <small class="text-muted">
+
+                    trả lời
+
+                </small>
+
+            </aside>
+
+            <section class="col">
+
+                <header
+                        class="
+                        d-flex
+                        justify-content-between
+                        align-items-start
+                        gap-3">
+
+                    <section>
+
+                        <h4 class="mb-2">
+
+                            <a
+                                    href="{{ url_for('forum_detail',post_id=post.id) }}"
+                                    class="text-decoration-none">
+
+                                {{ post.title }}
+
+                            </a>
+
+                        </h4>
+
+                    </section>
+
+                    {% if post.is_solved %}
+
+                        <span
+                                class="
+                                badge
+                                rounded-pill
+                                bg-success">
+
+                            <i class="bi bi-check-circle"></i>
+
+                            Đã giải quyết
+
+                        </span>
+
+                    {% endif %}
+
+                </header>
+
+                <p class="text-muted">
+
+                    {{ post.content[:250] }}
+
+                    {% if post.content|length > 250 %}
+                        ...
+                    {% endif %}
+
+                </p>
+
+                {% if post.image %}
+
+                    <img
+                            src="{{ post.image }}"
+                            class="img-fluid rounded mb-3"
+                            alt="question">
+
+                {% endif %}
+
+                <footer
+                        class="
+                        d-flex
+                        flex-column
+                        flex-md-row
+                        justify-content-between
+                        align-items-md-center
+                        gap-2">
+
+                    <section>
+
+                        {% for cate in post.categories %}
+                        <span class="badge bg-primary me-1">
+                            {{ cate.name }}
+                        </span>
+                    {% endfor %}
+                    </section>
+
+                    <section
+                            class="
+                            text-muted
+                            small">
+
+                        <i class="bi bi-eye"></i>
+
+                        {{ post.view_count }}
+
+                        &nbsp;&nbsp;
+
+                        <i class="bi bi-calendar3"></i>
+
+                        {{ post.created_date.strftime("%d/%m/%Y") }}
+
+                        &nbsp;&nbsp;
+
+                        <i class="bi bi-person-circle"></i>
+
+                        {{ post.user.first_name }}
+
+                        {{ post.user.last_name }}
+
+                    </section>
+
+                </footer>
+
+            </section>
+
+        </section>
+
+    </section>
+
+</article>

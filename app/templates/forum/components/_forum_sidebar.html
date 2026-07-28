@@ -1,0 +1,91 @@
+<aside class="d-flex flex-column gap-4">
+
+
+
+    <!-- Hướng dẫn -->
+
+    <section class="card shadow-sm border-0">
+
+        <header class="card-header bg-white">
+
+            <strong>
+
+                Hướng dẫn đặt câu hỏi
+
+            </strong>
+
+        </header>
+
+        <ol class="list-group list-group-numbered list-group-flush">
+
+            <li class="list-group-item">
+
+                Đặt tiêu đề ngắn gọn, rõ ràng.
+
+            </li>
+
+            <li class="list-group-item">
+
+                Mô tả đầy đủ lỗi hoặc vấn đề gặp phải.
+
+            </li>
+
+            <li class="list-group-item">
+
+                Chèn hình ảnh hoặc đoạn mã nếu cần.
+
+            </li>
+
+            <li class="list-group-item">
+
+                Chọn đúng danh mục.
+
+            </li>
+
+            <li class="list-group-item">
+
+                Đánh dấu câu trả lời đúng khi vấn đề đã được giải quyết.
+
+            </li>
+
+        </ol>
+
+    </section>
+
+
+    <!-- Tags -->
+
+    <section class="card shadow-sm border-0">
+
+        <header class="card-header bg-white">
+
+            <strong>
+
+                Tags phổ biến
+
+            </strong>
+
+        </header>
+
+        <article class="card-body">
+
+            {% for c in dao.get_post_categories() %}
+
+                <a
+                    href="{{ url_for('forum', category=c.id) }}"
+                    class="badge rounded-pill text-bg-primary text-decoration-none mb-2 me-1">
+
+                    #{{ c.name }}
+
+                </a>
+
+            {% endfor %}
+
+        </article>
+
+    </section>
+
+
+
+
+</aside>

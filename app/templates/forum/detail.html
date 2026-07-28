@@ -1,0 +1,65 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+{{ post.title }}
+{% endblock %}
+
+{% block content %}
+
+<main class="container-xl py-4">
+
+    <section class="row g-4">
+
+        <section class="col-lg-9">
+
+            {% include "forum/components/_post_detail.html" %}
+
+            <section class="mt-5">
+
+                <header class="mb-4">
+
+                    <h4>
+
+                        {{ post.comments|length }}
+
+                        câu trả lời
+
+                    </h4>
+
+                </header>
+
+                {% for comment in post.comments %}
+
+                    {% if not comment.parent_comment_id %}
+
+                        {% include "forum/components/_answer_card.html" %}
+
+                    {% endif %}
+
+                {% else %}
+
+                    <article class="alert alert-light border">
+
+                        Chưa có câu trả lời nào.
+
+                    </article>
+
+                {% endfor %}
+
+            </section>
+
+            {% include "forum/components/_reply_form.html" %}
+
+        </section>
+
+        <aside class="col-lg-3">
+
+            {% include "forum/components/_related_posts.html" %}
+
+        </aside>
+
+    </section>
+
+</main>
+
+{% endblock %}

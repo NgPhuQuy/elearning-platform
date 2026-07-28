@@ -1,0 +1,81 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+Diễn đàn Q&A
+{% endblock %}
+
+{% block content %}
+
+<main class="container-fluid">
+
+    <section class="d-flex flex-column flex-xl-row gap-4 p-3 p-lg-4 mx-auto"
+             style="max-width:1152px;">
+
+        <!-- LEFT -->
+
+        <section class="flex-grow-1" style="min-width:0;">
+
+            {% include "forum/components/_question_header.html" %}
+
+            {% include "forum/components/_filter_bar.html" %}
+
+            <section class="d-flex flex-column gap-3">
+
+                {% if posts %}
+
+                    {% for post in posts %}
+
+                        {% include "forum/components/_question_card.html" %}
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <article class="card-ef p-5 text-center">
+
+                        <i class="bi bi-chat-square-text display-3 text-secondary"></i>
+
+                        <h4 class="mt-3">
+
+                            Chưa có câu hỏi nào
+
+                        </h4>
+
+                        <p class="text-muted-ef">
+
+                            Hãy trở thành người đầu tiên đặt câu hỏi.
+
+                        </p>
+
+                        <a href="{{ url_for('create_question') }}"
+                           class="btn btn-indigo  ms-auto">
+
+                            <i class="bi bi-plus-circle me-1"></i>
+
+                            Đặt câu hỏi
+
+                        </a>
+
+                    </article>
+
+                {% endif %}
+
+            </section>
+
+        </section>
+
+
+        <!-- RIGHT -->
+
+        <aside style="width:256px;flex-shrink:0;"
+               class="d-flex flex-column gap-4">
+
+            {% include "forum/components/_forum_sidebar.html" %}
+
+        </aside>
+
+    </section>
+
+</main>
+
+{% endblock %}
