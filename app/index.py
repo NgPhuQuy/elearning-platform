@@ -7,7 +7,7 @@ from flask_login import current_user, login_user, logout_user
 from app import app, dao, db, oauth  # noqa: F401  # Register admin routes.
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
-from app.models import Comment, Course, Post, PostCate, User, VoteType
+from app.models import Comment, Course, Post, PostCate, User, VoteType, Enrollment
 
 
 @app.context_processor
@@ -307,6 +307,57 @@ def my_courses():
     return render_template("course/manage.html", courses=courses)
 
 
+@app.route("/courses/<int:course_id>")
+def course_detail(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    is_enrolled = False
+    if current_user.is_authenticated:
+        is_enrolled = dao.is_enrolled(current_user.id, course_id)
+
+    chapters = dao.get_chapters(course_id)
+    outcomes = dao.get_outcomes(course_id)
+
+    return render_template(
+        "course/detail.html",
+        course=course,
+        chapters=chapters,
+        outcomes=outcomes,
+        is_enrolled=is_enrolled,
+    )
+@app.route("/courses/<int:course_id>/enroll", methods=["POST"])
+@login_required
+def enroll_course(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    if dao.is_enrolled(current_user.id, course_id):
+        return jsonify({"success": False, "error": "Bạn đã đăng ký khóa học này rồi!"}), 400
+
+    try:
+        dao.enroll_course(user_id=current_user.id, course_id=course.id)
+        return jsonify({"success": True, "redirect": url_for("learn_course", course_id=course.id)})
+    except Exception:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Hệ thống lỗi, vui lòng thử lại sau!"}), 500
+
+# learning
+@app.route("/my-learning")
+@login_required
+def my_learning():
+    enrollments = dao.get_my_enrollments(current_user.id)
+    return render_template("profile/my-learning.html", enrollments=enrollments)
+
+
+@app.route("/learn/<int:course_id>")
+@login_required
+def learn_course(course_id):
+    if not dao.is_enrolled(current_user.id, course_id):
+        return redirect(url_for("course_detail", course_id=course_id))
+
+    course = dao.get_course_details(course_id)
+    chapters = dao.get_chapters(course_id)
+
+    return render_template("course/learn.html", course=course, chapters=chapters)
 @app.route("/courses/create", methods=["GET", "POST"])
 @login_required
 @teacher_required

@@ -29,6 +29,7 @@ class User(BaseModel, UserMixin):
     phone = Column(String(255))
     teacher_profile = relationship("Teacher", backref="user", uselist=False, lazy=True)
     bio = Column(String(255), default="")
+    enrollment = relationship("Enrollment", backref="user", lazy=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -72,7 +73,7 @@ class CourseLevel(MyEnum):
 
 class Course(BaseModel):
     is_sale = Column(Boolean, default=True)
-
+    price = Column(Integer, nullable=False, default=0)
     description = Column(String(1000), nullable=False)
     image = Column(String(500), nullable=False, default="")
 
@@ -81,6 +82,7 @@ class Course(BaseModel):
     chapters = relationship("Chapter", backref="course", cascade="all, delete-orphan", lazy=True)
     course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True)
     level = Column(Enum(CourseLevel), nullable=False, default=CourseLevel.BASIC)
+    enrollment = relationship("Enrollment", backref="course", cascade="all, delete-orphan", lazy=True)
 
 
 class LessonType(MyEnum):
@@ -116,6 +118,18 @@ class CourseOutcome(BaseModel):
 
     course = relationship("Course", backref="outcomes")
 
+class Enrollment(BaseModel):
+
+    progress = Column(Integer, default=0)
+    price = Column(Integer, nullable=False, default=0)  # snapshot giá đã trả, 0 nếu free
+    completed_date = Column(DateTime, nullable=True)
+
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "course_id", name="uix_user_course_enrollment"),
+    )
 
 class PostCate(BaseModel):
     __tablename__ = "post_cate"
