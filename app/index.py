@@ -299,7 +299,7 @@ def change_password():
 @app.route("/courses")
 def courses():
     courses = Course.query.order_by(Course.id.desc()).all()
-    return render_template("course/manage.html", courses=courses)
+    return render_template("course/courses.html", courses=courses)
 
 
 @app.route("/courses/manage")
@@ -308,6 +308,99 @@ def courses():
 def my_courses():
     courses = dao.get_courses_by_teacher_id(current_user.teacher_profile.id)
     return render_template("course/manage.html", courses=courses)
+
+
+@app.route("/courses/<int:course_id>")
+def course_detail(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    is_enrolled = False
+    if current_user.is_authenticated:
+        is_enrolled = dao.is_enrolled(current_user.id, course_id)
+
+    chapters = dao.get_chapters(course_id)
+    outcomes = dao.get_outcomes(course_id)
+
+    return render_template(
+        "course/course_detail.html",
+        course=course,
+        chapters=chapters,
+        outcomes=outcomes,
+        is_enrolled=is_enrolled,
+    )
+
+
+@app.route("/courses/<int:course_id>/enroll", methods=["POST"])
+@login_required
+def enroll_course(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    # Chặn giảng viên tự học khóa mình tạo
+    if current_user.teacher_profile and course.teacher_id == current_user.teacher_profile.id:
+        return jsonify({"success": False, "error": "Bạn không thể tự đăng ký khóa học do chính mình tạo!"}), 400
+
+    if dao.is_enrolled(current_user.id, course_id):
+        return jsonify({"success": False, "error": "Bạn đã đăng ký khóa học này rồi!"}), 400
+
+    try:
+        dao.enroll_course(user_id=current_user.id, course_id=course.id)
+        return jsonify({"success": True, "redirect": url_for("learn_course", course_id=course.id)})
+    except Exception:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Hệ thống lỗi, vui lòng thử lại sau!"}), 500
+
+
+# learning
+@app.route("/my-learning")
+@login_required
+def my_learning():
+    enrollments = dao.get_my_enrollments(current_user.id)
+    return render_template("profile/my-learning.html", enrollments=enrollments)
+
+
+@app.route("/learn/<int:course_id>")
+@login_required
+def learn_course(course_id):
+    if not dao.is_enrolled(current_user.id, course_id):
+        return redirect(url_for("course_detail", course_id=course_id))
+
+    course = dao.get_course_details(course_id)
+    chapters = dao.get_chapters(course_id)
+
+    lesson_id = request.args.get("lesson_id", type=int)
+    current_lesson = None
+
+    if lesson_id:
+        current_lesson = dao.get_lesson_details(lesson_id)
+
+    if not current_lesson:
+        for chapter in chapters:
+            if chapter.lessons:
+                current_lesson = chapter.lessons[0]
+                break
+
+    doc_kind = None
+    if current_lesson and current_lesson.doc_content:
+        doc_kind = get_doc_kind(current_lesson.doc_content.file_ext or "")
+
+    return render_template(
+        "course/learn.html",
+        course=course,
+        chapters=chapters,
+        current_lesson=current_lesson,
+        doc_kind=doc_kind,
+    )
+
+
+def get_doc_kind(ext):
+    ext = ext.lower()
+    if ext == "pdf":
+        return "pdf"
+    if ext in ("doc", "docx", "ppt", "pptx", "xls", "xlsx"):
+        return "office"
+    if ext in ("png", "jpg", "jpeg", "gif", "webp"):
+        return "image"
+    return "other"
 
 
 @app.route("/courses/create", methods=["GET", "POST"])

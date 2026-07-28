@@ -1,0 +1,54 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Khóa học của tôi · EduForum{% endblock %}
+
+{% block content %}
+<h1 class="font-display fs-5 mb-4">Khóa học của tôi</h1>
+
+{% if enrollments %}
+<div class="row g-4">
+  {% for enrollment in enrollments %}
+  {% set course = enrollment.course %}
+  <div class="col-md-6 col-lg-4">
+    <a href="{{ url_for('learn_course', course_id=course.id) }}" class="card-ef ef-course-card d-block text-decoration-none text-reset overflow-hidden h-100">
+      <div class="position-relative bg-slate-100" style="height:160px; overflow:hidden;">
+        {% if course.image %}
+        <img src="{{ course.image }}" class="w-100 h-100" style="object-fit:cover;">
+        {% endif %}
+        <div class="position-absolute top-0 end-0 m-3">
+          <span class="badge-ef badge-ef-default">{{ course.level.value }}</span>
+        </div>
+      </div>
+      <div class="p-3">
+        <h3 class="font-display fs-6 line-clamp-2 mb-2" style="font-size:.92rem !important;">{{ course.name }}</h3>
+        {% if course.teacher and course.teacher.user %}
+        <p class="text-muted-ef small mb-2">{{ course.teacher.user.first_name }} {{ course.teacher.user.last_name }}</p>
+        {% endif %}
+
+        <div class="d-flex justify-content-between mb-1">
+          <span class="text-muted-ef small">Tiến độ</span>
+          <span class="text-indigo small fw-semibold">{{ enrollment.progress }}%</span>
+        </div>
+        <div class="progress-ef mb-3"><div class="progress-bar" style="width:{{ enrollment.progress }}%;"></div></div>
+
+        <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+          <span class="small text-muted-ef">
+            <i class="bi bi-calendar3"></i> {{ enrollment.created_date.strftime("%d/%m/%Y") }}
+          </span>
+          <span class="btn btn-indigo btn-sm"><i class="bi bi-play-circle"></i> Vào học</span>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card-ef p-5 text-center">
+  <i class="bi bi-journal-x text-muted-ef" style="font-size:2.5rem;"></i>
+  <p class="text-muted-ef mt-3 mb-3">Bạn chưa đăng ký khóa học nào.</p>
+  <a href="{{ url_for('courses') }}" class="btn btn-indigo">
+    <i class="bi bi-search"></i> Khám phá khóa học
+  </a>
+</div>
+{% endif %}
+{% endblock %}

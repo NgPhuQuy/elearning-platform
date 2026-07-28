@@ -1,4 +1,5 @@
 import hashlib
+import uuid
 from datetime import datetime, timedelta
 
 import cloudinary.uploader
@@ -14,6 +15,7 @@ from app.models import (
     CourseCategory,
     CourseOutcome,
     DocContent,
+    Enrollment,
     Lesson,
     LessonType,
     Post,
@@ -431,13 +433,22 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
         doc_file = files.get(f"doc_file_lesson_{file_key_id}")
         if doc_file and doc_file.filename and lesson_type == LessonType.DOCUMENT:
             try:
-                res = cloudinary.uploader.upload(doc_file, resource_type="raw")
+                file_ext = doc_file.filename.rsplit(".", 1)[-1].lower() if "." in doc_file.filename else ""
+                public_id = f"doc_lesson_{lesson.id}_{uuid.uuid4().hex[:8]}.{file_ext}"
+
+                res = cloudinary.uploader.upload(
+                    doc_file,
+                    resource_type="raw",
+                    public_id=public_id,
+                    access_mode="public",
+                )
                 if existing_doc:
                     existing_doc.file_url = res["secure_url"]
+                    existing_doc.file_ext = file_ext
                 else:
-                    db.session.add(DocContent(lesson_id=lesson.id, file_url=res["secure_url"]))
-            except Exception:
-                pass
+                    db.session.add(DocContent(lesson_id=lesson.id, file_url=res["secure_url"], file_ext=file_ext))
+            except Exception as e:
+                print("LỖI UPLOAD DOC:", repr(e))
 
     for old_id in existing_lesson_ids - kept_lesson_ids:
         old_lesson = Lesson.query.get(old_id)
@@ -520,6 +531,40 @@ def delete_outcome(outcome_id):
     except Exception:
         db.session.rollback()
         return False
+
+
+# enrollment
+
+
+def is_enrolled(user_id, course_id):
+    return Enrollment.query.filter_by(user_id=user_id, course_id=course_id).first() is not None
+
+
+def enroll_course(user_id, course_id):
+    course = Course.query.get(course_id)
+    if not course:
+        return None
+
+    if course.teacher_id and current_user.is_authenticated and current_user.teacher_profile:
+        if course.teacher_id == current_user.teacher_profile.id:
+            return None
+
+    enrollment = Enrollment(
+        user_id=user_id,
+        course_id=course_id,
+    )
+
+    try:
+        db.session.add(enrollment)
+        db.session.commit()
+        return enrollment
+    except Exception:
+        db.session.rollback()
+        return None
+
+
+def get_my_enrollments(user_id):
+    return Enrollment.query.filter_by(user_id=user_id).order_by(Enrollment.created_date.desc()).all()
 
 
 # forum
