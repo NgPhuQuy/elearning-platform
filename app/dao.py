@@ -421,7 +421,7 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
         video_file = files.get(f"video_file_lesson_{file_key_id}")
         if video_file and video_file.filename and lesson_type == LessonType.VIDEO:
             try:
-                res = cloudinary.uploader.upload(video_file, resource_type="video")
+                res = cloudinary.uploader.upload(video_file, resource_type="video", folder="elearning-platform/courses")
                 if existing_video:
                     existing_video.video_url = res["secure_url"]
                 else:
@@ -438,7 +438,7 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
 
                 res = cloudinary.uploader.upload(
                     doc_file,
-                    resource_type="raw",
+                    folder="elearning-platform/courses",
                     public_id=public_id,
                     access_mode="public",
                 )
