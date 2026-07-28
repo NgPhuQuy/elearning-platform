@@ -7,7 +7,7 @@ from flask_login import current_user, login_user, logout_user
 from app import app, dao, db, oauth  # noqa: F401  # Register admin routes.
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
-from app.models import Comment, Course, Post, PostCate, User, VoteType, Enrollment
+from app.models import Comment, Course, Post, PostCate, User, VoteType
 
 
 @app.context_processor
