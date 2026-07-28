@@ -130,6 +130,22 @@ jobs:
       - name: Check out source code
         uses: actions/checkout@v4
 
+      - name: Validate release deployment assets
+        shell: bash
+        env:
+          APP_IMAGE: ghcr.io/example/elearning:ci-validation
+          APP_PORT: "8000"
+          SECRET_KEY: ci-release-contract-secret
+          DB_URI: mysql+pymysql://elearning:elearning@db:3306/elearning?charset=utf8mb4
+          MYSQL_DATABASE: elearning
+          MYSQL_USER: elearning
+          MYSQL_PASSWORD: elearning
+          MYSQL_ROOT_PASSWORD: root-ci-password
+        run: |
+          set -euo pipefail
+          sh -n scripts/deploy_release.sh
+          docker compose -f compose.production.yaml config --quiet
+
       - name: Build application image
         run: |
           docker build \

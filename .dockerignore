@@ -31,4 +31,6 @@ ruff.toml
 .ruff_cache
 
 README.md
+
+compose*.yaml
 docs
