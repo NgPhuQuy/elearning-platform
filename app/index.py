@@ -333,6 +333,10 @@ def course_detail(course_id):
 def enroll_course(course_id):
     course = Course.query.get_or_404(course_id)
 
+    # Chặn giảng viên tự học khóa mình tạo
+    if current_user.teacher_profile and course.teacher_id == current_user.teacher_profile.id:
+        return jsonify({"success": False, "error": "Bạn không thể tự đăng ký khóa học do chính mình tạo!"}), 400
+
     if dao.is_enrolled(current_user.id, course_id):
         return jsonify({"success": False, "error": "Bạn đã đăng ký khóa học này rồi!"}), 400
 
@@ -374,7 +378,7 @@ def learn_course(course_id):
 
     doc_kind = None
     if current_lesson and current_lesson.doc_content:
-        doc_kind = get_doc_kind(current_lesson.doc_content.file_url)
+        doc_kind = get_doc_kind(current_lesson.doc_content.file_ext or "")
 
     return render_template(
         "course/learn.html",
@@ -385,8 +389,8 @@ def learn_course(course_id):
     )
 
 
-def get_doc_kind(file_url):
-    ext = file_url.rsplit(".", 1)[-1].lower() if "." in file_url else ""
+def get_doc_kind(ext):
+    ext = ext.lower()
     if ext == "pdf":
         return "pdf"
     if ext in ("doc", "docx", "ppt", "pptx", "xls", "xlsx"):

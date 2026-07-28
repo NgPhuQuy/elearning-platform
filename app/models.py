@@ -101,6 +101,7 @@ class DocContent(db.Model):
     lesson_id = Column(Integer, ForeignKey("lesson.id"), primary_key=True)
     content_text = Column(Text)
     file_url = Column(String(500))
+    file_ext = Column(String(20))
 
 
 class Lesson(BaseModel):

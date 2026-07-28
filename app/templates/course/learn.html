@@ -10,8 +10,23 @@
   <video controls class="w-100 h-100" style="object-fit:cover;">
     <source src="{{ current_lesson.video_content.video_url }}">
   </video>
-  {% elif current_lesson and current_lesson.doc_content %}
-  <iframe src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100" style="border:none; background:#fff;"></iframe>
+ {% elif current_lesson and current_lesson.doc_content %}
+    {% if doc_kind == "pdf" %}
+    <iframe src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100" style="border:none; background:#fff;"></iframe>
+    {% elif doc_kind == "office" %}
+    <iframe src="https://docs.google.com/gview?url={{ current_lesson.doc_content.file_url }}&embedded=true" class="w-100 h-100" style="border:none; background:#fff;"></iframe>
+    {% elif doc_kind == "image" %}
+    <img src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100" style="object-fit:contain; background:#fff;">
+    {% else %}
+    <div class="position-absolute top-0 start-0 end-0 bottom-0 d-flex flex-column align-items-center justify-content-center bg-dark">
+      <i class="bi bi-file-earmark text-white" style="font-size:3rem;"></i>
+      <p class="text-white fw-semibold mt-3 fs-5 mb-0">{{ current_lesson.name }}</p>
+      <p class="text-white-50 small mb-3">Định dạng file này không thể xem trực tiếp.</p>
+      <a href="{{ current_lesson.doc_content.file_url }}" target="_blank" class="btn btn-indigo btn-sm">
+        <i class="bi bi-download"></i> Tải file xuống
+      </a>
+    </div>
+    {% endif %}
   {% else %}
   <div class="position-absolute top-0 start-0 end-0 bottom-0 d-flex flex-column align-items-center justify-content-center bg-dark">
     <p class="text-white-50 small mb-0">Bài học chưa có nội dung.</p>
