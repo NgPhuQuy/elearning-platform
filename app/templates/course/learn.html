@@ -1,0 +1,83 @@
+{% extends "layout/base.html" %}
+
+{% block title %}{{ current_lesson.name if current_lesson else course.name }} · EduForum{% endblock %}
+
+{% block content %}
+    <div class="d-flex" style="height: calc(100vh - 64px); margin: -1.5rem;">
+        <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
+           <div class="ef-video-wrap">
+  {% if current_lesson and current_lesson.video_content %}
+  <video controls class="w-100 h-100" style="object-fit:cover;">
+    <source src="{{ current_lesson.video_content.video_url }}">
+  </video>
+  {% elif current_lesson and current_lesson.doc_content %}
+  <iframe src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100" style="border:none; background:#fff;"></iframe>
+  {% else %}
+  <div class="position-absolute top-0 start-0 end-0 bottom-0 d-flex flex-column align-items-center justify-content-center bg-dark">
+    <p class="text-white-50 small mb-0">Bài học chưa có nội dung.</p>
+  </div>
+  {% endif %}
+</div>
+
+            <div class="flex-grow-1 overflow-auto bg-white">
+                <div class="border-bottom px-4 pt-4">
+                    <h2 class="font-display fs-5 mb-1">{{ current_lesson.name if current_lesson else "Chưa chọn bài học" }}</h2>
+                    <p class="text-muted-ef small mb-3">{{ course.name }}</p>
+                </div>
+                <div class="p-4">
+                    {% if current_lesson %}
+                        <p class="small text-muted-ef">{{ current_lesson.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div style="width:320px; flex-shrink:0;" class="bg-white border-start d-none d-lg-flex flex-column">
+            <div class="p-3 border-bottom">
+                <h3 class="font-display fs-6 mb-2 line-clamp-1">{{ course.name }}</h3>
+                <a href="{{ url_for('course_detail', course_id=course.id) }}"
+                   class="small text-muted-ef text-decoration-none">
+                    <i class="bi bi-arrow-left"></i> Về trang khóa học
+                </a>
+            </div>
+            <div class="flex-grow-1 overflow-auto">
+                {% for chapter in chapters %}
+                    <button class="w-100 d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom text-start btn btn-light rounded-0"
+                            type="button" data-bs-toggle="collapse" data-bs-target="#sec-{{ chapter.id }}">
+                        <span class="small fw-semibold">{{ chapter.name }}</span>
+                        <i class="bi bi-chevron-down text-muted-ef"></i>
+                    </button>
+                    <div class="collapse show" id="sec-{{ chapter.id }}">
+                        {% for lesson in chapter.lessons if lesson.is_active %}
+                            <a href="{{ url_for('learn_course', course_id=course.id, lesson_id=lesson.id) }}"
+                               class="lesson-row d-flex align-items-start gap-2 px-3 py-2 border-bottom text-decoration-none text-reset {% if current_lesson and lesson.id == current_lesson.id %}active{% endif %}">
+                                <div class="mt-1 flex-shrink-0">
+                                    {% if current_lesson and lesson.id == current_lesson.id %}
+                                        <i class="bi bi-circle text-indigo"></i>
+                                    {% else %}
+                                        <i class="bi bi-circle text-muted-ef"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1" style="min-width:0;">
+                                    <p class="small mb-1 {% if current_lesson and lesson.id == current_lesson.id %}text-indigo-700 fw-semibold{% endif %}">{{ lesson.name }}</p>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if lesson.type.name == "VIDEO" %}
+                                            <i class="bi bi-camera-video text-muted-ef" style="font-size:.65rem;"></i>
+                                        {% elif lesson.type.name == "DOCUMENT" %}
+                                            <i class="bi bi-file-earmark-text text-muted-ef"
+                                               style="font-size:.65rem;"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                        {% else %}
+                            <p class="text-muted-ef small px-3 py-2 mb-0">Chưa có bài học nào.</p>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted-ef small px-3 py-2 mb-0">Khóa học chưa có chương nào.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

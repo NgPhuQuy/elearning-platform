@@ -299,7 +299,7 @@ def change_password():
 @app.route("/courses")
 def courses():
     courses = Course.query.order_by(Course.id.desc()).all()
-    return render_template("course/manage.html", courses=courses)
+    return render_template("course/courses.html", courses=courses)
 
 
 @app.route("/courses/manage")
@@ -322,7 +322,7 @@ def course_detail(course_id):
     outcomes = dao.get_outcomes(course_id)
 
     return render_template(
-        "course/detail.html",
+        "course/course_detail.html",
         course=course,
         chapters=chapters,
         outcomes=outcomes,
@@ -360,7 +360,41 @@ def learn_course(course_id):
     course = dao.get_course_details(course_id)
     chapters = dao.get_chapters(course_id)
 
-    return render_template("course/learn.html", course=course, chapters=chapters)
+    lesson_id = request.args.get("lesson_id", type=int)
+    current_lesson = None
+
+    if lesson_id:
+        current_lesson = dao.get_lesson_details(lesson_id)
+
+    if not current_lesson:
+        for chapter in chapters:
+            if chapter.lessons:
+                current_lesson = chapter.lessons[0]
+                break
+
+    doc_kind = None
+    if current_lesson and current_lesson.doc_content:
+        doc_kind = get_doc_kind(current_lesson.doc_content.file_url)
+
+    return render_template(
+        "course/learn.html",
+        course=course,
+        chapters=chapters,
+        current_lesson=current_lesson,
+        doc_kind=doc_kind,
+    )
+
+
+def get_doc_kind(file_url):
+    ext = file_url.rsplit(".", 1)[-1].lower() if "." in file_url else ""
+    if ext == "pdf":
+        return "pdf"
+    if ext in ("doc", "docx", "ppt", "pptx", "xls", "xlsx"):
+        return "office"
+    if ext in ("png", "jpg", "jpeg", "gif", "webp"):
+        return "image"
+    return "other"
+
 @app.route("/courses/create", methods=["GET", "POST"])
 @login_required
 @teacher_required

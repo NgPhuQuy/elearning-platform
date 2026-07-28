@@ -432,7 +432,12 @@ def _sync_lessons_for_chapter(chapter, lessons_data, files):
         doc_file = files.get(f"doc_file_lesson_{file_key_id}")
         if doc_file and doc_file.filename and lesson_type == LessonType.DOCUMENT:
             try:
-                res = cloudinary.uploader.upload(doc_file, resource_type="raw")
+                res = cloudinary.uploader.upload(
+                    doc_file,
+                    resource_type="raw",
+                    use_filename=True,
+                    unique_filename=False,
+                )
                 if existing_doc:
                     existing_doc.file_url = res["secure_url"]
                 else:
