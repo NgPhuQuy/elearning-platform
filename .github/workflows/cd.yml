@@ -1,0 +1,122 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: Git branch, tag, or commit to publish
+        required: true
+        default: main
+        type: string
+
+concurrency:
+  group: cd-container-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  publish-image:
+    name: Publish release image
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main'
+      )
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out validated source
+        uses: actions/checkout@v6
+        with:
+          ref: >-
+            ${{
+              github.event_name == 'workflow_run' &&
+              github.event.workflow_run.head_sha ||
+              inputs.git_ref
+            }}
+          persist-credentials: false
+
+      - name: Resolve release metadata
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          repository="${GITHUB_REPOSITORY,,}"
+          source_sha="$(git rev-parse HEAD)"
+          echo "image_name=${REGISTRY}/${repository}" >> "$GITHUB_OUTPUT"
+          echo "source_sha=${source_sha}" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_run" || "${{ inputs.git_ref }}" == "main" ]]; then
+            echo "publish_main_tag=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish_main_tag=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate image tags and labels
+        id: metadata
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ steps.release.outputs.image_name }}
+          tags: |
+            type=raw,value=sha-${{ steps.release.outputs.source_sha }}
+            type=raw,value=main,enable=${{ steps.release.outputs.publish_main_tag }}
+          labels: |
+            org.opencontainers.image.revision=${{ steps.release.outputs.source_sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Build and publish image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          cache-from: type=gha,scope=release-image
+          cache-to: type=gha,mode=max,scope=release-image
+          provenance: mode=max
+          sbom: true
+
+      - name: Verify published manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect \
+            "${{ steps.release.outputs.image_name }}@${{ steps.build.outputs.digest }}"
+
+      - name: Write release summary
+        shell: bash
+        run: |
+          {
+            echo "## Container release"
+            echo
+            echo "- Source commit: \`${{ steps.release.outputs.source_sha }}\`"
+            echo "- Image: \`${{ steps.release.outputs.image_name }}@${{ steps.build.outputs.digest }}\`"
+            echo "- Mutable tag updated: \`${{ steps.release.outputs.publish_main_tag }}\`"
+            echo
+            echo "Deploy the immutable digest above rather than relying on the mutable \`main\` tag."
+          } >> "$GITHUB_STEP_SUMMARY"
