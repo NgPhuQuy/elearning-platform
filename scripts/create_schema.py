@@ -8,5 +8,6 @@ def main():
         db.create_all()
         print("Database schema created successfully.")
 
+
 if __name__ == "__main__":
     main()

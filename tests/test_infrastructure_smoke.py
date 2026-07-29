@@ -20,6 +20,7 @@ def test_home_page_is_served():
     assert response.status_code == 200
     assert response.mimetype == "text/html"
 
+
 def test_health_check_reports_database_ready():
     flask_app.config.update(TESTING=True)
     with flask_app.test_client() as client:

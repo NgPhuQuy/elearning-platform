@@ -22,6 +22,7 @@ def _positive_float_from_env(name, default):
         raise ValueError(f"{name} must be greater than zero")
     return value
 
+
 def wait_for_database(timeout_seconds, interval_seconds):
     deadline = time.monotonic() + timeout_seconds
     attempt = 0
@@ -43,11 +44,9 @@ def wait_for_database(timeout_seconds, interval_seconds):
                         f"{type(exc).__name__}."
                     )
                     return False
-                print(
-                    "[wait-for-db] Database is not ready yet "
-                    f"(attempt {attempt}, error type {type(exc).__name__})."
-                )
+                print(f"[wait-for-db] Database is not ready yet (attempt {attempt}, error type {type(exc).__name__}).")
                 time.sleep(min(interval_seconds, remaining_seconds))
+
 
 def main():
     try:
