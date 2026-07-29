@@ -26,13 +26,18 @@ base_url = sys.argv[1].rstrip("/")
 
 checks = [
     {
+        "name": "Health check",
+        "path": "/healthz",
+        "accepted_statuses": range(200, 201),
+    },
+    {
         "name": "Home page",
         "path": "/",
         "accepted_statuses": range(200, 400),
     },
 ]
 
-def check_endpoint(name: str, path: str, accepted_statuses: range) -> None:
+def check_endpoint(name, path, accepted_statuses):
     url = f"{base_url}{path}"
     request = urllib.request.Request(
         url,
@@ -58,7 +63,6 @@ def check_endpoint(name: str, path: str, accepted_statuses: range) -> None:
             f"{name} failed: {url} returned HTTP {status}. "
             f"Response preview: {preview!r}"
         )
-
     print(f"[smoke-test] PASS: {name} -> HTTP {status}")
 
 failures: list[str] = []

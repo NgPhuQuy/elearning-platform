@@ -144,6 +144,7 @@ jobs:
         run: |
           set -euo pipefail
           sh -n scripts/deploy_release.sh
+          sh -n scripts/start_render.sh
           docker compose -f compose.production.yaml config --quiet
 
       - name: Build application image
