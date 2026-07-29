@@ -3,6 +3,8 @@ import json
 import cloudinary.uploader
 from flask import jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user, logout_user
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from app import app, dao, db, oauth  # noqa: F401  # Register admin routes.
 from app.dao import register_user
@@ -20,6 +22,18 @@ def inject_common():
         "posts": dao.get_posts(),
         "dao": dao,
     }
+
+
+@app.get("/healthz")
+def healthz():
+    try:
+        db.session.execute(text("SELECT 1"))
+        return jsonify({"status": "ok"})
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({"status": "unavailable"}), 503
+    finally:
+        db.session.remove()
 
 
 @app.route("/")

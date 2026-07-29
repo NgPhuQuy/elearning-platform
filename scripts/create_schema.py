@@ -3,11 +3,10 @@ from app import db
 from app import models as _models  # noqa: F401
 
 
-def main() -> None:
+def main():
     with flask_app.app_context():
         db.create_all()
         print("Database schema created successfully.")
-
 
 if __name__ == "__main__":
     main()
