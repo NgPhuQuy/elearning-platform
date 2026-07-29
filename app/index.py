@@ -250,7 +250,8 @@ def register_teacher():
 @app.route("/profile")
 @login_required
 def profile():
-    return render_template("profile/profile.html")
+    enrollments = dao.get_my_enrollments(current_user.id)
+    return render_template("profile/profile.html", enrollments=enrollments)
 
 
 @app.route("/profile/change-info", methods=["GET", "POST"])

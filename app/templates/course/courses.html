@@ -3,9 +3,38 @@
 {% block title %}Kho khóa học · EduForum{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column gap-3">
+<style>
+  /* ── CSS riêng cho trang Kho khóa học ─────────────────────────────── */
+  .ef-search-input {
+    border-radius: 9999px !important;
+    padding-top: .55rem;
+    padding-bottom: .55rem;
+  }
+  .ef-search-input:focus {
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, .15);
+  }
 
-  <div class="ef-hero-violet p-4 p-lg-5">
+  .ef-pill-btn {
+    border-radius: 9999px !important;
+    padding: .4rem 1rem;
+    background: #fff;
+    border: 1px solid var(--ef-slate-200, #e2e8f0);
+    color: var(--ef-slate-500, #64748b);
+    font-weight: 500;
+  }
+  .ef-pill-btn:hover {
+    background: var(--ef-slate-50, #f8fafc);
+  }
+  .btn-check:checked + .ef-pill-btn {
+    background: var(--ef-slate-900, #0f172a);
+    border-color: var(--ef-slate-900, #0f172a);
+    color: #fff;
+  }
+</style>
+
+<div class="d-flex flex-column gap-3 mx-auto p-3 p-lg-4" style="max-width:1152px;">
+
+  <div class="ef-hero-violet p-4 p-lg-5" style="border-radius:24px; overflow:hidden;">
     <p class="small fw-semibold mb-2" style="color:#ddd6fe;">🎓 Kho khóa học</p>
     <h2 class="font-display fs-3 text-white mb-1">Học từ những chuyên gia hàng đầu</h2>
     <p class="small mb-0" style="color:#ddd6fe;">{{ courses|length }} khóa học · Học mọi lúc mọi nơi</p>
@@ -13,18 +42,18 @@
 
   <div class="card-ef p-3 d-flex flex-row align-items-center gap-3 flex-wrap">
     <div class="position-relative flex-grow-1" style="min-width:200px;">
-      <i class="bi bi-search position-absolute text-muted-ef" style="left:.8rem; top:50%; transform:translateY(-50%); font-size:.8rem;"></i>
-      <input type="text" id="courseSearch" class="form-control form-control-sm bg-slate-50" style="padding-left:2.2rem;" placeholder="Tìm khóa học...">
+      <i class="bi bi-search position-absolute text-muted-ef" style="left:.9rem; top:50%; transform:translateY(-50%); font-size:.8rem;"></i>
+      <input type="text" id="courseSearch" class="form-control form-control-sm ef-search-input" placeholder="Tìm khóa học...">
     </div>
-    <div class="btn-group" role="group">
+    <div class="d-flex gap-2 flex-wrap">
       <input type="radio" class="btn-check level-filter" name="level" id="l-all" value="ALL" checked>
-      <label class="btn btn-dark btn-sm" for="l-all">Mọi cấp độ</label>
+      <label class="btn btn-sm ef-pill-btn" for="l-all">Mọi cấp độ</label>
       <input type="radio" class="btn-check level-filter" name="level" id="l-basic" value="BASIC">
-      <label class="btn btn-outline-secondary btn-sm" for="l-basic">Cơ bản</label>
+      <label class="btn btn-sm ef-pill-btn" for="l-basic">Cơ bản</label>
       <input type="radio" class="btn-check level-filter" name="level" id="l-mid" value="INTERMEDIATE">
-      <label class="btn btn-outline-secondary btn-sm" for="l-mid">Trung cấp</label>
+      <label class="btn btn-sm ef-pill-btn" for="l-mid">Trung cấp</label>
       <input type="radio" class="btn-check level-filter" name="level" id="l-adv" value="ADVANCED">
-      <label class="btn btn-outline-secondary btn-sm" for="l-adv">Nâng cao</label>
+      <label class="btn btn-sm ef-pill-btn" for="l-adv">Nâng cao</label>
     </div>
   </div>
 

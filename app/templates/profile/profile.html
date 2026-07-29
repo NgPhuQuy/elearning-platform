@@ -78,77 +78,39 @@
             </ul>
 
             <div class="tab-content">
-                <div class="tab-pane fade show active d-flex flex-column gap-3" id="pf-courses">
-                    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-center">
-                        <div class="rounded-3 bg-slate-100 overflow-hidden flex-shrink-0"
-                             style="width:80px;height:64px;"><img
-                                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=340&fit=crop&auto=format"
-                                class="w-100 h-100" style="object-fit:cover;"></div>
-                        <div class="flex-grow-1" style="min-width:0;">
-                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
-                                <p class="font-display fs-6 mb-0 line-clamp-1" style="font-size:.9rem !important;">Khóa
-                                    học React &
-                                    TypeScript từ cơ bản đến nâng cao</p>
-                                <span class="badge-ef badge-ef-primary">Premium</span>
-                            </div>
-                            <p class="text-muted-ef small mb-2">Nguyễn Minh Khoa</p>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="progress-ef flex-grow-1">
-                                    <div class="progress-bar" style="width:42%;"></div>
-                                </div>
-                                <span class="text-muted-ef small">42%</span>
-                            </div>
-                        </div>
-                        <button class="btn btn-indigo rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center"
-                                style="width:36px;height:36px;"><i class="bi bi-play-fill"></i></button>
-                    </div>
-                    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-center">
-                        <div class="rounded-3 bg-slate-100 overflow-hidden flex-shrink-0"
-                             style="width:80px;height:64px;"><img
-                                src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=340&fit=crop&auto=format"
-                                class="w-100 h-100" style="object-fit:cover;"></div>
-                        <div class="flex-grow-1" style="min-width:0;">
-                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
-                                <p class="font-display fs-6 mb-0 line-clamp-1" style="font-size:.9rem !important;">
-                                    Python & Machine
-                                    Learning: Ứng dụng thực tế với TensorFlow</p>
-                                <span class="badge-ef badge-ef-primary">Premium</span>
-                            </div>
-                            <p class="text-muted-ef small mb-2">Trần Thị Lan Anh</p>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="progress-ef flex-grow-1">
-                                    <div class="progress-bar" style="width:78%;"></div>
-                                </div>
-                                <span class="text-muted-ef small">78%</span>
-                            </div>
-                        </div>
-                        <button class="btn btn-indigo rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center"
-                                style="width:36px;height:36px;"><i class="bi bi-play-fill"></i></button>
-                    </div>
-                    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-center">
-                        <div class="rounded-3 bg-slate-100 overflow-hidden flex-shrink-0"
-                             style="width:80px;height:64px;"><img
-                                src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=600&h=340&fit=crop&auto=format"
-                                class="w-100 h-100" style="object-fit:cover;"></div>
-                        <div class="flex-grow-1" style="min-width:0;">
-                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
-                                <p class="font-display fs-6 mb-0 line-clamp-1" style="font-size:.9rem !important;">HTML
-                                    & CSS Cơ
-                                    Bản: Xây dựng trang web đầu tiên</p>
-                                <span class="badge-ef badge-ef-success">Miễn phí</span>
-                            </div>
-                            <p class="text-muted-ef small mb-2">Phạm Đức Hùng</p>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="progress-ef flex-grow-1">
-                                    <div class="progress-bar" style="width:100%;"></div>
-                                </div>
-                                <span class="text-muted-ef small">100%</span>
-                            </div>
-                        </div>
-                        <button class="btn btn-indigo rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center"
-                                style="width:36px;height:36px;"><i class="bi bi-play-fill"></i></button>
-                    </div>
+               <div class="tab-pane fade show active d-flex flex-column gap-3" id="pf-courses">
+    {% for enrollment in enrollments %}
+    {% set course = enrollment.course %}
+    <div class="card-ef p-3 d-flex flex-row gap-3 align-items-center">
+        <div class="rounded-3 bg-slate-100 overflow-hidden flex-shrink-0" style="width:80px;height:64px;">
+            {% if course.image %}
+            <img src="{{ course.image }}" class="w-100 h-100" style="object-fit:cover;">
+            {% endif %}
+        </div>
+        <div class="flex-grow-1" style="min-width:0;">
+            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                <p class="font-display fs-6 mb-0 line-clamp-1" style="font-size:.9rem !important;">{{ course.name }}</p>
+            </div>
+            <p class="text-muted-ef small mb-2">
+                {% if course.teacher and course.teacher.user %}{{ course.teacher.user.first_name }} {{ course.teacher.user.last_name }}{% endif %}
+            </p>
+            <div class="d-flex align-items-center gap-2">
+                <div class="progress-ef flex-grow-1">
+                    <div class="progress-bar" style="width:0%;"></div>
                 </div>
+                <span class="text-muted-ef small">0%</span>
+            </div>
+        </div>
+        <a href="{{ url_for('learn_course', course_id=course.id) }}"
+           class="btn btn-indigo rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center"
+           style="width:36px;height:36px;"><i class="bi bi-play-fill"></i></a>
+    </div>
+    {% else %}
+    <div class="card-ef p-4 text-center text-muted-ef">
+        <p class="mb-0">Bạn chưa đăng ký khóa học nào.</p>
+    </div>
+    {% endfor %}
+</div>
 
                 <div class="tab-pane fade d-flex flex-column gap-3" id="pf-posts">
                     <div class="card-ef p-3 d-flex flex-row gap-3">
