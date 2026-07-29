@@ -135,7 +135,7 @@ class PostCate(BaseModel):
     __tablename__ = "post_cate"
 
     description = Column(String(255), nullable=True)
-    posts = relationship("Post", backref="category", lazy=True)
+    posts = relationship("Post", secondary="post_category", back_populates="categories", lazy=True)
 
 
 class Post(BaseModel):
@@ -147,10 +147,18 @@ class Post(BaseModel):
     view_count = Column(Integer, default=0)
     is_solved = Column(Boolean, default=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
-    category_id = Column(Integer, ForeignKey(PostCate.id), nullable=False)
+    categories = relationship("PostCate", secondary="post_category", back_populates="posts", lazy=True)
     comments = relationship("Comment", backref="post", cascade="all, delete-orphan", lazy=True)
     reactions = relationship("ReactionPost", backref="post", cascade="all, delete-orphan", lazy=True)
     user = relationship("User", backref="posts")
+
+
+class PostCategory(db.Model):
+    __tablename__ = "post_category"
+
+    post_id = Column(Integer, ForeignKey("post.id", ondelete="CASCADE"), primary_key=True)
+
+    category_id = Column(Integer, ForeignKey("post_cate.id", ondelete="CASCADE"), primary_key=True)
 
 
 class Comment(BaseModel):

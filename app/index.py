@@ -591,7 +591,7 @@ def forum_detail(post_id):
 
     post.view_count += 1
     db.session.commit()
-    related_posts = dao.get_related_posts(post.id, post.category_id)
+    related_posts = dao.get_related_posts(post.id)
     user_vote = dao.get_user_post_vote(post.id, current_user.id)
     return render_template("forum/detail.html", post=post, related_posts=related_posts, user_vote=user_vote)
 
@@ -611,7 +611,7 @@ def create_question():
         dao.create_post(
             title=request.form["title"],
             content=request.form["content"],
-            category_id=request.form["category_id"],
+            category_ids=request.form.getlist("category_ids"),
             user_id=current_user.id,
             image=image_url,
         )
