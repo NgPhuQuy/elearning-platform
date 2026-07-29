@@ -5,18 +5,36 @@
 {% block content %}
     <div class="d-flex" style="height: calc(100vh - 64px); margin: -1.5rem;">
         <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
-           <div class="ef-video-wrap">
+           <div class="ef-video-wrap" style="flex-shrink:0;">
   {% if current_lesson and current_lesson.video_content %}
-  <video controls class="w-100 h-100" style="object-fit:cover;">
-    <source src="{{ current_lesson.video_content.video_url }}">
-  </video>
+    {% set vurl = current_lesson.video_content.video_url %}
+    {% if 'youtube.com' in vurl or 'youtu.be' in vurl %}
+      {% if 'youtu.be/' in vurl %}
+        {% set yt_id = vurl.split('youtu.be/')[1].split('?')[0].split('&')[0] %}
+      {% elif 'watch?v=' in vurl %}
+        {% set yt_id = vurl.split('watch?v=')[1].split('&')[0] %}
+      {% elif '/embed/' in vurl %}
+        {% set yt_id = vurl.split('/embed/')[1].split('?')[0] %}
+      {% else %}
+        {% set yt_id = '' %}
+      {% endif %}
+      <iframe class="w-100 h-100 d-block"
+              src="https://www.youtube.com/embed/{{ yt_id }}"
+              style="border:none;"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
+    {% else %}
+      <video controls class="w-100 h-100 d-block" style="object-fit:contain;">
+        <source src="{{ vurl }}">
+      </video>
+    {% endif %}
  {% elif current_lesson and current_lesson.doc_content %}
     {% if doc_kind == "pdf" %}
-    <iframe src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100" style="border:none; background:#fff;"></iframe>
+    <iframe src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100 d-block" style="border:none; background:#fff;"></iframe>
     {% elif doc_kind == "office" %}
-    <iframe src="https://docs.google.com/gview?url={{ current_lesson.doc_content.file_url }}&embedded=true" class="w-100 h-100" style="border:none; background:#fff;"></iframe>
+    <iframe src="https://docs.google.com/gview?url={{ current_lesson.doc_content.file_url }}&embedded=true" class="w-100 h-100 d-block" style="border:none; background:#fff;"></iframe>
     {% elif doc_kind == "image" %}
-    <img src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100" style="object-fit:contain; background:#fff;">
+    <img src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100 d-block" style="object-fit:contain; background:#fff;">
     {% else %}
     <div class="position-absolute top-0 start-0 end-0 bottom-0 d-flex flex-column align-items-center justify-content-center bg-dark">
       <i class="bi bi-file-earmark text-white" style="font-size:3rem;"></i>

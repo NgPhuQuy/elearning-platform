@@ -38,6 +38,10 @@ jobs:
         github.event.workflow_run.head_branch == 'main'
       )
     runs-on: ubuntu-latest
+    outputs:
+      image_ref: ${{ steps.release.outputs.image_name }}@${{ steps.build.outputs.digest }}
+      publish_main_tag: ${{ steps.release.outputs.publish_main_tag }}
+      source_sha: ${{ steps.release.outputs.source_sha }}
 
     steps:
       - name: Check out validated source
@@ -119,4 +123,72 @@ jobs:
             echo "- Mutable tag updated: \`${{ steps.release.outputs.publish_main_tag }}\`"
             echo
             echo "Deploy the immutable digest above rather than relying on the mutable \`main\` tag."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-render-staging:
+    name: Trigger Render staging deploy
+    needs:
+      - publish-image
+    if: >-
+      needs.publish-image.result == 'success' &&
+      needs.publish-image.outputs.publish_main_tag == 'true' &&
+      vars.RENDER_STAGING_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.RENDER_STAGING_URL }}
+
+    steps:
+      - name: Trigger immutable image deployment
+        shell: bash
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
+          IMAGE_REF: ${{ needs.publish-image.outputs.image_ref }}
+          SOURCE_SHA: ${{ needs.publish-image.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${DEPLOY_HOOK_URL:-}" ]]; then
+            echo "::error::RENDER_STAGING_DEPLOY_HOOK_URL is not configured."
+            exit 1
+          fi
+
+          if [[ -z "${IMAGE_REF:-}" ]]; then
+            echo "::error::The published image reference is missing."
+            exit 1
+          fi
+
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
+          status_code="$(
+            curl \
+              --silent \
+              --show-error \
+              --output "$response_file" \
+              --write-out '%{http_code}' \
+              --get \
+              --data-urlencode "imgURL=${IMAGE_REF}" \
+              "$DEPLOY_HOOK_URL"
+          )"
+
+          case "$status_code" in
+            200|202)
+              echo "Render accepted the staging deployment request (HTTP $status_code)."
+              ;;
+            *)
+              echo "::error::Render rejected the staging deployment request (HTTP $status_code)."
+              cat "$response_file"
+              exit 1
+              ;;
+          esac
+
+          {
+            echo "## Render staging deployment"
+            echo
+            echo "- Source commit: \`${SOURCE_SHA}\`"
+            echo "- Image: \`${IMAGE_REF}\`"
+            echo "- Render response: HTTP \`${status_code}\`"
+            echo
+            echo "Render performs the service health check before replacing the previous live instance."
           } >> "$GITHUB_STEP_SUMMARY"
