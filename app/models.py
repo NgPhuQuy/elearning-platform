@@ -74,6 +74,7 @@ class CourseLevel(MyEnum):
 class Course(BaseModel):
     is_sale = Column(Boolean, default=True)
     price = Column(Integer, nullable=False, default=0)
+    activate = Column(Boolean, nullable=False, default=False)
     description = Column(String(1000), nullable=False)
     image = Column(String(500), nullable=False, default="")
 
