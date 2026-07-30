@@ -572,6 +572,7 @@ def enroll_course(user_id, course_id):
         db.session.rollback()
         return None, "Hệ thống lỗi, vui lòng thử lại sau!"
 
+
 def activate_course(course_id, teacher_id):
     course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
     if not course:
@@ -645,7 +646,9 @@ def get_courses_by_teacher_id(teacher_id):
     return Course.query.filter_by(teacher_id=teacher_id).order_by(Course.created_date.desc()).all()
 
 
-def update_course(course_id, teacher_id, name=None, description=None, image=None, level=None, category_ids=None, price=None):
+def update_course(
+    course_id, teacher_id, name=None, description=None, image=None, level=None, category_ids=None, price=None
+):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
         if name:

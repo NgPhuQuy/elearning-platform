@@ -520,7 +520,6 @@ def update_course(course_id):
     )
 
 
-
 @app.route("/courses/<int:course_id>/delete", methods=["POST"])
 @login_required
 @teacher_required
@@ -532,6 +531,7 @@ def delete_course(course_id):
 
     return redirect(url_for("my_courses"))
 
+
 @app.route("/courses/<int:course_id>/activate", methods=["POST"])
 @login_required
 @teacher_required
@@ -542,6 +542,7 @@ def activate_course(course_id):
         return redirect(url_for("my_courses", error=error))
 
     return redirect(url_for("my_courses"))
+
 
 @app.route("/courses/<int:course_id>/content", methods=["GET", "POST"])
 @login_required
