@@ -43,6 +43,27 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+// ===== Tab "Cài đặt": switch Miễn phí khóa/mở ô nhập giá =====
+document.addEventListener('DOMContentLoaded', function () {
+    const freeCheckbox = document.getElementById('freeCourse');
+    const priceInput = document.getElementById('priceInput');
+
+    if (!freeCheckbox || !priceInput) return;
+
+    function syncPriceState() {
+        if (freeCheckbox.disabled) return; // đã activate -> không cho đổi gì cả
+        if (freeCheckbox.checked) {
+            priceInput.value = '';
+            priceInput.disabled = true;
+        } else {
+            priceInput.disabled = false;
+        }
+    }
+
+    syncPriceState();
+    freeCheckbox.addEventListener('change', syncPriceState);
+});
+
 // ===== Tab "Nội dung": quản lý chương / bài học =====
 document.addEventListener('DOMContentLoaded', function () {
     const chapterList = document.getElementById('chapterList');
@@ -427,6 +448,26 @@ document.addEventListener('DOMContentLoaded', function () {
             previewWrap.style.display = '';
         };
         reader.readAsDataURL(file);
+    });
+});
+
+// ===== Ẩn/hiện nút Lưu thay đổi / Công khai khóa học theo tab đang active =====
+document.addEventListener('DOMContentLoaded', function () {
+    const btnSaveOnly = document.getElementById('btnSaveOnly');
+    const btnPublish = document.getElementById('btnPublish');
+    if (!btnSaveOnly || !btnPublish) return; // khóa học đã activate hoặc đang tạo mới -> không có 2 nút này
+
+    document.querySelectorAll('.nav-ef-tabs button[data-bs-toggle="tab"]').forEach(function (tabBtn) {
+        tabBtn.addEventListener('shown.bs.tab', function (e) {
+            const target = e.target.getAttribute('data-bs-target');
+            if (target === '#cc-settings') {
+                btnSaveOnly.classList.add('d-none');
+                btnPublish.classList.remove('d-none');
+            } else {
+                btnSaveOnly.classList.remove('d-none');
+                btnPublish.classList.add('d-none');
+            }
+        });
     });
 });
 

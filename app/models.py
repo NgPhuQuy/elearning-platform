@@ -73,6 +73,7 @@ class CourseLevel(MyEnum):
 class Course(BaseModel):
     is_sale = Column(Boolean, default=True)
     price = Column(Integer, nullable=False, default=0)
+    activate = Column(Boolean, nullable=False, default=False)
     description = Column(String(1000), nullable=False)
     image = Column(String(500), nullable=False, default="")
 
@@ -119,15 +120,20 @@ class CourseOutcome(BaseModel):
     course = relationship("Course", backref="outcomes")
 
 
-class Enrollment(BaseModel):
+class EnrollmentStatus(MyEnum):
+    IN_PROGRESS = "Đang học"
+    COMPLETED = "Hoàn thành"
+    FAILED = "Chưa đạt"
+
+
+class Enrollment(db.Model):
     progress = Column(Integer, default=0)
-    price = Column(Integer, nullable=False, default=0)  # snapshot giá đã trả, 0 nếu free
-    completed_date = Column(DateTime, nullable=True)
-
-    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), nullable=False)
-
-    __table_args__ = (db.UniqueConstraint("user_id", "course_id", name="uix_user_course_enrollment"),)
+    price = Column(Integer, nullable=False, default=0)
+    completed_date = Column(DateTime)
+    status = Column(Enum(EnrollmentStatus), nullable=False, default=EnrollmentStatus.IN_PROGRESS)
+    created_date = Column(DateTime, nullable=False, default=datetime.now(), primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, primary_key=True)
+    course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), nullable=False, primary_key=True)
 
 
 class PostCate(BaseModel):
