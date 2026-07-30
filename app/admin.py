@@ -59,9 +59,7 @@ class MyAdminIndexView(AdminIndexView):
             .all()
         )
         pending_count = (
-            db.session.query(TeacherApplication)
-            .filter(TeacherApplication.status == ApplicationStatus.PENDING)
-            .count()
+            db.session.query(TeacherApplication).filter(TeacherApplication.status == ApplicationStatus.PENDING).count()
         )
 
         return self.render(
