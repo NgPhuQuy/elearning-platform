@@ -1,4 +1,5 @@
 from functools import wraps
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from flask import redirect, request, session, url_for
 from flask_login import current_user
@@ -14,12 +15,22 @@ def anonymous_required(func):
     return wrapper
 
 
+def _add_login_param(url):
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query))
+    query["login"] = "1"
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
 def login_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not current_user.is_authenticated:
-            # hien thi trang dang nhap todo
             session["next_url"] = request.url
+
+            referrer = request.referrer
+            if referrer and urlsplit(referrer).netloc == urlsplit(request.url).netloc:
+                return redirect(_add_login_param(referrer))
             return redirect(url_for("index", login=1))
         return func(*args, **kwargs)
 
