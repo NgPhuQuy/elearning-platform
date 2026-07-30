@@ -46,11 +46,23 @@ class MyAuthenticatedView(ModelView):
 class MyAdminIndexView(AdminIndexView):
     @expose("/")
     def index(self):
-        # KPI
         total_users = db.session.query(User).count()
         total_courses = db.session.query(Course).count()
         total_teachers = db.session.query(Teacher).count()
         total_posts = db.session.query(Post).count()
+
+        pending_applications = (
+            db.session.query(TeacherApplication)
+            .filter(TeacherApplication.status == ApplicationStatus.PENDING)
+            .order_by(TeacherApplication.created_date.desc())
+            .limit(10)
+            .all()
+        )
+        pending_count = (
+            db.session.query(TeacherApplication)
+            .filter(TeacherApplication.status == ApplicationStatus.PENDING)
+            .count()
+        )
 
         return self.render(
             "admin/index.html",
@@ -58,7 +70,31 @@ class MyAdminIndexView(AdminIndexView):
             total_courses=total_courses,
             total_teachers=total_teachers,
             total_posts=total_posts,
+            pending_applications=pending_applications,
+            pending_count=pending_count,
         )
+
+    @expose("/approve-application/<int:app_id>", methods=("POST",))
+    def approve_application(self, app_id):
+        application = db.session.get(TeacherApplication, app_id)
+        if application and application.status == ApplicationStatus.PENDING:
+            _approve_application(application)
+            db.session.commit()
+            flash(f"Đã duyệt đơn của {application.user}.", "success")
+        else:
+            flash("Đơn không tồn tại hoặc đã được xử lý.", "warning")
+        return redirect("/admin")
+
+    @expose("/reject-application/<int:app_id>", methods=("POST",))
+    def reject_application(self, app_id):
+        application = db.session.get(TeacherApplication, app_id)
+        if application and application.status == ApplicationStatus.PENDING:
+            _reject_application(application)
+            db.session.commit()
+            flash(f"Đã từ chối đơn của {application.user}.", "success")
+        else:
+            flash("Đơn không tồn tại hoặc đã được xử lý.", "warning")
+        return redirect("/admin")
 
 
 class MyLogoutView(BaseView):

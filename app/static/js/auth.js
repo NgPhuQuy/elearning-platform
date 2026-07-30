@@ -163,3 +163,24 @@ document.querySelectorAll('[data-tab]').forEach(function (btn) {
         }
     });
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('login') === '1') {
+        const modalEl = document.getElementById('authModal');
+        if (modalEl) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+
+            const tabTrigger = document.getElementById('login-tab');
+            if (tabTrigger) {
+                new bootstrap.Tab(tabTrigger).show();
+            }
+        }
+
+        params.delete('login');
+        const newQuery = params.toString();
+        const newUrl = window.location.pathname + (newQuery ? '?' + newQuery : '') + window.location.hash;
+        window.history.replaceState({}, '', newUrl);
+    }
+});

@@ -3,170 +3,155 @@
 {% block title %}{{ course.name }} · EduForum{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column flex-xl-row gap-4">
-  <div class="flex-grow-1" style="min-width:0;">
+    <div class="d-flex flex-column flex-xl-row gap-4">
+        <div class="flex-grow-1" style="min-width:0;">
 
-    <div class="card-ef overflow-hidden mb-4">
-      <div class="position-relative bg-dark" style="height:224px;">
-        {% if course.image %}
-        <img src="{{ course.image }}" class="w-100 h-100" style="object-fit:cover; opacity:.7;">
-        {% endif %}
-        <div class="position-absolute bottom-0 start-0 end-0 p-4" style="background:linear-gradient(to top, rgba(15,23,42,.85), transparent);">
-          <div class="d-flex gap-2 mb-2">
-            <span class="badge-ef badge-ef-default">{{ course.level.value }}</span>
-            {% if course.price and course.price > 0 %}
-            <span class="badge-ef badge-ef-default">{{ "{:,.0f}".format(course.price) }}đ</span>
-            {% else %}
-            <span class="badge-ef badge-ef-success"><i class="bi bi-stars"></i> Miễn phí</span>
-            {% endif %}
-          </div>
-          <h1 class="font-display fs-4 text-white mb-2">{{ course.name }}</h1>
-          {% if course.teacher and course.teacher.user %}
-          <div class="d-flex align-items-center gap-3 text-white small flex-wrap">
+            <div class="card-ef overflow-hidden mb-4">
+                <div class="position-relative bg-dark" style="height:224px;">
+                    {% if course.image %}
+                        <img src="{{ course.image }}" class="w-100 h-100" style="object-fit:cover; opacity:.7;">
+                    {% endif %}
+                    <div class="position-absolute bottom-0 start-0 end-0 p-4"
+                         style="background:linear-gradient(to top, rgba(15,23,42,.85), transparent);">
+                        <div class="d-flex gap-2 mb-2">
+                            <span class="badge-ef badge-ef-default">{{ course.level.value }}</span>
+                            {% if course.price and course.price > 0 %}
+                                <span class="badge-ef badge-ef-default">{{ "{:,.0f}".format(course.price) }}đ</span>
+                            {% else %}
+                                <span class="badge-ef badge-ef-success"><i class="bi bi-stars"></i> Miễn phí</span>
+                            {% endif %}
+                        </div>
+                        <h1 class="font-display fs-4 text-white mb-2">{{ course.name }}</h1>
+                        {% if course.teacher and course.teacher.user %}
+                            <div class="d-flex align-items-center gap-3 text-white small flex-wrap">
             <span class="d-flex align-items-center gap-1">
               <span class="ef-avatar ef-avatar-indigo" style="width:20px;height:20px;font-size:7.6px;">
                 {{ (course.teacher.user.first_name or '')[:1] }}{{ (course.teacher.user.last_name or '')[:1] }}
               </span>
               {{ course.teacher.user.first_name }} {{ course.teacher.user.last_name }}
             </span>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-      <div class="px-4 py-3 border-bottom d-flex gap-4 small text-muted-ef flex-wrap">
-        <span><i class="bi bi-layers"></i> {{ chapters|length }} chương</span>
-        <span><i class="bi bi-camera-video"></i> {{ chapters | map(attribute='lessons') | map('length') | sum }} bài học</span>
-        <span><i class="bi bi-bar-chart"></i> {{ course.level.value }}</span>
-        <span><i class="bi bi-globe"></i> Tiếng Việt</span>
-      </div>
-    </div>
-
-    <div class="card-ef overflow-hidden">
-      <ul class="nav nav-ef-tabs px-3 pt-2">
-        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cd-overview">Tổng quan</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cd-curriculum">Nội dung</button></li>
-      </ul>
-      <div class="tab-content p-4">
-        <div class="tab-pane fade show active" id="cd-overview">
-          <h3 class="font-display fs-6 mb-3">Mô tả khóa học</h3>
-          <p class="small text-muted-ef">{{ course.description }}</p>
-
-          {% if course.outcomes %}
-          <h3 class="font-display fs-6 mb-3 mt-4">Bạn sẽ học được gì?</h3>
-          <div class="row g-2">
-            {% for outcome in course.outcomes %}
-            <div class="col-md-6 d-flex align-items-start gap-2 small">
-              <i class="bi bi-check-lg text-success mt-1"></i>{{ outcome.content }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="px-4 py-3 border-bottom d-flex gap-4 small text-muted-ef flex-wrap">
+                    <span><i class="bi bi-layers"></i> {{ chapters|length }} chương</span>
+                    <span><i
+                            class="bi bi-camera-video"></i> {{ chapters | map(attribute='lessons') | map('length') | sum }} bài học</span>
+                    <span><i class="bi bi-bar-chart"></i> {{ course.level.value }}</span>
+                    <span><i class="bi bi-globe"></i> Tiếng Việt</span>
+                </div>
             </div>
-            {% endfor %}
-          </div>
-          {% endif %}
+
+            <div class="card-ef overflow-hidden">
+                <ul class="nav nav-ef-tabs px-3 pt-2">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cd-overview">Tổng quan
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cd-curriculum">Nội dung</button>
+                    </li>
+                </ul>
+                <div class="tab-content p-4">
+                    <div class="tab-pane fade show active" id="cd-overview">
+                        <h3 class="font-display fs-6 mb-3">Mô tả khóa học</h3>
+                        <p class="small text-muted-ef">{{ course.description }}</p>
+
+                        {% if course.outcomes %}
+                            <h3 class="font-display fs-6 mb-3 mt-4">Bạn sẽ học được gì?</h3>
+                            <div class="row g-2">
+                                {% for outcome in course.outcomes %}
+                                    <div class="col-md-6 d-flex align-items-start gap-2 small">
+                                        <i class="bi bi-check-lg text-success mt-1"></i>{{ outcome.content }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="tab-pane fade" id="cd-curriculum">
+                        {% for chapter in chapters %}
+                            <div class="border rounded-3 mb-2">
+                                <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="rounded-circle bg-indigo-50 text-indigo d-flex align-items-center justify-content-center fw-bold"
+                                              style="width:24px;height:24px;font-size:.7rem;">{{ loop.index }}</span>
+                                        <span class="fw-semibold small">{{ chapter.name }}</span>
+                                    </div>
+                                    <span class="text-muted-ef small">{{ chapter.lessons|selectattr('is_active')|list|length }} bài</span>
+                                </div>
+                                <div class="p-2">
+                                    {% for lesson in chapter.lessons if lesson.is_active %}
+                                        <div class="d-flex align-items-center gap-2 px-2 py-2 {% if not loop.last %}border-bottom{% endif %}">
+                                            <i class="bi bi-dot text-indigo"></i>
+                                            <span class="small flex-grow-1">{{ lesson.name }}</span>
+                                            {% if not is_enrolled and current_user.is_authenticated %}
+                                                <i class="bi bi-lock-fill text-muted-ef small"></i>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted-ef small px-2 py-2 mb-0">Chưa có bài học nào.</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <p class="text-muted-ef small">Khóa học chưa có chương nào.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="tab-pane fade" id="cd-curriculum">
-          {% for chapter in chapters %}
-          <div class="border rounded-3 mb-2">
-            <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom">
-              <div class="d-flex align-items-center gap-2">
-                <span class="rounded-circle bg-indigo-50 text-indigo d-flex align-items-center justify-content-center fw-bold" style="width:24px;height:24px;font-size:.7rem;">{{ loop.index }}</span>
-                <span class="fw-semibold small">{{ chapter.name }}</span>
-              </div>
-              <span class="text-muted-ef small">{{ chapter.lessons|selectattr('is_active')|list|length }} bài</span>
-            </div>
-            <div class="p-2">
-              {% for lesson in chapter.lessons if lesson.is_active %}
-              <div class="d-flex align-items-center gap-2 px-2 py-2 {% if not loop.last %}border-bottom{% endif %}">
-                <i class="bi bi-dot text-indigo"></i>
-                <span class="small flex-grow-1">{{ lesson.name }}</span>
-                {% if not is_enrolled and current_user.is_authenticated %}
-                <i class="bi bi-lock-fill text-muted-ef small"></i>
+        <aside style="width:288px; flex-shrink:0;">
+            <div class="card-ef p-4 ef-sticky-80 d-flex flex-column gap-3">
+                <div>
+                    {% if course.price > 0 %}
+                        <div class="font-display fs-3 text-indigo-700 mb-1">{{ "{:,.0f}".format(course.price) }}đ</div>
+                    {% else %}
+                        <div class="font-display fs-3 text-success mb-1">Miễn phí</div>
+                    {% endif %}
+                    <p class="text-muted-ef small mb-0">{{ chapters|length }} chương
+                        · {{ chapters | map(attribute='lessons') | map('length') | sum }} bài học</p>
+                </div>
+
+
+                {% if is_enrolled %}
+                    <a href="{{ url_for('learn_course', course_id=course.id) }}"
+                       class="btn btn-indigo d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-play-circle"></i> Vào học
+                    </a>
+                {% else %}
+                    <button type="button"
+                            class="btn btn-indigo d-flex align-items-center justify-content-center gap-2 js-enroll-btn"
+                            data-course-id="{{ course.id }}"
+                            data-enroll-url="{{ url_for('enroll_course', course_id=course.id) }}">
+                        <i class="bi bi-cart-plus"></i>
+                        {% if course.price > 0 %}Đăng ký học{% else %}Học ngay - Miễn phí{% endif %}
+                    </button>
                 {% endif %}
-              </div>
-              {% else %}
-              <p class="text-muted-ef small px-2 py-2 mb-0">Chưa có bài học nào.</p>
-              {% endfor %}
+
+                <div class="d-flex flex-column gap-2 border-top pt-3">
+                    <div class="d-flex align-items-center gap-2 small"><i
+                            class="bi bi-layers text-indigo"></i>{{ chapters|length }} chương học
+                    </div>
+                    <div class="d-flex align-items-center gap-2 small"><i
+                            class="bi bi-camera-video text-indigo"></i>{{ chapters | map(attribute='lessons') | map('length') | sum }}
+                        bài học
+                    </div>
+                    <div class="d-flex align-items-center gap-2 small"><i class="bi bi-bar-chart text-indigo"></i>Cấp
+                        độ {{ course.level.value }}</div>
+                    <div class="d-flex align-items-center gap-2 small"><i class="bi bi-globe text-indigo"></i>Truy cập
+                        trọn đời
+                    </div>
+                    {% if course.teacher and course.teacher.user %}
+                        <div class="d-flex align-items-center gap-2 small"><i
+                                class="bi bi-person text-indigo"></i>{{ course.teacher.user.first_name }} {{ course.teacher.user.last_name }}
+                        </div>
+                    {% endif %}
+                </div>
             </div>
-          </div>
-          {% else %}
-          <p class="text-muted-ef small">Khóa học chưa có chương nào.</p>
-          {% endfor %}
-        </div>
-      </div>
+        </aside>
     </div>
-  </div>
 
-  <aside style="width:288px; flex-shrink:0;">
-    <div class="card-ef p-4 ef-sticky-80 d-flex flex-column gap-3">
-      <div>
-        {% if course.price and course.price > 0 %}
-        <div class="font-display fs-3 text-indigo-700 mb-1">{{ "{:,.0f}".format(course.price) }}đ</div>
-        {% else %}
-        <div class="font-display fs-3 text-success mb-1">Miễn phí</div>
-        {% endif %}
-        <p class="text-muted-ef small mb-0">{{ chapters|length }} chương · {{ chapters | map(attribute='lessons') | map('length') | sum }} bài học</p>
-      </div>
-
-      {% if current_user.is_authenticated %}
-        {% if is_enrolled %}
-        <a href="{{ url_for('learn_course', course_id=course.id) }}" class="btn btn-indigo d-flex align-items-center justify-content-center gap-2">
-          <i class="bi bi-play-circle"></i> Vào học
-        </a>
-        {% else %}
-        <button id="enroll-btn" data-course-id="{{ course.id }}" class="btn btn-indigo d-flex align-items-center justify-content-center gap-2">
-          <i class="bi bi-cart-plus"></i>
-          {% if course.price and course.price > 0 %}Đăng ký học{% else %}Học ngay - Miễn phí{% endif %}
-        </button>
-        {% endif %}
-      {% else %}
-      <a href="{{ url_for('login') }}" class="btn btn-indigo d-flex align-items-center justify-content-center gap-2">
-        <i class="bi bi-box-arrow-in-right"></i> Học miễn phí ngay
-      </a>
-      {% endif %}
-
-      <div class="d-flex flex-column gap-2 border-top pt-3">
-        <div class="d-flex align-items-center gap-2 small"><i class="bi bi-layers text-indigo"></i>{{ chapters|length }} chương học</div>
-        <div class="d-flex align-items-center gap-2 small"><i class="bi bi-camera-video text-indigo"></i>{{ chapters | map(attribute='lessons') | map('length') | sum }} bài học</div>
-        <div class="d-flex align-items-center gap-2 small"><i class="bi bi-bar-chart text-indigo"></i>Cấp độ {{ course.level.value }}</div>
-        <div class="d-flex align-items-center gap-2 small"><i class="bi bi-globe text-indigo"></i>Truy cập trọn đời</div>
-        {% if course.teacher and course.teacher.user %}
-        <div class="d-flex align-items-center gap-2 small"><i class="bi bi-person text-indigo"></i>{{ course.teacher.user.first_name }} {{ course.teacher.user.last_name }}</div>
-        {% endif %}
-      </div>
-    </div>
-  </aside>
-</div>
-
-<script>
-document.getElementById("enroll-btn")?.addEventListener("click", function () {
-  const btn = this;
-  const courseId = btn.dataset.courseId;
-  btn.disabled = true;
-
-  fetch(`/courses/${courseId}/enroll`, {
-    method: "POST",
-    headers: { "X-Requested-With": "XMLHttpRequest" },
-  })
-    .then((res) => {
-      const contentType = res.headers.get("content-type") || "";
-      if (!contentType.includes("application/json")) {
-        window.location.href = "/?login=1";
-        return null;
-      }
-      return res.json();
-    })
-    .then((data) => {
-      if (!data) return;
-      if (data.success) {
-        window.location.href = data.redirect;
-      } else {
-        alert(data.error || "Đăng ký thất bại, vui lòng thử lại!");
-        btn.disabled = false;
-      }
-    })
-    .catch(() => {
-      alert("Hệ thống lỗi, vui lòng thử lại sau!");
-      btn.disabled = false;
-    });
-});
-</script>
 {% endblock %}
