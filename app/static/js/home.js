@@ -31,3 +31,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 });
+
+document.querySelectorAll('.js-enroll-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        const url = this.getAttribute('data-enroll-url');
+        this.disabled = true;
+
+        fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (res) {
+                if (res.status === 401 || res.redirected) {
+                    // chưa đăng nhập, backend đã redirect (nếu login_required trả redirect thay vì JSON)
+                    window.location.href = res.url;
+                    return null;
+                }
+                return res.json();
+            })
+            .then(function (data) {
+                if (!data) return;
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    alert(data.error);
+                    btn.disabled = false;
+                }
+            })
+            .catch(function () {
+                alert('Hệ thống lỗi, vui lòng thử lại sau!');
+                btn.disabled = false;
+            });
+    });
+});
