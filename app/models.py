@@ -60,7 +60,6 @@ class Category(BaseModel):
 
 
 class CourseCategory(db.Model):
-    __tablename__ = "course_category"
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), primary_key=True)
     category_id = Column(Integer, ForeignKey("category.id"), primary_key=True)
 
@@ -132,15 +131,11 @@ class Enrollment(BaseModel):
 
 
 class PostCate(BaseModel):
-    __tablename__ = "post_cate"
-
     description = Column(String(255), nullable=True)
     posts = relationship("Post", secondary="post_category", back_populates="categories", lazy=True)
 
 
 class Post(BaseModel):
-    __tablename__ = "post"
-
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
     image = Column(String(500), default="")
@@ -154,16 +149,11 @@ class Post(BaseModel):
 
 
 class PostCategory(db.Model):
-    __tablename__ = "post_category"
-
     post_id = Column(Integer, ForeignKey("post.id", ondelete="CASCADE"), primary_key=True)
-
     category_id = Column(Integer, ForeignKey("post_cate.id", ondelete="CASCADE"), primary_key=True)
 
 
 class Comment(BaseModel):
-    __tablename__ = "comment"
-
     content = Column(Text, nullable=False)
     is_accepted = Column(Boolean, default=False)
     post_id = Column(Integer, ForeignKey(Post.id), nullable=False)
@@ -180,8 +170,6 @@ class VoteType(MyEnum):
 
 
 class ReactionPost(db.Model):
-    __tablename__ = "reaction_post"
-
     id = Column(Integer, primary_key=True)
     vote_type = Column(Enum(VoteType), nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
@@ -190,8 +178,6 @@ class ReactionPost(db.Model):
 
 
 class ReactionComment(db.Model):
-    __tablename__ = "reaction_comment"
-
     id = Column(Integer, primary_key=True)
     vote_type = Column(Enum(VoteType), nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
@@ -206,8 +192,6 @@ class ApplicationStatus(MyEnum):
 
 
 class TeacherApplication(BaseModel):
-    __tablename__ = "teacher_application"
-
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
     # Bước 1: thông tin cá nhân
@@ -242,6 +226,7 @@ class TeacherApplication(BaseModel):
 
 if __name__ == "__main__":
     with app.app_context():
+        db.drop_all()
         db.create_all()
         db.session.commit()
         password = hashlib.sha256(b"11111111").hexdigest()
