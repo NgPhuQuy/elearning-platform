@@ -286,16 +286,20 @@ def delete_course(course_id, teacher_id):
     course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
 
     if not course:
-        return False
+        return False, "Khóa học không tồn tại."
+
+    has_enrollment = Enrollment.query.filter_by(course_id=course_id).first() is not None
+    if has_enrollment:
+        return False, "Không thể xóa: đã có học viên đăng ký khóa học này."
 
     try:
         db.session.delete(course)
         db.session.commit()
-        return True
+        return True, None
 
     except Exception:
         db.session.rollback()
-        return False
+        return False, "Hệ thống lỗi, vui lòng thử lại sau!"
 
 
 def update_lesson(lesson_id, teacher_id, name=None, description=None, lesson_type=None):
@@ -543,24 +547,47 @@ def is_enrolled(user_id, course_id):
 def enroll_course(user_id, course_id):
     course = Course.query.get(course_id)
     if not course:
-        return None
+        return None, "Khóa học không tồn tại."
+    if not course.activate:
+        return None, "Khóa học chưa được công khai."
 
     if course.teacher_id and current_user.is_authenticated and current_user.teacher_profile:
         if course.teacher_id == current_user.teacher_profile.id:
-            return None
+            return None, "Bạn không thể tự đăng ký khóa học do chính mình tạo."
+
+    if course.price and course.price > 0:
+        return None, "Khóa học có phí, vui lòng thanh toán trước khi đăng ký."
 
     enrollment = Enrollment(
         user_id=user_id,
         course_id=course_id,
+        price=0,
     )
 
     try:
         db.session.add(enrollment)
         db.session.commit()
-        return enrollment
+        return enrollment, None
     except Exception:
         db.session.rollback()
-        return None
+        return None, "Hệ thống lỗi, vui lòng thử lại sau!"
+
+
+def activate_course(course_id, teacher_id):
+    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
+    if not course:
+        return None, "Khóa học không tồn tại."
+
+    if course.activate:
+        return course, None
+
+    course.activate = True
+    try:
+        db.session.commit()
+        return course, None
+    except Exception:
+        db.session.rollback()
+        return None, "Hệ thống lỗi, vui lòng thử lại sau!"
 
 
 def get_my_enrollments(user_id):
@@ -619,7 +646,9 @@ def get_courses_by_teacher_id(teacher_id):
     return Course.query.filter_by(teacher_id=teacher_id).order_by(Course.created_date.desc()).all()
 
 
-def update_course(course_id, teacher_id, name=None, description=None, image=None, level=None, category_ids=None):
+def update_course(
+    course_id, teacher_id, name=None, description=None, image=None, level=None, category_ids=None, price=None
+):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
         if name:
@@ -631,6 +660,9 @@ def update_course(course_id, teacher_id, name=None, description=None, image=None
 
         if level:
             course.level = level
+        if price is not None and not course.activate:
+            course.price = price
+
         if category_ids is not None:
             CourseCategory.query.filter_by(course_id=course.id).delete()
             for cate_id in category_ids:
