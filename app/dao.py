@@ -567,7 +567,7 @@ def enroll_course(user_id, course_id):
     try:
         db.session.add(enrollment)
         db.session.commit()
-        return enrollment
+        return enrollment, None
     except Exception:
         db.session.rollback()
         return None, "Hệ thống lỗi, vui lòng thử lại sau!"
