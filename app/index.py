@@ -320,7 +320,7 @@ def change_password():
 
 @app.route("/courses")
 def courses():
-    courses = Course.query.order_by(Course.id.desc()).all()
+    courses = Course.query.filter_by(activate=True).order_by(Course.id.desc()).all()
     return render_template("course/courses.html", courses=courses)
 
 
@@ -355,21 +355,12 @@ def course_detail(course_id):
 @app.route("/courses/<int:course_id>/enroll", methods=["POST"])
 @login_required
 def enroll_course(course_id):
-    course = Course.query.get_or_404(course_id)
+    enrollment, error = dao.enroll_course(user_id=current_user.id, course_id=course_id)
 
-    # Chặn giảng viên tự học khóa mình tạo
-    if current_user.teacher_profile and course.teacher_id == current_user.teacher_profile.id:
-        return jsonify({"success": False, "error": "Bạn không thể tự đăng ký khóa học do chính mình tạo!"}), 400
+    if error:
+        return jsonify({"success": False, "error": error}), 400
 
-    if dao.is_enrolled(current_user.id, course_id):
-        return jsonify({"success": False, "error": "Bạn đã đăng ký khóa học này rồi!"}), 400
-
-    try:
-        dao.enroll_course(user_id=current_user.id, course_id=course.id)
-        return jsonify({"success": True, "redirect": url_for("learn_course", course_id=course.id)})
-    except Exception:
-        db.session.rollback()
-        return jsonify({"success": False, "error": "Hệ thống lỗi, vui lòng thử lại sau!"}), 500
+    return jsonify({"success": True, "redirect": url_for("learn_course", course_id=course_id)})
 
 
 # learning
@@ -471,6 +462,21 @@ def update_course(course_id):
             res = cloudinary.uploader.upload(image, folder="elearning-platform/courses")
             image_url = res["secure_url"]
 
+        # Đọc giá từ form: nếu tick "Miễn phí", ô price bị disable nên sẽ không có trong form -> None
+        price_raw = request.form.get("price")
+        price = None
+        if price_raw not in (None, ""):
+            try:
+                price = max(0, int(price_raw))
+            except ValueError:
+                price = None
+        elif not course.activate:
+            # Chưa activate và không nhập gì (tick Miễn phí) -> set về 0
+            price = 0
+
+        was_draft = not course.activate
+        action = request.form.get("action", "save")
+
         dao.update_course(
             course_id=course_id,
             teacher_id=current_user.teacher_profile.id,
@@ -479,6 +485,7 @@ def update_course(course_id):
             image=image_url,
             level=request.form.get("level"),
             category_ids=request.form.getlist("category_ids"),
+            price=price,
         )
 
         outcomes = request.form.getlist("outcomes")
@@ -498,6 +505,10 @@ def update_course(course_id):
                     files=request.files,
                 )
 
+        # Chỉ công khai khi bấm đúng nút "Công khai khóa học" (tab Cài đặt)
+        if was_draft and action == "publish":
+            dao.activate_course(course_id, teacher_id=current_user.teacher_profile.id)
+
         return redirect(url_for("my_courses"))
 
     categories = dao.get_categories()
@@ -509,13 +520,28 @@ def update_course(course_id):
     )
 
 
+
 @app.route("/courses/<int:course_id>/delete", methods=["POST"])
 @login_required
 @teacher_required
 def delete_course(course_id):
-    dao.delete_course(course_id, teacher_id=current_user.teacher_profile.id)
+    success, error = dao.delete_course(course_id, teacher_id=current_user.teacher_profile.id)
+
+    if not success:
+        return redirect(url_for("my_courses", error=error))
+
     return redirect(url_for("my_courses"))
 
+@app.route("/courses/<int:course_id>/activate", methods=["POST"])
+@login_required
+@teacher_required
+def activate_course(course_id):
+    course, error = dao.activate_course(course_id, teacher_id=current_user.teacher_profile.id)
+
+    if error:
+        return redirect(url_for("my_courses", error=error))
+
+    return redirect(url_for("my_courses"))
 
 @app.route("/courses/<int:course_id>/content", methods=["GET", "POST"])
 @login_required

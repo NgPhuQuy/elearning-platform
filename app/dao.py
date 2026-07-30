@@ -295,11 +295,11 @@ def delete_course(course_id, teacher_id):
     try:
         db.session.delete(course)
         db.session.commit()
-        return True
+        return True, None
 
     except Exception:
         db.session.rollback()
-        return False
+        return False, "Hệ thống lỗi, vui lòng thử lại sau!"
 
 
 def update_lesson(lesson_id, teacher_id, name=None, description=None, lesson_type=None):
