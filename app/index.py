@@ -331,7 +331,7 @@ def courses():
 @teacher_required
 def my_courses():
     courses = dao.get_courses_by_teacher_id(current_user.teacher_profile.id)
-    error = request.args.get("error")
+    request.args.get("error")
     return render_template("course/manage.html", courses=courses)
 
 
