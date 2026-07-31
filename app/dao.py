@@ -979,7 +979,6 @@ def get_question_today():
 
 
 def create_payment(user_id, course_id):
-    """Tạo Payment PENDING + lấy payUrl từ Momo. Trả về (pay_url, error)."""
     course = Course.query.get(course_id)
     if not course or not course.activate:
         return None, "Khóa học không tồn tại hoặc chưa công khai."
@@ -1022,7 +1021,6 @@ def get_payment_by_order_id(order_id):
 
 
 def confirm_payment_success(order_id, momo_trans_id, pay_type):
-    """Gọi khi IPN báo thành công: cập nhật Payment, tạo Enrollment, gửi email hóa đơn."""
     payment = get_payment_by_order_id(order_id)
     if not payment:
         return False, "Không tìm thấy đơn hàng."
