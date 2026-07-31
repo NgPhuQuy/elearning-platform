@@ -137,6 +137,31 @@ class Enrollment(db.Model):
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, primary_key=True)
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), nullable=False, primary_key=True)
 
+class LessonProgress(db.Model):
+    id = Column(Integer, primary_key=True)
+    lesson_id = Column(Integer, ForeignKey("lesson.id", ondelete="CASCADE"), nullable=False)
+    is_completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+    last_watched_at = Column(DateTime, nullable=True)
+
+    enrollment_created_date = Column(DateTime, nullable=False)
+    user_id = Column(Integer, nullable=False)
+    course_id = Column(Integer, nullable=False)
+
+    lesson = relationship("Lesson")
+
+    __table_args__ = (
+        db.ForeignKeyConstraint(
+            ["enrollment_created_date", "user_id", "course_id"],
+            ["enrollment.created_date", "enrollment.user_id", "enrollment.course_id"],
+            ondelete="CASCADE",
+        ),
+        db.UniqueConstraint(
+            "user_id", "course_id", "enrollment_created_date", "lesson_id",
+            name="uix_progress_per_attempt",
+        ),
+    )
+
 class Test(BaseModel):
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
     chapter_id = Column(Integer, ForeignKey("chapter.id"), nullable=True)  # null nếu là bài thi cuối khóa

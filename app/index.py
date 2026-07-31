@@ -265,8 +265,9 @@ def register_teacher():
 @login_required
 def profile():
     enrollments = dao.get_my_enrollments(current_user.id)
+    for e in enrollments:
+        dao.recalc_enrollment_progress(e)
     return render_template("profile/profile.html", enrollments=enrollments)
-
 
 @app.route("/profile/change-info", methods=["GET", "POST"])
 @login_required
@@ -329,6 +330,7 @@ def courses():
 @teacher_required
 def my_courses():
     courses = dao.get_courses_by_teacher_id(current_user.teacher_profile.id)
+    error = request.args.get("error")
     return render_template("course/manage.html", courses=courses)
 
 
@@ -395,6 +397,13 @@ def learn_course(course_id):
     doc_kind = None
     if current_lesson and current_lesson.doc_content:
         doc_kind = get_doc_kind(current_lesson.doc_content.file_ext or "")
+        dao.mark_lesson_completed(current_user.id, course_id, current_lesson.id)
+
+    enrollment = dao.get_latest_enrollment(current_user.id, course_id)
+    if enrollment:
+        dao.recalc_enrollment_progress(enrollment)
+    progress_map = dao.get_lesson_progress_map(current_user.id, course_id)
+
 
     return render_template(
         "course/learn.html",
@@ -402,7 +411,14 @@ def learn_course(course_id):
         chapters=chapters,
         current_lesson=current_lesson,
         doc_kind=doc_kind,
+        enrollment=enrollment,
+        progress_map=progress_map,
     )
+@app.route("/learn/<int:course_id>/lessons/<int:lesson_id>/complete", methods=["POST"])
+@login_required
+def complete_lesson(course_id, lesson_id):
+    ok, error = dao.mark_lesson_completed(current_user.id, course_id, lesson_id)
+    return jsonify({"success": ok, "error": error})
 
 
 def get_doc_kind(ext):
