@@ -598,11 +598,7 @@ def _lesson_has_content(lesson):
 
 def recalc_enrollment_progress(enrollment):
 
-    total_lessons = sum(
-        1
-        for ch in enrollment.course.chapters
-        for lesson in ch.lessons
-        if _lesson_has_content(lesson))
+    total_lessons = sum(1 for ch in enrollment.course.chapters for lesson in ch.lessons if _lesson_has_content(lesson))
     done_lessons = LessonProgress.query.filter_by(
         user_id=enrollment.user_id,
         course_id=enrollment.course_id,
