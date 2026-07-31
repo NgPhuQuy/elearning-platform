@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum as MyEnum
 
 from flask_login import UserMixin
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import backref, relationship
 
 from app import app, db
@@ -54,6 +54,8 @@ class Chapter(BaseModel):
 
     lessons = relationship("Lesson", backref="chapter", cascade="all, delete-orphan", lazy=True)
 
+    tests = relationship("Test", backref="chapter", cascade="all, delete-orphan", lazy=True)
+
 
 class Category(BaseModel):
     course_category = relationship("CourseCategory", backref="category", lazy=True)
@@ -83,6 +85,7 @@ class Course(BaseModel):
     course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True)
     level = Column(Enum(CourseLevel), nullable=False, default=CourseLevel.BASIC)
     enrollment = relationship("Enrollment", backref="course", cascade="all, delete-orphan", lazy=True)
+    tests = relationship("Test", backref="course", cascade="all, delete-orphan", lazy=True)
 
 
 class LessonType(MyEnum):
@@ -134,6 +137,73 @@ class Enrollment(db.Model):
     created_date = Column(DateTime, nullable=False, default=datetime.now(), primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, primary_key=True)
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), nullable=False, primary_key=True)
+
+
+class LessonProgress(db.Model):
+    id = Column(Integer, primary_key=True)
+    lesson_id = Column(Integer, ForeignKey("lesson.id", ondelete="CASCADE"), nullable=False)
+    is_completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+    last_watched_at = Column(DateTime, nullable=True)
+
+    enrollment_created_date = Column(DateTime, nullable=False)
+    user_id = Column(Integer, nullable=False)
+    course_id = Column(Integer, nullable=False)
+
+    lesson = relationship("Lesson")
+
+    __table_args__ = (
+        db.ForeignKeyConstraint(
+            ["enrollment_created_date", "user_id", "course_id"],
+            ["enrollment.created_date", "enrollment.user_id", "enrollment.course_id"],
+            ondelete="CASCADE",
+        ),
+        db.UniqueConstraint(
+            "user_id",
+            "course_id",
+            "enrollment_created_date",
+            "lesson_id",
+            name="uix_progress_per_attempt",
+        ),
+    )
+
+
+class Test(BaseModel):
+    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
+    chapter_id = Column(Integer, ForeignKey("chapter.id"), nullable=True)  # null nếu là bài thi cuối khóa
+    duration = Column(Integer, default=0)  # phút, 0 = không giới hạn thời gian
+    max_attempts = Column(Integer, default=0)  # 0 = không giới hạn số lần làm
+
+    questions = relationship("Question", backref="test", cascade="all, delete-orphan", lazy=True)
+    scores = relationship("Score", backref="test", cascade="all, delete-orphan", lazy=True)
+
+
+class Question(BaseModel):
+    test_id = Column(Integer, ForeignKey("test.id"), nullable=False)
+    content = Column(Text, nullable=False)
+
+    answers = relationship("Answer", backref="question", cascade="all, delete-orphan", lazy=True)
+
+
+class Answer(BaseModel):
+    question_id = Column(Integer, ForeignKey("question.id"), nullable=False)
+    content = Column(String(500), nullable=False)
+    is_correct = Column(Boolean, default=False)
+
+
+class Score(db.Model):
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
+    test_id = Column(Integer, ForeignKey("test.id"), nullable=False)
+    attempt_number = Column(Integer, default=1)
+    score_value = Column(Float, nullable=False)  # điểm quy đổi thang 10
+    is_passed = Column(Boolean, default=False)  # score_value >= 5
+    started_at = Column(DateTime, default=datetime.now)
+    completed_at = Column(DateTime)
+
+    user = relationship("User", backref="scores")
+    course = relationship("Course", backref="scores")
 
 
 class PostCate(BaseModel):
@@ -232,7 +302,7 @@ class TeacherApplication(BaseModel):
 
 if __name__ == "__main__":
     with app.app_context():
-        # db.drop_all()
+        db.drop_all()
         db.create_all()
         db.session.commit()
         password = hashlib.sha256(b"11111111").hexdigest()
