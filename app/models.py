@@ -87,6 +87,7 @@ class Course(BaseModel):
     enrollment = relationship("Enrollment", backref="course", cascade="all, delete-orphan", lazy=True)
     tests = relationship("Test", backref="course", cascade="all, delete-orphan", lazy=True)
 
+
 class LessonType(MyEnum):
     VIDEO = "Video"
     NONE = "Chưa chọn"
@@ -137,6 +138,7 @@ class Enrollment(db.Model):
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, primary_key=True)
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), nullable=False, primary_key=True)
 
+
 class LessonProgress(db.Model):
     id = Column(Integer, primary_key=True)
     lesson_id = Column(Integer, ForeignKey("lesson.id", ondelete="CASCADE"), nullable=False)
@@ -157,15 +159,19 @@ class LessonProgress(db.Model):
             ondelete="CASCADE",
         ),
         db.UniqueConstraint(
-            "user_id", "course_id", "enrollment_created_date", "lesson_id",
+            "user_id",
+            "course_id",
+            "enrollment_created_date",
+            "lesson_id",
             name="uix_progress_per_attempt",
         ),
     )
 
+
 class Test(BaseModel):
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
     chapter_id = Column(Integer, ForeignKey("chapter.id"), nullable=True)  # null nếu là bài thi cuối khóa
-    duration = Column(Integer, default=0)      # phút, 0 = không giới hạn thời gian
+    duration = Column(Integer, default=0)  # phút, 0 = không giới hạn thời gian
     max_attempts = Column(Integer, default=0)  # 0 = không giới hạn số lần làm
 
     questions = relationship("Question", backref="test", cascade="all, delete-orphan", lazy=True)
@@ -191,13 +197,14 @@ class Score(db.Model):
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
     test_id = Column(Integer, ForeignKey("test.id"), nullable=False)
     attempt_number = Column(Integer, default=1)
-    score_value = Column(Float, nullable=False)   # điểm quy đổi thang 10
-    is_passed = Column(Boolean, default=False)     # score_value >= 5
+    score_value = Column(Float, nullable=False)  # điểm quy đổi thang 10
+    is_passed = Column(Boolean, default=False)  # score_value >= 5
     started_at = Column(DateTime, default=datetime.now)
     completed_at = Column(DateTime)
 
     user = relationship("User", backref="scores")
     course = relationship("Course", backref="scores")
+
 
 class PostCate(BaseModel):
     description = Column(String(255), nullable=True)

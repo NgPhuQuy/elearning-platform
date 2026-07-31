@@ -269,6 +269,7 @@ def profile():
         dao.recalc_enrollment_progress(e)
     return render_template("profile/profile.html", enrollments=enrollments)
 
+
 @app.route("/profile/change-info", methods=["GET", "POST"])
 @login_required
 def change_info():
@@ -404,7 +405,6 @@ def learn_course(course_id):
         dao.recalc_enrollment_progress(enrollment)
     progress_map = dao.get_lesson_progress_map(current_user.id, course_id)
 
-
     return render_template(
         "course/learn.html",
         course=course,
@@ -414,6 +414,8 @@ def learn_course(course_id):
         enrollment=enrollment,
         progress_map=progress_map,
     )
+
+
 @app.route("/learn/<int:course_id>/lessons/<int:lesson_id>/complete", methods=["POST"])
 @login_required
 def complete_lesson(course_id, lesson_id):

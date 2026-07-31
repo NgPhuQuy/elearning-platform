@@ -542,9 +542,6 @@ def delete_outcome(outcome_id):
 # enrollment
 
 
-
-
-
 def get_latest_enrollment(user_id, course_id):
     """Lấy lần enroll gần nhất của user với course này."""
     return (
@@ -592,6 +589,7 @@ def enroll_course(user_id, course_id):
         db.session.rollback()
         return None, "Hệ thống lỗi, vui lòng thử lại sau!"
 
+
 def _lesson_has_content(lesson):
     return (lesson.type == LessonType.VIDEO and lesson.video_content) or (
         lesson.type == LessonType.DOCUMENT and lesson.doc_content
@@ -600,9 +598,7 @@ def _lesson_has_content(lesson):
 
 def recalc_enrollment_progress(enrollment):
 
-    total_lessons = sum(
-        1 for ch in enrollment.course.chapters for l in ch.lessons if _lesson_has_content(l)
-    )
+    total_lessons = sum(1 for ch in enrollment.course.chapters for l in ch.lessons if _lesson_has_content(l))
     done_lessons = LessonProgress.query.filter_by(
         user_id=enrollment.user_id,
         course_id=enrollment.course_id,
@@ -626,11 +622,13 @@ def recalc_enrollment_progress(enrollment):
 
     return enrollment.progress
 
+
 def _ensure_lesson_completable(lesson):
 
     if not _lesson_has_content(lesson):
         return False, "Bài học này chưa có nội dung, không thể đánh dấu hoàn thành."
     return True, None
+
 
 def mark_lesson_completed(user_id, course_id, lesson_id):
 
@@ -674,8 +672,6 @@ def mark_lesson_completed(user_id, course_id, lesson_id):
 
     recalc_enrollment_progress(enrollment)
     return True, None
-
-
 
 
 def get_lesson_progress_map(user_id, course_id):
