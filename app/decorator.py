@@ -26,11 +26,14 @@ def login_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not current_user.is_authenticated:
-            session["next_url"] = request.url
+            same_host_referrer = None
+            if request.referrer and urlsplit(request.referrer).netloc == urlsplit(request.url).netloc:
+                same_host_referrer = request.referrer
 
-            referrer = request.referrer
-            if referrer and urlsplit(referrer).netloc == urlsplit(request.url).netloc:
-                return redirect(_add_login_param(referrer))
+            session["next_url"] = same_host_referrer or url_for("index")
+
+            if same_host_referrer:
+                return redirect(_add_login_param(same_host_referrer))
             return redirect(url_for("index", login=1))
         return func(*args, **kwargs)
 
