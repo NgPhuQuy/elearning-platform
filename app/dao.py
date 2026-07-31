@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import cloudinary.uploader
 from flask_login import current_user
 
-from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login
+from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login, mailer, momo
 from app.models import (
     ApplicationStatus,
     Category,
@@ -16,8 +16,11 @@ from app.models import (
     CourseOutcome,
     DocContent,
     Enrollment,
+    EnrollmentStatus,
     Lesson,
     LessonType,
+    Payment,
+    PaymentStatus,
     Post,
     PostCate,
     ReactionComment,
@@ -858,3 +861,91 @@ def get_course_sale():
 
 def get_question_today():
     return Post.query.filter(Post.created_date == datetime.today()).all()
+
+
+def create_payment(user_id, course_id):
+    """Tạo Payment PENDING + lấy payUrl từ Momo. Trả về (pay_url, error)."""
+    course = Course.query.get(course_id)
+    if not course or not course.activate:
+        return None, "Khóa học không tồn tại hoặc chưa công khai."
+    if is_enrolled(user_id, course_id):
+        return None, "Bạn đang học hoặc đã hoàn thành khóa học này rồi."
+    if not course.price or course.price <= 0:
+        return None, "Khóa học này miễn phí, không cần thanh toán."
+
+    order_id = momo.new_order_id(course_id)
+    request_id = momo.new_request_id()
+
+    payment = Payment(
+        user_id=user_id,
+        course_id=course_id,
+        order_id=order_id,
+        request_id=request_id,
+        amount=course.price,
+        status=PaymentStatus.PENDING,
+    )
+    db.session.add(payment)
+    db.session.commit()
+
+    pay_url, error = momo.create_payment_request(
+        order_id=order_id,
+        request_id=request_id,
+        amount=course.price,
+        order_info=f"Thanh toan khoa hoc: {course.name}",
+        extra_data=str(user_id),
+    )
+    if error:
+        payment.status = PaymentStatus.FAILED
+        db.session.commit()
+        return None, error
+
+    return pay_url, None
+
+
+def get_payment_by_order_id(order_id):
+    return Payment.query.filter_by(order_id=order_id).first()
+
+
+def confirm_payment_success(order_id, momo_trans_id, pay_type):
+    """Gọi khi IPN báo thành công: cập nhật Payment, tạo Enrollment, gửi email hóa đơn."""
+    payment = get_payment_by_order_id(order_id)
+    if not payment:
+        return False, "Không tìm thấy đơn hàng."
+    if payment.status == PaymentStatus.SUCCESS:
+        return True, None  # đã xử lý trước đó (Momo có thể gọi IPN nhiều lần)
+
+    payment.status = PaymentStatus.SUCCESS
+    payment.momo_trans_id = momo_trans_id
+    payment.pay_type = pay_type
+    payment.paid_at = datetime.now()
+
+    if not is_enrolled(payment.user_id, payment.course_id):
+        enrollment = Enrollment(
+            user_id=payment.user_id,
+            course_id=payment.course_id,
+            price=payment.amount,
+            status=EnrollmentStatus.IN_PROGRESS,
+        )
+        db.session.add(enrollment)
+
+    db.session.commit()
+
+    ok, mail_error = mailer.send_invoice_email(payment, payment.user, payment.course)
+    payment.invoice_sent = ok
+    db.session.commit()
+    if not ok:
+        # không rollback enrollment vì lỗi gửi mail không phải lỗi nghiệp vụ
+        return True, f"Đã thanh toán nhưng gửi email hóa đơn lỗi: {mail_error}"
+
+    return True, None
+
+
+def confirm_payment_failed(order_id):
+    payment = get_payment_by_order_id(order_id)
+    if payment and payment.status == PaymentStatus.PENDING:
+        payment.status = PaymentStatus.FAILED
+        db.session.commit()
+
+
+def get_my_payments(user_id):
+    return Payment.query.filter_by(user_id=user_id).order_by(Payment.created_date.desc()).all()
