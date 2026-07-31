@@ -730,13 +730,13 @@ def reply_comment(comment_id):
     return redirect(url_for("forum_detail", post_id=parent_comment.post_id))
 
 
-@app.route("/courses/<int:course_id>/checkout", methods=["POST"])
+@app.route("/courses/<int:course_id>/checkout", methods=["GET", "POST"])
 @login_required
 def checkout_course(course_id):
     pay_url, error = dao.create_payment(user_id=current_user.id, course_id=course_id)
     if error:
         return jsonify({"success": False, "error": error}), 400
-    return jsonify({"success": True, "redirect": pay_url})
+    return redirect(pay_url)
 
 
 @app.route("/payment/momo/ipn", methods=["POST"])

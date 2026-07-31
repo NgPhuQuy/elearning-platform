@@ -1025,7 +1025,7 @@ def confirm_payment_success(order_id, momo_trans_id, pay_type):
     if not payment:
         return False, "Không tìm thấy đơn hàng."
     if payment.status == PaymentStatus.SUCCESS:
-        return True, None  # đã xử lý trước đó (Momo có thể gọi IPN nhiều lần)
+        return True, None
 
     payment.status = PaymentStatus.SUCCESS
     payment.momo_trans_id = momo_trans_id
@@ -1047,7 +1047,6 @@ def confirm_payment_success(order_id, momo_trans_id, pay_type):
     payment.invoice_sent = ok
     db.session.commit()
     if not ok:
-        # không rollback enrollment vì lỗi gửi mail không phải lỗi nghiệp vụ
         return True, f"Đã thanh toán nhưng gửi email hóa đơn lỗi: {mail_error}"
 
     return True, None
