@@ -40,5 +40,3 @@ oauth.register(
     server_metadata_url=GOOGLE_DISCOVERY_URL,
     client_kwargs={"scope": "openid email profile"},
 )
-
-
