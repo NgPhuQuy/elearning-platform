@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum as MyEnum
 
 from flask_login import UserMixin
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text, Float
+from sqlalchemy import Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import backref, relationship
 
 from app import app, db
