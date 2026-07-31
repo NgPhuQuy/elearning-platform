@@ -18,6 +18,7 @@ from app.models import (
     Enrollment,
     EnrollmentStatus,
     Lesson,
+    LessonProgress,
     LessonType,
     Payment,
     PaymentStatus,
@@ -543,8 +544,19 @@ def delete_outcome(outcome_id):
 # enrollment
 
 
+def get_latest_enrollment(user_id, course_id):
+    """Lấy lần enroll gần nhất của user với course này."""
+    return (
+        Enrollment.query.filter_by(user_id=user_id, course_id=course_id)
+        .order_by(Enrollment.created_date.desc())
+        .first()
+    )
+
+
 def is_enrolled(user_id, course_id):
-    return Enrollment.query.filter_by(user_id=user_id, course_id=course_id).first() is not None
+    """Coi là 'đang enrolled' nếu lần học gần nhất KHÔNG phải FAILED."""
+    latest = get_latest_enrollment(user_id, course_id)
+    return latest is not None and latest.status != EnrollmentStatus.FAILED
 
 
 def enroll_course(user_id, course_id):
@@ -558,6 +570,9 @@ def enroll_course(user_id, course_id):
         if course.teacher_id == current_user.teacher_profile.id:
             return None, "Bạn không thể tự đăng ký khóa học do chính mình tạo."
 
+    if is_enrolled(user_id, course_id):
+        return None, "Bạn đang học hoặc đã hoàn thành khóa học này rồi."
+
     if course.price and course.price > 0:
         return None, "Khóa học có phí, vui lòng thanh toán trước khi đăng ký."
 
@@ -565,6 +580,7 @@ def enroll_course(user_id, course_id):
         user_id=user_id,
         course_id=course_id,
         price=0,
+        status=EnrollmentStatus.IN_PROGRESS,
     )
 
     try:
@@ -574,6 +590,105 @@ def enroll_course(user_id, course_id):
     except Exception:
         db.session.rollback()
         return None, "Hệ thống lỗi, vui lòng thử lại sau!"
+
+
+def _lesson_has_content(lesson):
+    return (lesson.type == LessonType.VIDEO and lesson.video_content) or (
+        lesson.type == LessonType.DOCUMENT and lesson.doc_content
+    )
+
+
+def recalc_enrollment_progress(enrollment):
+
+    total_lessons = sum(1 for ch in enrollment.course.chapters for lesson in ch.lessons if _lesson_has_content(lesson))
+    done_lessons = LessonProgress.query.filter_by(
+        user_id=enrollment.user_id,
+        course_id=enrollment.course_id,
+        enrollment_created_date=enrollment.created_date,
+        is_completed=True,
+    ).count()
+    enrollment.progress = int(done_lessons / total_lessons * 100) if total_lessons else 0
+
+    if enrollment.progress >= 100 and not enrollment.course.tests:
+        enrollment.status = EnrollmentStatus.COMPLETED
+        enrollment.completed_date = datetime.now()
+    elif enrollment.progress < 100 and enrollment.status == EnrollmentStatus.COMPLETED:
+        # Thêm bài học mới sau khi đã hoàn thành -> quay lại trạng thái đang học
+        enrollment.status = EnrollmentStatus.IN_PROGRESS
+        enrollment.completed_date = None
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    return enrollment.progress
+
+
+def _ensure_lesson_completable(lesson):
+
+    if not _lesson_has_content(lesson):
+        return False, "Bài học này chưa có nội dung, không thể đánh dấu hoàn thành."
+    return True, None
+
+
+def mark_lesson_completed(user_id, course_id, lesson_id):
+
+    enrollment = get_latest_enrollment(user_id, course_id)
+    if not enrollment or enrollment.status == EnrollmentStatus.FAILED:
+        return False, "Bạn chưa đăng ký khóa học này."
+
+    lesson = Lesson.query.get(lesson_id)
+    if not lesson or lesson.chapter.course_id != course_id:
+        return False, "Bài học không hợp lệ."
+
+    ok, error = _ensure_lesson_completable(lesson)
+    if not ok:
+        return False, error
+
+    lp = LessonProgress.query.filter_by(
+        user_id=user_id,
+        course_id=course_id,
+        enrollment_created_date=enrollment.created_date,
+        lesson_id=lesson_id,
+    ).first()
+
+    if not lp:
+        lp = LessonProgress(
+            user_id=user_id,
+            course_id=course_id,
+            enrollment_created_date=enrollment.created_date,
+            lesson_id=lesson_id,
+        )
+        db.session.add(lp)
+
+    lp.is_completed = True
+    lp.completed_at = datetime.now()
+    lp.last_watched_at = datetime.now()
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return False, "Hệ thống lỗi, vui lòng thử lại sau!"
+
+    recalc_enrollment_progress(enrollment)
+    return True, None
+
+
+def get_lesson_progress_map(user_id, course_id):
+
+    enrollment = get_latest_enrollment(user_id, course_id)
+    if not enrollment:
+        return {}
+
+    rows = LessonProgress.query.filter_by(
+        user_id=user_id,
+        course_id=course_id,
+        enrollment_created_date=enrollment.created_date,
+        is_completed=True,
+    ).all()
+    return {row.lesson_id: True for row in rows}
 
 
 def activate_course(course_id, teacher_id):

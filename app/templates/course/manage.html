@@ -29,6 +29,13 @@
   }
 </style>
 
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
 <div class="d-flex flex-column gap-3">
   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
     <div>
