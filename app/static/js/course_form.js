@@ -15,25 +15,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!searchInput || !listContainer) return;
 
-    function reorderCategories() {
-        const items = Array.from(listContainer.querySelectorAll('.category-item'));
-        items.sort((a, b) => {
-            const aChecked = a.querySelector('.category-checkbox').checked;
-            const bChecked = b.querySelector('.category-checkbox').checked;
-            if (aChecked === bChecked) return 0;
-            return aChecked ? -1 : 1;
-        });
-        items.forEach(item => listContainer.appendChild(item));
-    }
-
-    reorderCategories();
-
-    listContainer.addEventListener('change', function (e) {
-        if (e.target.classList.contains('category-checkbox')) {
-            reorderCategories();
-        }
-    });
-
     searchInput.addEventListener('input', function () {
         const keyword = this.value.trim().toLowerCase();
         listContainer.querySelectorAll('.category-item').forEach(item => {
