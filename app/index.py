@@ -1,6 +1,6 @@
 import json
 import uuid
-
+from datetime import datetime
 import cloudinary.uploader
 from flask import jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user, logout_user
@@ -428,6 +428,7 @@ def complete_lesson(course_id, lesson_id):
     ok, error = dao.mark_lesson_completed(current_user.id, course_id, lesson_id)
     return jsonify({"success": ok, "error": error})
 
+
 @app.route("/courses/<int:course_id>/tests/<int:test_id>")
 @login_required
 def take_test(course_id, test_id):
@@ -445,9 +446,20 @@ def take_test(course_id, test_id):
         )
 
     attempts = dao.get_test_attempts(current_user.id, course_id, test_id)
-    attempts_left = (
-        test.max_attempts - len(attempts) if test.max_attempts and test.max_attempts > 0 else None
-    )
+    attempts_used = len(attempts)
+    attempts_left = test.max_attempts - attempts_used if test.max_attempts and test.max_attempts > 0 else None
+    best_score = max((a.score_value for a in attempts), default=None)
+
+    # Lưu thời điểm bắt đầu vào session (theo đúng lượt làm hiện tại), để đồng hồ
+    # không bị reset khi người dùng rời trang rồi quay lại giữa chừng.
+    remaining_seconds = None
+    if test.duration and test.duration > 0:
+        session_key = f"test_start_{test_id}_{attempts_used}"
+        if session_key not in session:
+            session[session_key] = datetime.now().isoformat()
+        start_time = datetime.fromisoformat(session[session_key])
+        elapsed = (datetime.now() - start_time).total_seconds()
+        remaining_seconds = max(int(test.duration * 60 - elapsed), 0)
 
     return render_template(
         "course/test.html",
@@ -455,6 +467,8 @@ def take_test(course_id, test_id):
         test=test,
         attempts=attempts,
         attempts_left=attempts_left,
+        best_score=best_score,
+        remaining_seconds=remaining_seconds,
     )
 
 
@@ -468,22 +482,11 @@ def submit_test(course_id, test_id):
             question_id = key.replace("answer_", "")
             answers[question_id] = value
 
+    attempts_before = dao.get_test_attempts(current_user.id, course_id, test_id)
+    session.pop(f"test_start_{test_id}_{len(attempts_before)}", None)
+
     score, error = dao.submit_test_score(current_user.id, course_id, test_id, answers)
 
-    if error:
-        return render_template(
-            "course/test_blocked.html",
-            course_id=course_id,
-            test=dao.get_test_details(test_id),
-            error=error,
-        )
-
-    return render_template(
-        "course/test_result.html",
-        course_id=course_id,
-        test=dao.get_test_details(test_id),
-        score=score,
-    )
 
 def get_doc_kind(ext):
     ext = ext.lower()
@@ -635,9 +638,6 @@ def activate_course(course_id):
     return redirect(url_for("my_courses"))
 
 
-
-
-
 @app.route("/chapters/<int:chapter_id>/delete", methods=["POST"])
 @login_required
 @teacher_required
@@ -679,9 +679,9 @@ def manage_test_questions(course_id, test_id):
         return redirect(url_for("update_course", course_id=course_id, test_id=test_id))
 
     questions = dao.get_questions(test_id)
-    return render_template(
-        "course/test_questions.html", course_id=course_id, test=test, questions=questions
-    )
+    return render_template("course/test_questions.html", course_id=course_id, test=test, questions=questions)
+
+
 # forum
 
 

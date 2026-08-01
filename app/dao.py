@@ -601,10 +601,9 @@ def _lesson_has_content(lesson):
         lesson.type == LessonType.DOCUMENT and lesson.doc_content
     )
 
+
 def get_test_for_teacher(test_id, teacher_id):
-    return (
-        Test.query.join(Course).filter(Test.id == test_id, Course.teacher_id == teacher_id).first()
-    )
+    return Test.query.join(Course).filter(Test.id == test_id, Course.teacher_id == teacher_id).first()
 
 
 def get_questions(test_id):
@@ -676,6 +675,7 @@ def sync_questions(test_id, teacher_id, questions_data):
     except Exception:
         db.session.rollback()
         return False
+
 
 def _get_best_scores_map(user_id, course_id, enrollment_created_date):
     """Trả về {test_id: điểm cao nhất} trong LẦN HỌC HIỆN TẠI."""
@@ -804,6 +804,7 @@ def get_lesson_progress_map(user_id, course_id):
     ).all()
     return {row.lesson_id: True for row in rows}
 
+
 def is_chapter_completed(user_id, course_id, chapter_id):
     enrollment = get_latest_enrollment(user_id, course_id)
     if not enrollment or enrollment.status == EnrollmentStatus.FAILED:
@@ -828,6 +829,7 @@ def is_chapter_completed(user_id, course_id, chapter_id):
     }
 
     return all(lesson.id in completed_ids for lesson in lessons_with_content)
+
 
 def get_test_details(test_id):
     return Test.query.get(test_id)
@@ -899,9 +901,7 @@ def submit_test_score(user_id, course_id, test_id, answers):
         if not selected_answer_id:
             continue
 
-        selected_answer = Answer.query.filter_by(
-            id=int(selected_answer_id), question_id=question.id
-        ).first()
+        selected_answer = Answer.query.filter_by(id=int(selected_answer_id), question_id=question.id).first()
 
         if selected_answer and selected_answer.is_correct:
             correct += 1
@@ -1133,6 +1133,7 @@ def sync_tests(course_id, teacher_id, tests_data):
     except Exception:
         db.session.rollback()
         return False
+
 
 def update_chapter(chapter_id, teacher_id, name=None, description=None):
     chapter = Chapter.query.join(Course).filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id).first()
