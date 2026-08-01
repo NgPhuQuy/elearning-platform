@@ -7,7 +7,7 @@ from flask_login import current_user, login_user, logout_user
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from app import admin, app, dao, db, oauth  # noqa: F401  # Register admin routes.
+from app import admin, app, dao, db, momo, oauth  # noqa: F401  # Register admin routes.
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
 from app.models import Comment, Course, Post, PostCate, User, VoteType
@@ -728,6 +728,57 @@ def reply_comment(comment_id):
     )
 
     return redirect(url_for("forum_detail", post_id=parent_comment.post_id))
+
+
+@app.route("/courses/<int:course_id>/checkout", methods=["GET", "POST"])
+@login_required
+def checkout_course(course_id):
+    pay_url, error = dao.create_payment(user_id=current_user.id, course_id=course_id)
+    if error:
+        return jsonify({"success": False, "error": error}), 400
+    return redirect(pay_url)
+
+
+@app.route("/payment/momo/ipn", methods=["POST"])
+def momo_ipn():
+    data = request.get_json(silent=True) or {}
+
+    if not momo.verify_ipn_signature(data):
+        return jsonify({"message": "Invalid signature"}), 400
+
+    order_id = data.get("orderId")
+    result_code = data.get("resultCode")
+
+    if result_code == 0:
+        dao.confirm_payment_success(
+            order_id=order_id,
+            momo_trans_id=data.get("transId"),
+            pay_type=data.get("payType"),
+        )
+    else:
+        dao.confirm_payment_failed(order_id)
+
+    return jsonify({"message": "OK"}), 204
+
+
+@app.route("/payment/momo/return")
+def momo_return():
+    order_id = request.args.get("orderId")
+    result_code = request.args.get("resultCode", type=int)
+    payment = dao.get_payment_by_order_id(order_id) if order_id else None
+
+    return render_template(
+        "payment/result.html",
+        success=(result_code == 0),
+        payment=payment,
+    )
+
+
+@app.route("/payment/history")
+@login_required
+def payment_history():
+    payments = dao.get_my_payments(current_user.id)
+    return render_template("profile/payment-history.html", payments=payments)
 
 
 if __name__ == "__main__":
