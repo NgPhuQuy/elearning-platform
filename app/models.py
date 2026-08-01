@@ -245,20 +245,20 @@ class VoteType(MyEnum):
     DOWN = -1
 
 
-class ReactionPost(db.Model):
+class Reactable(db.Model):
+    __abstract__ = True
     id = Column(Integer, primary_key=True)
     vote_type = Column(Enum(VoteType), nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    created_date = Column(DateTime, default=datetime.now)
+
+
+class ReactionPost(Reactable):
     post_id = Column(Integer, ForeignKey(Post.id), nullable=False)
-    created_date = Column(DateTime, default=datetime.now)
 
 
-class ReactionComment(db.Model):
-    id = Column(Integer, primary_key=True)
-    vote_type = Column(Enum(VoteType), nullable=False)
-    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+class ReactionComment(Reactable):
     comment_id = Column(Integer, ForeignKey(Comment.id), nullable=False)
-    created_date = Column(DateTime, default=datetime.now)
 
 
 class ApplicationStatus(MyEnum):
@@ -298,6 +298,31 @@ class TeacherApplication(BaseModel):
 
     user = relationship("User", foreign_keys="TeacherApplication.user_id", backref="teacher_applications")
     reviewer = relationship("User", foreign_keys="TeacherApplication.reviewed_by")
+
+
+class PaymentStatus(MyEnum):
+    PENDING = "Chờ thanh toán"
+    SUCCESS = "Đã thanh toán"
+    FAILED = "Thất bại"
+    CANCELLED = "Đã hủy"
+
+
+class Payment(BaseModel):
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
+
+    order_id = Column(String(50), unique=True, nullable=False)
+    request_id = Column(String(50), nullable=False)
+    momo_trans_id = Column(String(50))
+
+    amount = Column(Integer, nullable=False)  # số tiền VND
+    status = Column(Enum(PaymentStatus), nullable=False, default=PaymentStatus.PENDING)
+    pay_type = Column(String(50))
+    paid_at = Column(DateTime)
+    invoice_sent = Column(Boolean, default=False)
+
+    user = relationship("User", backref="payments")
+    course = relationship("Course", backref="payments")
 
 
 if __name__ == "__main__":
