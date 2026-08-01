@@ -141,7 +141,7 @@ def login():
             )
         if not user.is_active:
             return (
-                jsonify({"success": False, "error":"Tài khoản của bạn đã bị cấm!"}),
+                jsonify({"success": False, "error": "Tài khoản của bạn đã bị cấm!"}),
                 403,
             )
         login_user(user)
