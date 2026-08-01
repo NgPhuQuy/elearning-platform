@@ -20,7 +20,6 @@ def get_schema_differences():
             )
             return list(compare_metadata(context, db.metadata))
 
-
 def main():
     differences = get_schema_differences()
     if differences:
