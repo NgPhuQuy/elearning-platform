@@ -31,7 +31,6 @@ from app.models import (
     User,
     VideoContent,
 )
-from models import BaseModel
 
 
 @login.user_loader
@@ -41,10 +40,7 @@ def load_user(user_id):
 
 def auth_user(username, password):
     password = hash_password(password)
-    user = User.query.filter(User.username.__eq__(username), User.password.__eq__(password)).first()
-    if not user.is_active:
-        return None
-    return user
+    return User.query.filter(User.username.__eq__(username), User.password.__eq__(password)).first()
 
 
 def register_user(username, password, email, phone, avatar, first_name, last_name):

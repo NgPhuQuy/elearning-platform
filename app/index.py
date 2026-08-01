@@ -11,6 +11,7 @@ from app import admin, app, dao, db, momo, oauth  # noqa: F401  # Register admin
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
 from app.models import Comment, Course, Post, PostCate, User, VoteType
+from models import BaseModel
 
 
 @app.context_processor
@@ -138,7 +139,11 @@ def login():
                 jsonify({"success": False, "error": "Tài khoản hoặc mật khẩu không đúng!"}),
                 401,
             )
-
+        if not user.is_active:
+            return (
+                jsonify({"success": False, "error":"Tài khoản của bạn đã bị cấm!"}),
+                403,
+            )
         login_user(user)
 
         redirect_url = session.pop("next_url", "/")
