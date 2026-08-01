@@ -411,6 +411,73 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+// ===== Tab "Nội dung": quản lý bài kiểm tra =====
+document.addEventListener('DOMContentLoaded', function () {
+    const testList = document.getElementById('testList');
+    const btnAddTest = document.getElementById('btnAddTest');
+    const testsDataInput = document.getElementById('testsDataInput');
+    if (!testList || !btnAddTest) return;
+
+    function testRowTemplate() {
+        const row = document.createElement('div');
+        row.className = 'd-flex align-items-end gap-2 px-2 py-2 border-bottom test-row';
+
+        let chapterOptions = '<option value="">-- Thi cuối khóa --</option>';
+        document.querySelectorAll('#chapterList .chapter-block').forEach(function (block) {
+            const id = block.dataset.chapterId;
+            const name = block.querySelector('.chapter-name').textContent.trim();
+            if (id) chapterOptions += `<option value="${id}">${name}</option>`;
+        });
+
+        row.innerHTML = `
+      <i class="bi bi-clipboard-check text-indigo mb-2"></i>
+      <div>
+        <label class="small text-muted-ef mb-1 d-block">Áp dụng cho</label>
+        <select class="form-select form-select-sm test-chapter-select" style="max-width:220px;">${chapterOptions}</select>
+      </div>
+      <div>
+        <label class="small text-muted-ef mb-1 d-block">Thời gian (phút)</label>
+        <input type="number" class="form-control form-control-sm test-duration" style="max-width:110px;" min="0" value="0">
+      </div>
+      <div>
+        <label class="small text-muted-ef mb-1 d-block">Số lần làm tối đa</label>
+        <input type="number" class="form-control form-control-sm test-max-attempts" style="max-width:110px;" min="0" value="0">
+      </div>
+      <button type="button" class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-test ms-auto mb-2">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    `;
+        return row;
+    }
+
+    btnAddTest.addEventListener('click', function () {
+        const emptyMsg = testList.querySelector('.empty-test-msg');
+        if (emptyMsg) emptyMsg.remove();
+        testList.appendChild(testRowTemplate());
+    });
+
+    testList.addEventListener('click', function (e) {
+        const removeBtn = e.target.closest('.btn-remove-test');
+        if (removeBtn) removeBtn.closest('.test-row').remove();
+    });
+
+    const courseForm = testList.closest('form');
+    if (courseForm && testsDataInput) {
+        courseForm.addEventListener('submit', function () {
+            const testsData = [];
+            testList.querySelectorAll('.test-row').forEach(function (row) {
+                testsData.push({
+                    id: row.dataset.testId || null,
+                    chapter_id: row.querySelector('.test-chapter-select').value || null,
+                    duration: row.querySelector('.test-duration').value || 0,
+                    max_attempts: row.querySelector('.test-max-attempts').value || 0
+                });
+            });
+            testsDataInput.value = JSON.stringify(testsData);
+        });
+    }
+});
+
 // ===== Preview ảnh khi chọn file (tạo mới hoặc sửa khóa học) =====
 document.addEventListener('DOMContentLoaded', function () {
     const imageInput = document.getElementById('imageInput');

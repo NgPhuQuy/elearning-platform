@@ -13,6 +13,7 @@
 
         <form method="POST" enctype="multipart/form-data" id="courseForm">
         <input type="hidden" name="chapters_data" id="chaptersDataInput">
+        <input type="hidden" name="tests_data" id="testsDataInput">
             <ul class="nav nav-ef-tabs card-ef px-3 pt-2">
                 <li class="nav-item">
                     <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#cc-info">Thông
@@ -141,7 +142,6 @@
                                             <button type="button"
                                                     class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-chapter"><i
                                                     class="bi bi-pencil"></i></button>
-                                            <!-- ĐÃ SỬA: bỏ <form> con, dùng button + fetch AJAX -->
                                             <button type="button"
                                                     class="btn btn-sm p-0 border-0 text-muted-ef btn-delete-chapter"
                                                     data-chapter-id="{{ chapter.id }}"
@@ -214,7 +214,6 @@
                                                             class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-lesson">
                                                         <i class="bi bi-pencil"></i></button>
 
-                                                    <!-- ĐÃ SỬA: bỏ <form> con, dùng button + fetch AJAX -->
                                                     <button type="button"
                                                             class="btn btn-sm p-0 border-0 text-muted-ef btn-delete-lesson"
                                                             data-lesson-id="{{ lesson.id }}"
@@ -223,7 +222,6 @@
                                                         <i class="bi bi-x-lg"></i>
                                                     </button>
 
-                                                    <!-- Input file ẩn, nằm trong form chính - JS sẽ gán file được chọn từ modal vào đây -->
                                                     <input type="file" name="video_file_lesson_{{ lesson.id }}"
                                                            id="videoFileHidden{{ lesson.id }}" class="d-none" accept="video/*">
                                                     <input type="file" name="doc_file_lesson_{{ lesson.id }}"
@@ -251,6 +249,42 @@
                                 class="btn btn-outline-indigo d-flex align-items-center gap-2">
                             <i class="bi bi-plus-circle"></i> Thêm chương mới
                         </button>
+
+                        <hr class="my-4">
+                        <h6 class="fw-semibold mb-2">Bài kiểm tra</h6>
+                        <div id="testList">
+                            {% for test in course.tests %}
+                            <div class="d-flex align-items-end gap-2 px-2 py-2 border-bottom test-row" data-test-id="{{ test.id }}">
+                                <i class="bi bi-clipboard-check text-indigo mb-2"></i>
+                                <div>
+                                    <label class="small text-muted-ef mb-1 d-block">Áp dụng cho</label>
+                                    <select class="form-select form-select-sm test-chapter-select" style="max-width:220px;">
+                                        <option value="">-- Thi cuối khóa --</option>
+                                        {% for chapter in chapters %}
+                                            <option value="{{ chapter.id }}" {{ 'selected' if test.chapter_id == chapter.id else '' }}>{{ chapter.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="small text-muted-ef mb-1 d-block">Thời gian (phút)</label>
+                                    <input type="number" class="form-control form-control-sm test-duration" style="max-width:110px;" min="0" value="{{ test.duration }}">
+                                </div>
+                                <div>
+                                    <label class="small text-muted-ef mb-1 d-block">Số lần làm tối đa</label>
+                                    <input type="number" class="form-control form-control-sm test-max-attempts" style="max-width:110px;" min="0" value="{{ test.max_attempts }}">
+                                </div>
+                                <button type="button" class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-test ms-auto mb-2">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            {% else %}
+                            <p class="text-muted-ef small px-2 py-2 mb-0 empty-test-msg">Chưa có bài kiểm tra nào.</p>
+                            {% endfor %}
+                        </div>
+                        <button type="button" id="btnAddTest" class="btn btn-sm btn-outline-secondary mt-2 d-flex align-items-center gap-1">
+                            <i class="bi bi-plus"></i> Thêm bài kiểm tra
+                        </button>
+
                         <p class="small text-muted-ef mt-2 mb-0">
                             <i class="bi bi-info-circle"></i>
                             Chọn video/tài liệu ở đây chỉ được lưu thật khi bạn bấm "{{ 'Công khai khóa học' if (course and not course.activate) else 'Lưu thay đổi' }}" bên dưới.
@@ -296,7 +330,6 @@
                    class="btn btn-outline-secondary">Hủy</a>
 
                 {% if course and not course.activate %}
-                    <!-- Khóa học nháp: 2 nút, JS ẩn/hiện theo tab đang active -->
                     <button type="submit" name="action" value="save" id="btnSaveOnly"
                             class="btn btn-indigo d-flex align-items-center gap-2">
                         <i class="bi bi-check-circle"></i> Lưu thay đổi
@@ -306,12 +339,10 @@
                         <i class="bi bi-rocket-takeoff"></i> Công khai khóa học
                     </button>
                 {% elif course %}
-                    <!-- Đã công khai: chỉ còn lưu thay đổi bình thường -->
                     <button type="submit" name="action" value="save" class="btn btn-indigo d-flex align-items-center gap-2">
                         <i class="bi bi-check-circle"></i> Lưu thay đổi
                     </button>
                 {% else %}
-                    <!-- Tạo mới -->
                     <button type="submit" name="action" value="save" class="btn btn-indigo d-flex align-items-center gap-2">
                         <i class="bi bi-send"></i> Tạo khóa học
                     </button>
@@ -321,7 +352,6 @@
     </div>
 
     {% if course %}
-        <!-- Modal dùng chung để sửa tên + mô tả (chương hoặc bài học) -->
         <div class="modal fade" id="editModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -347,7 +377,6 @@
             </div>
         </div>
 
-        <!-- Modal chọn video (KHÔNG submit lên server ngay - chỉ đính kèm chờ Lưu thay đổi) -->
         <div class="modal fade" id="uploadVideoModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -373,7 +402,6 @@
             </div>
         </div>
 
-        <!-- Modal chọn tài liệu (KHÔNG submit lên server ngay - chỉ đính kèm chờ Lưu thay đổi) -->
         <div class="modal fade" id="uploadDocModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">

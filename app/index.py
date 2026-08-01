@@ -422,6 +422,62 @@ def complete_lesson(course_id, lesson_id):
     ok, error = dao.mark_lesson_completed(current_user.id, course_id, lesson_id)
     return jsonify({"success": ok, "error": error})
 
+@app.route("/courses/<int:course_id>/tests/<int:test_id>")
+@login_required
+def take_test(course_id, test_id):
+    test = dao.get_test_details(test_id)
+    if not test or test.course_id != course_id:
+        return redirect(url_for("course_detail", course_id=course_id))
+
+    ok, error = dao.can_take_test(current_user.id, test)
+    if not ok:
+        return render_template(
+            "course/test_blocked.html",
+            course_id=course_id,
+            test=test,
+            error=error,
+        )
+
+    attempts = dao.get_test_attempts(current_user.id, course_id, test_id)
+    attempts_left = (
+        test.max_attempts - len(attempts) if test.max_attempts and test.max_attempts > 0 else None
+    )
+
+    return render_template(
+        "course/test.html",
+        course_id=course_id,
+        test=test,
+        attempts=attempts,
+        attempts_left=attempts_left,
+    )
+
+
+@app.route("/courses/<int:course_id>/tests/<int:test_id>/submit", methods=["POST"])
+@login_required
+def submit_test(course_id, test_id):
+    # Đáp án gửi lên dạng: answer_<question_id> = <answer_id>
+    answers = {}
+    for key, value in request.form.items():
+        if key.startswith("answer_"):
+            question_id = key.replace("answer_", "")
+            answers[question_id] = value
+
+    score, error = dao.submit_test_score(current_user.id, course_id, test_id, answers)
+
+    if error:
+        return render_template(
+            "course/test_blocked.html",
+            course_id=course_id,
+            test=dao.get_test_details(test_id),
+            error=error,
+        )
+
+    return render_template(
+        "course/test_result.html",
+        course_id=course_id,
+        test=dao.get_test_details(test_id),
+        score=score,
+    )
 
 def get_doc_kind(ext):
     ext = ext.lower()
@@ -474,6 +530,17 @@ def update_course(course_id):
         return redirect(url_for("my_courses"))
 
     if request.method == "POST":
+        tests_data_raw = request.form.get("tests_data")
+        if tests_data_raw:
+            try:
+                tests_data = json.loads(tests_data_raw)
+            except (ValueError, TypeError):
+                tests_data = []
+            dao.sync_tests(
+                course_id=course_id,
+                teacher_id=current_user.teacher_profile.id,
+                tests_data=tests_data,
+            )
         image = request.files.get("image")
         image_url = None
         if image and image.filename:
@@ -562,33 +629,7 @@ def activate_course(course_id):
     return redirect(url_for("my_courses"))
 
 
-@app.route("/courses/<int:course_id>/content", methods=["GET", "POST"])
-@login_required
-@teacher_required
-def manage_content(course_id):
-    course = dao.get_course_details(course_id, teacher_id=current_user.teacher_profile.id)
-    if not course:
-        return redirect(url_for("my_courses"))
 
-    action = request.form.get("action")
-
-    if action == "add_chapter":
-        dao.create_chapter(
-            course_id=course_id,
-            teacher_id=current_user.teacher_profile.id,
-            name=request.form.get("chapter_name"),
-            description=request.form.get("chapter_description", ""),
-        )
-    elif action == "add_lesson":
-        dao.create_lesson(
-            teacher_id=current_user.teacher_profile.id,
-            chapter_id=request.form.get("chapter_id"),
-            name=request.form.get("lesson_name"),
-            description=request.form.get("lesson_description", ""),
-            lesson_type=request.form.get("lesson_type"),
-        )
-
-    return redirect(url_for("update_course", course_id=course_id) + "#cc-content")
 
 
 @app.route("/chapters/<int:chapter_id>/delete", methods=["POST"])
@@ -597,7 +638,7 @@ def manage_content(course_id):
 def delete_chapter(chapter_id):
     course_id = request.form.get("course_id")
     dao.delete_chapter(chapter_id, teacher_id=current_user.teacher_profile.id)
-    return redirect(url_for("manage_content", course_id=course_id))
+    return jsonify({"success": True})
 
 
 @app.route("/lessons/<int:lesson_id>/delete", methods=["POST"])
@@ -606,7 +647,7 @@ def delete_chapter(chapter_id):
 def delete_lesson(lesson_id):
     course_id = request.form.get("course_id")
     dao.delete_lesson(lesson_id, teacher_id=current_user.teacher_profile.id)
-    return redirect(url_for("manage_content", course_id=course_id))
+    return jsonify({"success": True})
 
 
 # forum
