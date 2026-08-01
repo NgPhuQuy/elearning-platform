@@ -7,6 +7,7 @@ from flask_login import current_user
 
 from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login
 from app.models import (
+    Answer,
     ApplicationStatus,
     Category,
     Chapter,
@@ -20,18 +21,15 @@ from app.models import (
     Lesson,
     LessonProgress,
     LessonType,
-    Score,
-    Test,
-    Answer,
-    Question,
-    Payment,
-    PaymentStatus,
     Post,
     PostCate,
+    Question,
     ReactionComment,
     ReactionPost,
+    Score,
     Teacher,
     TeacherApplication,
+    Test,
     User,
     VideoContent,
 )
@@ -814,7 +812,7 @@ def is_chapter_completed(user_id, course_id, chapter_id):
     if not chapter or chapter.course_id != course_id:
         return False
 
-    lessons_with_content = [l for l in chapter.lessons if _lesson_has_content(l)]
+    lessons_with_content = [lesson for lesson in chapter.lessons if _lesson_has_content(lesson)]
     if not lessons_with_content:
         return True
 

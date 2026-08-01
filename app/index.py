@@ -1,6 +1,7 @@
 import json
 import uuid
 from datetime import datetime
+
 import cloudinary.uploader
 from flask import jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user, logout_user
@@ -642,7 +643,6 @@ def activate_course(course_id):
 @login_required
 @teacher_required
 def delete_chapter(chapter_id):
-    course_id = request.form.get("course_id")
     dao.delete_chapter(chapter_id, teacher_id=current_user.teacher_profile.id)
     return jsonify({"success": True})
 
@@ -651,7 +651,7 @@ def delete_chapter(chapter_id):
 @login_required
 @teacher_required
 def delete_lesson(lesson_id):
-    course_id = request.form.get("course_id")
+
     dao.delete_lesson(lesson_id, teacher_id=current_user.teacher_profile.id)
     return jsonify({"success": True})
 
