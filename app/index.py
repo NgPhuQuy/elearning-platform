@@ -138,7 +138,11 @@ def login():
                 jsonify({"success": False, "error": "Tài khoản hoặc mật khẩu không đúng!"}),
                 401,
             )
-
+        if not user.is_active:
+            return (
+                jsonify({"success": False, "error": "Tài khoản của bạn đã bị cấm!"}),
+                403,
+            )
         login_user(user)
 
         redirect_url = session.pop("next_url", "/")
