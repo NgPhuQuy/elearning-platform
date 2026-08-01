@@ -9,6 +9,9 @@ services:
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
       GUNICORN_THREADS: ${GUNICORN_THREADS:-8}
       GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-120}
+      DB_WAIT_TIMEOUT_SECONDS: ${DB_WAIT_TIMEOUT_SECONDS:-180}
+      DB_WAIT_INTERVAL_SECONDS: ${DB_WAIT_INTERVAL_SECONDS:-3}
+      BASELINE_EXISTING_DATABASE: ${BASELINE_EXISTING_DATABASE:-false}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
       DB_URI: ${DB_URI:?DB_URI is required}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
@@ -16,6 +19,17 @@ services:
       CLOUD_NAME: ${CLOUD_NAME:-}
       CLOUD_KEY: ${CLOUD_KEY:-}
       CLOUD_SECRET: ${CLOUD_SECRET:-}
+      MOMO_PARTNER_CODE: ${MOMO_PARTNER_CODE:-}
+      MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY:-}
+      MOMO_SECRET_KEY: ${MOMO_SECRET_KEY:-}
+      MOMO_ENDPOINT: ${MOMO_ENDPOINT:-}
+      MOMO_REDIRECT_URL: ${MOMO_REDIRECT_URL:-}
+      MOMO_IPN_URL: ${MOMO_IPN_URL:-}
+      MAIL_SERVER: ${MAIL_SERVER:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SENDER: ${MAIL_SENDER:-}
 
     ports:
       - "127.0.0.1:${APP_PORT:-8000}:8000"
@@ -28,7 +42,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=5)\"",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=5)\"",
         ]
       interval: 15s
       timeout: 5s
