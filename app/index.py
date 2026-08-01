@@ -404,6 +404,7 @@ def learn_course(course_id):
     if enrollment:
         dao.recalc_enrollment_progress(enrollment)
     progress_map = dao.get_lesson_progress_map(current_user.id, course_id)
+    course_tests = dao.get_course_tests(course_id)
 
     return render_template(
         "course/learn.html",
@@ -413,6 +414,7 @@ def learn_course(course_id):
         doc_kind=doc_kind,
         enrollment=enrollment,
         progress_map=progress_map,
+        course_tests=course_tests,
     )
 
 
