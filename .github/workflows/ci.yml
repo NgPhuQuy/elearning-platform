@@ -38,11 +38,11 @@ jobs:
             echo "Source-branch validation is not required for this event."
             exit 0
           fi
-          if [[ "$HEAD_REF" == "dev" || "$HEAD_REF" == hotfix/* ]]; then
+          if [[ "$HEAD_REF" == "dev" ]]; then
             echo "Allowed production source branch: $HEAD_REF"
             exit 0
           fi
-          echo "::error::Pull requests into main must originate from dev or hotfix/*."
+          echo "::error::Pull requests into main must originate from dev."
           exit 1
 
   python-checks:
@@ -72,6 +72,17 @@ jobs:
       CLOUD_NAME: ci-cloud-name
       CLOUD_KEY: ci-cloud-key
       CLOUD_SECRET: ci-cloud-secret
+      MOMO_PARTNER_CODE: ci-momo-partner
+      MOMO_ACCESS_KEY: ci-momo-access-key
+      MOMO_SECRET_KEY: ci-momo-secret-key
+      MOMO_ENDPOINT: https://momo.invalid/ci
+      MOMO_REDIRECT_URL: http://localhost/payment/momo/return
+      MOMO_IPN_URL: http://localhost/payment/momo/ipn
+      MAIL_SERVER: smtp.invalid
+      MAIL_PORT: "1025"
+      MAIL_USERNAME: ci-mail@example.invalid
+      MAIL_PASSWORD: ci-mail-password
+      MAIL_SENDER: ci-mail@example.invalid
 
     steps:
       - name: Check out source code
@@ -102,10 +113,13 @@ jobs:
         run: python -m ruff format --check .
 
       - name: Compile Python source
-        run: python -m compileall -q app scripts tests
+        run: python -m compileall -q app scripts tests migrations/versions
 
-      - name: Create CI database schema
-        run: python -m scripts.create_schema
+      - name: Apply CI database migrations
+        run: flask --app app.index:app db upgrade
+
+      - name: Check model and migration consistency
+        run: flask --app app.index:app db check
 
       - name: Run infrastructure tests
         run: |
@@ -180,8 +194,10 @@ jobs:
       - name: Start MySQL and application containers
         run: docker compose up --build --detach db app
 
-      - name: Create container database schema
-        run: docker compose exec -T app python -m scripts.create_schema
+      - name: Apply container database migrations
+        run: >-
+          docker compose exec -T app
+          flask --app app.index:app db upgrade
 
       - name: Run HTTP smoke test
         run: |

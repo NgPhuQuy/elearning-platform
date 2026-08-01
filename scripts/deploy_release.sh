@@ -30,8 +30,13 @@ compose pull app db
 echo "[deploy] Starting database and waiting for health..."
 compose up --detach --wait db
 
-echo "[deploy] Provisioning missing database tables..."
-compose run --rm app python -m scripts.create_schema
+echo "[deploy] Applying database migrations..."
+compose run --rm app sh -c '
+    if [ "${BASELINE_EXISTING_DATABASE:-false}" = "true" ]; then
+        python -m scripts.baseline_existing_database
+    fi
+    flask --app app.index:app db upgrade
+'
 
 echo "[deploy] Starting application and waiting for health..."
 compose up --detach --wait app

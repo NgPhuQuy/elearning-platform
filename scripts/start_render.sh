@@ -2,13 +2,18 @@
 
 set -eu
 
-echo "[render-start] Waiting for the staging database..."
+echo "[release-start] Waiting for the database..."
 python -m scripts.wait_for_db
 
-echo "[render-start] Creating missing database tables..."
-python -m scripts.create_schema
+if [ "${BASELINE_EXISTING_DATABASE:-false}" = "true" ]; then
+    echo "[release-start] Checking the one-time migration baseline..."
+    python -m scripts.baseline_existing_database
+fi
 
-echo "[render-start] Starting Gunicorn..."
+echo "[release-start] Applying database migrations..."
+flask --app app.index:app db upgrade
+
+echo "[release-start] Starting Gunicorn..."
 exec gunicorn \
     --bind "0.0.0.0:${PORT:-8000}" \
     --workers "${GUNICORN_WORKERS:-1}" \
