@@ -650,6 +650,32 @@ def delete_lesson(lesson_id):
     return jsonify({"success": True})
 
 
+@app.route("/courses/<int:course_id>/tests/<int:test_id>/questions", methods=["GET", "POST"])
+@login_required
+@teacher_required
+def manage_test_questions(course_id, test_id):
+    test = dao.get_test_for_teacher(test_id, current_user.teacher_profile.id)
+    if not test or test.course_id != course_id:
+        return redirect(url_for("update_course", course_id=course_id))
+
+    if request.method == "POST":
+        questions_data_raw = request.form.get("questions_data")
+        if questions_data_raw:
+            try:
+                questions_data = json.loads(questions_data_raw)
+            except (ValueError, TypeError):
+                questions_data = []
+            dao.sync_questions(
+                test_id=test_id,
+                teacher_id=current_user.teacher_profile.id,
+                questions_data=questions_data,
+            )
+        return redirect(url_for("update_course", course_id=course_id, test_id=test_id))
+
+    questions = dao.get_questions(test_id)
+    return render_template(
+        "course/test_questions.html", course_id=course_id, test=test, questions=questions
+    )
 # forum
 
 

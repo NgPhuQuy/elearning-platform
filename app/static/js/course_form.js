@@ -437,11 +437,11 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
       <div>
         <label class="small text-muted-ef mb-1 d-block">Thời gian (phút)</label>
-        <input type="number" class="form-control form-control-sm test-duration" style="max-width:110px;" min="0" value="0">
+        <input type="number" class="form-control form-control-sm test-duration" style="max-width:110px;" min="1" value="1">
       </div>
       <div>
         <label class="small text-muted-ef mb-1 d-block">Số lần làm tối đa</label>
-        <input type="number" class="form-control form-control-sm test-max-attempts" style="max-width:110px;" min="0" value="0">
+        <input type="number" class="form-control form-control-sm test-max-attempts" style="max-width:110px;" min="1" value="1">
       </div>
       <button type="button" class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-test ms-auto mb-2">
         <i class="bi bi-x-lg"></i>

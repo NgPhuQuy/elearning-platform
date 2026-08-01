@@ -23,6 +23,7 @@ from app.models import (
     Score,
     Test,
     Answer,
+    Question,
     Payment,
     PaymentStatus,
     Post,
@@ -600,6 +601,81 @@ def _lesson_has_content(lesson):
         lesson.type == LessonType.DOCUMENT and lesson.doc_content
     )
 
+def get_test_for_teacher(test_id, teacher_id):
+    return (
+        Test.query.join(Course).filter(Test.id == test_id, Course.teacher_id == teacher_id).first()
+    )
+
+
+def get_questions(test_id):
+    return Question.query.filter_by(test_id=test_id).all()
+
+
+def sync_questions(test_id, teacher_id, questions_data):
+    test = get_test_for_teacher(test_id, teacher_id)
+    if not test:
+        return False
+
+    existing_question_ids = {q.id for q in test.questions}
+    kept_question_ids = set()
+
+    for question_data in questions_data:
+        question_id = question_data.get("id")
+        content = (question_data.get("content") or "").strip()
+        if not content:
+            continue
+
+        if question_id:
+            question = Question.query.filter_by(id=int(question_id), test_id=test_id).first()
+            if not question:
+                continue
+            question.content = content
+        else:
+            question = Question(test_id=test_id, content=content)
+            db.session.add(question)
+            db.session.flush()
+
+        kept_question_ids.add(question.id)
+
+        existing_answer_ids = {a.id for a in question.answers}
+        kept_answer_ids = set()
+
+        for answer_data in question_data.get("answers", []):
+            answer_id = answer_data.get("id")
+            a_content = (answer_data.get("content") or "").strip()
+            if not a_content:
+                continue
+            is_correct = bool(answer_data.get("is_correct"))
+
+            if answer_id:
+                answer = Answer.query.filter_by(id=int(answer_id), question_id=question.id).first()
+                if not answer:
+                    continue
+                answer.content = a_content
+                answer.is_correct = is_correct
+            else:
+                answer = Answer(question_id=question.id, content=a_content, is_correct=is_correct)
+                db.session.add(answer)
+                db.session.flush()
+
+            kept_answer_ids.add(answer.id)
+
+        for old_id in existing_answer_ids - kept_answer_ids:
+            old_answer = Answer.query.get(old_id)
+            if old_answer:
+                db.session.delete(old_answer)
+
+    for old_id in existing_question_ids - kept_question_ids:
+        old_question = Question.query.get(old_id)
+        if old_question:
+            db.session.delete(old_question)
+
+    try:
+        db.session.commit()
+        return True
+    except Exception:
+        db.session.rollback()
+        return False
 
 def _get_best_scores_map(user_id, course_id, enrollment_created_date):
     """Trả về {test_id: điểm cao nhất} trong LẦN HỌC HIỆN TẠI."""
@@ -739,7 +815,7 @@ def is_chapter_completed(user_id, course_id, chapter_id):
 
     lessons_with_content = [l for l in chapter.lessons if _lesson_has_content(l)]
     if not lessons_with_content:
-        return False
+        return True
 
     completed_ids = {
         row.lesson_id

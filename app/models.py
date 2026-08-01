@@ -172,7 +172,7 @@ class Test(BaseModel):
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
     chapter_id = Column(Integer, ForeignKey("chapter.id"), nullable=True)  # null nếu là bài thi cuối khóa
     duration = Column(Integer, default=0)  # phút, 0 = không giới hạn thời gian
-    max_attempts = Column(Integer, default=0)  # 0 = không giới hạn số lần làm
+    max_attempts = Column(Integer, default=1)  # 0 = không giới hạn số lần làm
 
     questions = relationship("Question", backref="test", cascade="all, delete-orphan", lazy=True)
     scores = relationship("Score", backref="test", cascade="all, delete-orphan", lazy=True)

@@ -12,8 +12,8 @@
         </div>
 
         <form method="POST" enctype="multipart/form-data" id="courseForm">
-        <input type="hidden" name="chapters_data" id="chaptersDataInput">
-        <input type="hidden" name="tests_data" id="testsDataInput">
+            <input type="hidden" name="chapters_data" id="chaptersDataInput">
+            <input type="hidden" name="tests_data" id="testsDataInput">
             <ul class="nav nav-ef-tabs card-ef px-3 pt-2">
                 <li class="nav-item">
                     <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#cc-info">Thông
@@ -156,78 +156,80 @@
                                             {% for lesson in chapter.lessons %}
                                                 <div class="d-flex flex-column gap-1 px-2 py-2 border-bottom lesson-row"
                                                      data-lesson-id="{{ lesson.id }}">
-                                                  <div class="d-flex align-items-center gap-2">
-                                                    <i class="bi bi-grip-vertical text-muted-ef"></i>
-                                                    <i class="bi {{ 'bi-camera-video' if lesson.type.name == 'VIDEO' else ('bi-file-earmark-text' if lesson.type.name == 'DOCUMENT' else 'bi-question-circle') }} text-indigo lesson-type-icon"></i>
-                                                    <span class="small flex-grow-1 lesson-name">{{ lesson.name }}</span>
-                                                    <span class="small text-muted-ef lesson-description d-none">{{ lesson.description if lesson.description is defined else '' }}</span>
-                                                    <select class="form-select form-select-sm w-auto lesson-type-select"
-                                                            style="max-width:110px;">
-                                                        <option value="VIDEO" {{ 'selected' if lesson.type.name == 'VIDEO' else '' }}>
-                                                            Video
-                                                        </option>
-                                                        <option value="DOCUMENT" {{ 'selected' if lesson.type.name == 'DOCUMENT' else '' }}>
-                                                            Doc
-                                                        </option>
-                                                        <option value="NONE" {{ 'selected' if lesson.type.name == 'NONE' else '' }}>
-                                                            Chưa chọn
-                                                        </option>
-                                                    </select>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <i class="bi bi-grip-vertical text-muted-ef"></i>
+                                                        <i class="bi {{ 'bi-camera-video' if lesson.type.name == 'VIDEO' else ('bi-file-earmark-text' if lesson.type.name == 'DOCUMENT' else 'bi-question-circle') }} text-indigo lesson-type-icon"></i>
+                                                        <span class="small flex-grow-1 lesson-name">{{ lesson.name }}</span>
+                                                        <span class="small text-muted-ef lesson-description d-none">{{ lesson.description if lesson.description is defined else '' }}</span>
+                                                        <select class="form-select form-select-sm w-auto lesson-type-select"
+                                                                style="max-width:110px;">
+                                                            <option value="VIDEO" {{ 'selected' if lesson.type.name == 'VIDEO' else '' }}>
+                                                                Video
+                                                            </option>
+                                                            <option value="DOCUMENT" {{ 'selected' if lesson.type.name == 'DOCUMENT' else '' }}>
+                                                                Doc
+                                                            </option>
+                                                            <option value="NONE" {{ 'selected' if lesson.type.name == 'NONE' else '' }}>
+                                                                Chưa chọn
+                                                            </option>
+                                                        </select>
 
-                                                    {% if lesson.video_content and lesson.video_content.video_url %}
-                                                        <a href="{{ lesson.video_content.video_url }}" target="_blank"
-                                                           class="btn btn-sm p-0 border-0 text-success video-view-link"
-                                                           title="Xem video hiện tại"
-                                                           {% if lesson.type.name != 'VIDEO' %}style="display:none;"{% endif %}>
-                                                            <i class="bi bi-play-circle-fill"></i>
-                                                        </a>
-                                                    {% endif %}
+                                                        {% if lesson.video_content and lesson.video_content.video_url %}
+                                                            <a href="{{ lesson.video_content.video_url }}"
+                                                               target="_blank"
+                                                               class="btn btn-sm p-0 border-0 text-success video-view-link"
+                                                               title="Xem video hiện tại"
+                                                               {% if lesson.type.name != 'VIDEO' %}style="display:none;"{% endif %}>
+                                                                <i class="bi bi-play-circle-fill"></i>
+                                                            </a>
+                                                        {% endif %}
 
-                                                    <button type="button"
-                                                            class="btn btn-sm p-0 border-0 text-muted-ef btn-upload-video"
-                                                            title="Tải video"
-                                                            data-lesson-id="{{ lesson.id }}"
-                                                            data-current-video="{{ lesson.video_content.video_url if lesson.video_content else '' }}"
-                                                            {% if lesson.type.name != 'VIDEO' %}style="display:none;"{% endif %}>
-                                                        <i class="bi bi-camera-video-fill"></i>
-                                                    </button>
+                                                        <button type="button"
+                                                                class="btn btn-sm p-0 border-0 text-muted-ef btn-upload-video"
+                                                                title="Tải video"
+                                                                data-lesson-id="{{ lesson.id }}"
+                                                                data-current-video="{{ lesson.video_content.video_url if lesson.video_content else '' }}"
+                                                                {% if lesson.type.name != 'VIDEO' %}style="display:none;"{% endif %}>
+                                                            <i class="bi bi-camera-video-fill"></i>
+                                                        </button>
 
-                                                    {% if lesson.doc_content and lesson.doc_content.file_url %}
-                                                        <a href="{{ lesson.doc_content.file_url }}" target="_blank"
-                                                           class="btn btn-sm p-0 border-0 text-success doc-view-link"
-                                                           title="Xem tài liệu hiện tại"
-                                                           {% if lesson.type.name != 'DOCUMENT' %}style="display:none;"{% endif %}>
-                                                            <i class="bi bi-file-earmark-text-fill"></i>
-                                                        </a>
-                                                    {% endif %}
+                                                        {% if lesson.doc_content and lesson.doc_content.file_url %}
+                                                            <a href="{{ lesson.doc_content.file_url }}" target="_blank"
+                                                               class="btn btn-sm p-0 border-0 text-success doc-view-link"
+                                                               title="Xem tài liệu hiện tại"
+                                                               {% if lesson.type.name != 'DOCUMENT' %}style="display:none;"{% endif %}>
+                                                                <i class="bi bi-file-earmark-text-fill"></i>
+                                                            </a>
+                                                        {% endif %}
 
-                                                    <button type="button"
-                                                            class="btn btn-sm p-0 border-0 text-muted-ef btn-upload-doc"
-                                                            title="Tải tài liệu"
-                                                            data-lesson-id="{{ lesson.id }}"
-                                                            data-current-doc="{{ lesson.doc_content.file_url if lesson.doc_content else '' }}"
-                                                            {% if lesson.type.name != 'DOCUMENT' %}style="display:none;"{% endif %}>
-                                                        <i class="bi bi-file-earmark-arrow-up-fill"></i>
-                                                    </button>
+                                                        <button type="button"
+                                                                class="btn btn-sm p-0 border-0 text-muted-ef btn-upload-doc"
+                                                                title="Tải tài liệu"
+                                                                data-lesson-id="{{ lesson.id }}"
+                                                                data-current-doc="{{ lesson.doc_content.file_url if lesson.doc_content else '' }}"
+                                                                {% if lesson.type.name != 'DOCUMENT' %}style="display:none;"{% endif %}>
+                                                            <i class="bi bi-file-earmark-arrow-up-fill"></i>
+                                                        </button>
 
-                                                    <button type="button"
-                                                            class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-lesson">
-                                                        <i class="bi bi-pencil"></i></button>
+                                                        <button type="button"
+                                                                class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-lesson">
+                                                            <i class="bi bi-pencil"></i></button>
 
-                                                    <button type="button"
-                                                            class="btn btn-sm p-0 border-0 text-muted-ef btn-delete-lesson"
-                                                            data-lesson-id="{{ lesson.id }}"
-                                                            data-course-id="{{ course.id }}"
-                                                            data-delete-url="{{ url_for('delete_lesson', lesson_id=lesson.id) }}">
-                                                        <i class="bi bi-x-lg"></i>
-                                                    </button>
+                                                        <button type="button"
+                                                                class="btn btn-sm p-0 border-0 text-muted-ef btn-delete-lesson"
+                                                                data-lesson-id="{{ lesson.id }}"
+                                                                data-course-id="{{ course.id }}"
+                                                                data-delete-url="{{ url_for('delete_lesson', lesson_id=lesson.id) }}">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
 
-                                                    <input type="file" name="video_file_lesson_{{ lesson.id }}"
-                                                           id="videoFileHidden{{ lesson.id }}" class="d-none" accept="video/*">
-                                                    <input type="file" name="doc_file_lesson_{{ lesson.id }}"
-                                                           id="docFileHidden{{ lesson.id }}" class="d-none">
-                                                  </div>
-                                                  <span class="small text-warning pending-media-note d-none ms-4"></span>
+                                                        <input type="file" name="video_file_lesson_{{ lesson.id }}"
+                                                               id="videoFileHidden{{ lesson.id }}" class="d-none"
+                                                               accept="video/*">
+                                                        <input type="file" name="doc_file_lesson_{{ lesson.id }}"
+                                                               id="docFileHidden{{ lesson.id }}" class="d-none">
+                                                    </div>
+                                                    <span class="small text-warning pending-media-note d-none ms-4"></span>
                                                 </div>
                                             {% else %}
                                                 <p class="text-muted-ef small px-2 py-2 mb-0 empty-lesson-msg">Chưa có
@@ -254,40 +256,55 @@
                         <h6 class="fw-semibold mb-2">Bài kiểm tra</h6>
                         <div id="testList">
                             {% for test in course.tests %}
-                            <div class="d-flex align-items-end gap-2 px-2 py-2 border-bottom test-row" data-test-id="{{ test.id }}">
-                                <i class="bi bi-clipboard-check text-indigo mb-2"></i>
-                                <div>
-                                    <label class="small text-muted-ef mb-1 d-block">Áp dụng cho</label>
-                                    <select class="form-select form-select-sm test-chapter-select" style="max-width:220px;">
-                                        <option value="">-- Thi cuối khóa --</option>
-                                        {% for chapter in chapters %}
-                                            <option value="{{ chapter.id }}" {{ 'selected' if test.chapter_id == chapter.id else '' }}>{{ chapter.name }}</option>
-                                        {% endfor %}
-                                    </select>
+                                <div class="d-flex align-items-end gap-2 px-2 py-2 border-bottom test-row"
+                                     data-test-id="{{ test.id }}">
+                                    <i class="bi bi-clipboard-check text-indigo mb-2"></i>
+                                    <div>
+                                        <label class="small text-muted-ef mb-1 d-block">Áp dụng cho</label>
+                                        <select class="form-select form-select-sm test-chapter-select"
+                                                style="max-width:220px;">
+                                            <option value="">-- Thi cuối khóa --</option>
+                                            {% for chapter in chapters %}
+                                                <option value="{{ chapter.id }}" {{ 'selected' if test.chapter_id == chapter.id else '' }}>{{ chapter.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="small text-muted-ef mb-1 d-block">Thời gian (phút)</label>
+                                        <input type="number" class="form-control form-control-sm test-duration"
+                                               style="max-width:110px;" min="0" value="{{ test.duration }}">
+                                    </div>
+                                    <div>
+                                        <label class="small text-muted-ef mb-1 d-block">Số lần làm tối đa</label>
+                                        <input type="number" class="form-control form-control-sm test-max-attempts"
+                                               style="max-width:110px;" min="0" value="{{ test.max_attempts }}">
+                                    </div>
+                                    {% if test.id %}
+                                        <a href="{{ url_for('manage_test_questions', course_id=course.id, test_id=test.id) }}"
+                                           class="btn btn-sm btn-outline-secondary mb-2" target="_blank">
+                                            <i class="bi bi-list-check"></i> Câu hỏi
+                                        </a>
+                                    {% endif %}
+                                    <button type="button"
+                                            class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-test ms-auto mb-2">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
                                 </div>
-                                <div>
-                                    <label class="small text-muted-ef mb-1 d-block">Thời gian (phút)</label>
-                                    <input type="number" class="form-control form-control-sm test-duration" style="max-width:110px;" min="0" value="{{ test.duration }}">
-                                </div>
-                                <div>
-                                    <label class="small text-muted-ef mb-1 d-block">Số lần làm tối đa</label>
-                                    <input type="number" class="form-control form-control-sm test-max-attempts" style="max-width:110px;" min="0" value="{{ test.max_attempts }}">
-                                </div>
-                                <button type="button" class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-test ms-auto mb-2">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                            </div>
                             {% else %}
-                            <p class="text-muted-ef small px-2 py-2 mb-0 empty-test-msg">Chưa có bài kiểm tra nào.</p>
+                                <p class="text-muted-ef small px-2 py-2 mb-0 empty-test-msg">Chưa có bài kiểm tra
+                                    nào.</p>
                             {% endfor %}
                         </div>
-                        <button type="button" id="btnAddTest" class="btn btn-sm btn-outline-secondary mt-2 d-flex align-items-center gap-1">
+                        <button type="button" id="btnAddTest"
+                                class="btn btn-sm btn-outline-secondary mt-2 d-flex align-items-center gap-1">
                             <i class="bi bi-plus"></i> Thêm bài kiểm tra
                         </button>
 
                         <p class="small text-muted-ef mt-2 mb-0">
                             <i class="bi bi-info-circle"></i>
-                            Chọn video/tài liệu ở đây chỉ được lưu thật khi bạn bấm "{{ 'Công khai khóa học' if (course and not course.activate) else 'Lưu thay đổi' }}" bên dưới.
+                            Chọn video/tài liệu ở đây chỉ được lưu thật khi bạn bấm
+                            "{{ 'Công khai khóa học' if (course and not course.activate) else 'Lưu thay đổi' }}" bên
+                            dưới.
                             Bài học mới thêm cần được lưu 1 lần trước khi có thể tải video/tài liệu.
                         </p>
                     </div>
@@ -317,10 +334,10 @@
                     </div>
 
                     {% if course and course.activate %}
-                    <div class="alert alert-warning small d-flex align-items-center gap-2 mb-3">
-                        <i class="bi bi-lock-fill"></i>
-                        Khóa học đã được công khai — giá bán không thể chỉnh sửa nữa.
-                    </div>
+                        <div class="alert alert-warning small d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-lock-fill"></i>
+                            Khóa học đã được công khai — giá bán không thể chỉnh sửa nữa.
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -339,11 +356,13 @@
                         <i class="bi bi-rocket-takeoff"></i> Công khai khóa học
                     </button>
                 {% elif course %}
-                    <button type="submit" name="action" value="save" class="btn btn-indigo d-flex align-items-center gap-2">
+                    <button type="submit" name="action" value="save"
+                            class="btn btn-indigo d-flex align-items-center gap-2">
                         <i class="bi bi-check-circle"></i> Lưu thay đổi
                     </button>
                 {% else %}
-                    <button type="submit" name="action" value="save" class="btn btn-indigo d-flex align-items-center gap-2">
+                    <button type="submit" name="action" value="save"
+                            class="btn btn-indigo d-flex align-items-center gap-2">
                         <i class="bi bi-send"></i> Tạo khóa học
                     </button>
                 {% endif %}
