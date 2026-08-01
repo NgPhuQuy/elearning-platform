@@ -259,29 +259,19 @@ def upgrade():
     op.create_table(
         "score",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("enrollment_user_id", sa.Integer(), nullable=False),
-        sa.Column("enrollment_course_id", sa.Integer(), nullable=False),
-        sa.Column("enrollment_created_date", sa.DateTime(), nullable=False),
+        sa.Column("user_id", sa.Integer(), nullable=False),
+        sa.Column("course_id", sa.Integer(), nullable=False),
         sa.Column("test_id", sa.Integer(), nullable=False),
         sa.Column("attempt_number", sa.Integer(), nullable=True),
         sa.Column("score_value", sa.Float(), nullable=False),
         sa.Column("is_passed", sa.Boolean(), nullable=True),
         sa.Column("started_at", sa.DateTime(), nullable=True),
         sa.Column("completed_at", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(
-            [
-                "enrollment_user_id",
-                "enrollment_course_id",
-                "enrollment_created_date",
-            ],
-            [
-                "enrollment.user_id",
-                "enrollment.course_id",
-                "enrollment.created_date",
-            ],
-            ondelete="CASCADE",
-        ),
+        sa.Column("enrollment_created_date", sa.DateTime(), nullable=False),
+
+        sa.ForeignKeyConstraint(["user_id"], ["user.id"]),
         sa.ForeignKeyConstraint(["test_id"], ["test.id"]),
+
         sa.PrimaryKeyConstraint("id"),
     )
 
