@@ -11,7 +11,6 @@ from app import admin, app, dao, db, momo, oauth  # noqa: F401  # Register admin
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
 from app.models import Comment, Course, Post, PostCate, User, VoteType
-from models import BaseModel
 
 
 @app.context_processor
