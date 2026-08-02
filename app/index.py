@@ -108,18 +108,20 @@ def forgot_password():
     pass
 
 
-@app.route("/login-admin", methods=["POST"])
+@app.route("/login-admin", methods=["GET", "POST"])
 def login_admin_process():
     username = request.form.get("username")
     password = request.form.get("password")
 
     user = dao.auth_user(username, password)
 
-    if user:
+    if not user:
         login_user(user)
-        return redirect("/admin")
-    else:
-        return redirect("/admin")
+
+    if not user.admin:
+        return jsonify({"success": True, "redirect": "/"})
+
+    return redirect("/admin")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -141,7 +143,7 @@ def login():
             )
         if not user.is_active:
             return (
-                jsonify({"success": False, "error": "Tài khoản của bạn đã bị cấm!"}),
+                jsonify({"success": False, "error": "Tài khoản của bạn đã bị khóa!"}),
                 403,
             )
         login_user(user)
