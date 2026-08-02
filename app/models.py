@@ -35,6 +35,12 @@ class User(BaseModel, UserMixin):
         return f"{self.first_name} {self.last_name}"
 
 
+class Admin(BaseModel):
+    user_id = Column(Integer, ForeignKey("user.id"), unique=True, nullable=False)
+    admin = relationship("User", backref="admin", uselist=False, lazy=True)
+    note = Column(String(255), default="")
+
+
 class Teacher(BaseModel):
     user_id = Column(Integer, ForeignKey("user.id"), unique=True, nullable=False)
     note = Column(String(255), default="")
