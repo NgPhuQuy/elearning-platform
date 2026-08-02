@@ -147,9 +147,7 @@ class LessonProgress(BaseModel):
 
     lesson = relationship("Lesson")
 
-    __table_args__ = (
-        db.UniqueConstraint("enrollment_id", "lesson_id", name="uix_progress_per_enrollment_lesson"),
-    )
+    __table_args__ = (db.UniqueConstraint("enrollment_id", "lesson_id", name="uix_progress_per_enrollment_lesson"),)
 
 
 class Test(BaseModel):
@@ -179,16 +177,12 @@ class Score(db.Model):
     enrollment_id = Column(Integer, ForeignKey("enrollment.id", ondelete="CASCADE"), nullable=False)
     test_id = Column(Integer, ForeignKey("test.id", ondelete="CASCADE"), nullable=False)
     attempt_number = Column(Integer, default=1)
-    score_value = Column(DECIMAL(10,2), nullable=False)
+    score_value = Column(DECIMAL(10, 2), nullable=False)
     is_passed = Column(Boolean, default=False)
     started_at = Column(DateTime, default=datetime.now)
     completed_at = Column(DateTime)
 
-    __table_args__ = (
-        db.UniqueConstraint(
-            "enrollment_id", "test_id", "attempt_number", name="uix_score_per_attempt"
-        ),
-    )
+    __table_args__ = (db.UniqueConstraint("enrollment_id", "test_id", "attempt_number", name="uix_score_per_attempt"),)
 
 
 class PostCate(BaseModel):
