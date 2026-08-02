@@ -36,7 +36,7 @@ class User(BaseModel, UserMixin):
 
 
 class Admin(BaseModel):
-    user_id = Column(Integer, ForeignKey("user.id"), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), unique=True, nullable=False)
     admin = relationship("User", backref="admin", uselist=False, lazy=True)
     note = Column(String(255), default="")
 
