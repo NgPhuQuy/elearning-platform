@@ -1,4 +1,3 @@
-import hashlib
 from datetime import datetime
 from enum import Enum as MyEnum
 
@@ -6,7 +5,7 @@ from flask_login import UserMixin
 from sqlalchemy import DECIMAL, Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import backref, relationship
 
-from app import app, db
+from app import db
 
 
 class BaseModel(db.Model):
