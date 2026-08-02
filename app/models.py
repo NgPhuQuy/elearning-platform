@@ -172,7 +172,7 @@ class Test(BaseModel):
     course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
     chapter_id = Column(Integer, ForeignKey("chapter.id"), nullable=True)  # null nếu là bài thi cuối khóa
     duration = Column(Integer, default=0)  # phút, 0 = không giới hạn thời gian
-    max_attempts = Column(Integer, default=0)  # 0 = không giới hạn số lần làm
+    max_attempts = Column(Integer, default=1)  # 0 = không giới hạn số lần làm
 
     questions = relationship("Question", backref="test", cascade="all, delete-orphan", lazy=True)
     scores = relationship("Score", backref="test", cascade="all, delete-orphan", lazy=True)
@@ -194,16 +194,16 @@ class Answer(BaseModel):
 class Score(db.Model):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
+    course_id = Column(Integer, nullable=False)
     test_id = Column(Integer, ForeignKey("test.id"), nullable=False)
     attempt_number = Column(Integer, default=1)
-    score_value = Column(Float, nullable=False)  # điểm quy đổi thang 10
-    is_passed = Column(Boolean, default=False)  # score_value >= 5
+    score_value = Column(Float, nullable=False)
+    is_passed = Column(Boolean, default=False)
     started_at = Column(DateTime, default=datetime.now)
     completed_at = Column(DateTime)
+    enrollment_created_date = Column(DateTime, nullable=False)  # chỉ để lọc, không ràng buộc gì
 
     user = relationship("User", backref="scores")
-    course = relationship("Course", backref="scores")
 
 
 class PostCate(BaseModel):

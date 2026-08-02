@@ -105,6 +105,8 @@
                     </div>
                     {% if enrollment.status.name == "COMPLETED" %}
                         <p class="small text-success mt-2 mb-0"><i class="bi bi-patch-check-fill"></i> Đã hoàn thành khóa học</p>
+                    {% elif enrollment.status.name == "FAILED" %}
+                        <p class="small text-danger mt-2 mb-0"><i class="bi bi-x-circle-fill"></i> Chưa đạt khóa học này</p>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -144,10 +146,79 @@
                         {% else %}
                             <p class="text-muted-ef small px-3 py-2 mb-0">Chưa có bài học nào.</p>
                         {% endfor %}
+
+                        {% for test in chapter.tests %}
+                            {% set unlocked = dao.is_chapter_completed(current_user.id, course.id, chapter.id) %}
+                            {% if unlocked %}
+                            <a href="{{ url_for('take_test', course_id=course.id, test_id=test.id) }}"
+                               class="lesson-row d-flex align-items-start gap-2 px-3 py-2 border-bottom text-decoration-none text-reset" style="background:var(--ef-amber-50, #fffbeb);">
+                                <div class="mt-1 flex-shrink-0">
+                                    <i class="bi bi-patch-question-fill text-warning"></i>
+                                </div>
+                                <div class="flex-grow-1" style="min-width:0;">
+                                    <p class="small mb-1 fw-semibold">Bài kiểm tra chương</p>
+                                    <span class="text-muted-ef" style="font-size:.65rem;">
+                                        {{ test.questions|length }} câu
+                                        {% if test.duration %} · {{ test.duration }} phút{% endif %}
+                                    </span>
+                                </div>
+                            </a>
+                            {% else %}
+                            <div class="d-flex align-items-start gap-2 px-3 py-2 border-bottom" style="opacity:.5;">
+                                <div class="mt-1 flex-shrink-0">
+                                    <i class="bi bi-lock-fill text-muted-ef"></i>
+                                </div>
+                                <div class="flex-grow-1" style="min-width:0;">
+                                    <p class="small mb-1">Bài kiểm tra chương</p>
+                                    <span class="text-muted-ef" style="font-size:.65rem;">Học hết bài trong chương để mở khóa</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
                     </div>
                 {% else %}
                     <p class="text-muted-ef small px-3 py-2 mb-0">Khóa học chưa có chương nào.</p>
                 {% endfor %}
+
+                {% set final_tests = course_tests|selectattr('chapter_id', 'none')|list %}
+                {% if final_tests %}
+                    <div class="px-3 py-2 bg-slate-50 border-bottom border-top">
+                        <span class="small fw-semibold text-indigo-700"><i class="bi bi-award-fill"></i> Bài thi cuối khóa</span>
+                    </div>
+                    {% for test in final_tests %}
+                        {% set all_chapters_done = true %}
+                        {% for ch in chapters %}
+                            {% if not dao.is_chapter_completed(current_user.id, course.id, ch.id) %}
+                                {% set all_chapters_done = false %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if all_chapters_done %}
+                        <a href="{{ url_for('take_test', course_id=course.id, test_id=test.id) }}"
+                           class="lesson-row d-flex align-items-start gap-2 px-3 py-2 border-bottom text-decoration-none text-reset" style="background:var(--ef-violet-50, #f5f3ff);">
+                            <div class="mt-1 flex-shrink-0">
+                                <i class="bi bi-trophy-fill text-violet"></i>
+                            </div>
+                            <div class="flex-grow-1" style="min-width:0;">
+                                <p class="small mb-1 fw-semibold">Bài thi cuối khóa</p>
+                                <span class="text-muted-ef" style="font-size:.65rem;">
+                                    {{ test.questions|length }} câu
+                                    {% if test.duration %} · {{ test.duration }} phút{% endif %}
+                                </span>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div class="d-flex align-items-start gap-2 px-3 py-2 border-bottom" style="opacity:.5;">
+                            <div class="mt-1 flex-shrink-0">
+                                <i class="bi bi-lock-fill text-muted-ef"></i>
+                            </div>
+                            <div class="flex-grow-1" style="min-width:0;">
+                                <p class="small mb-1">Bài thi cuối khóa</p>
+                                <span class="text-muted-ef" style="font-size:.65rem;">Học hết tất cả các chương để mở khóa</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
     </div>

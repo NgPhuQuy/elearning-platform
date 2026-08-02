@@ -267,9 +267,11 @@ def upgrade():
         sa.Column("is_passed", sa.Boolean(), nullable=True),
         sa.Column("started_at", sa.DateTime(), nullable=True),
         sa.Column("completed_at", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["course_id"], ["course.id"]),
-        sa.ForeignKeyConstraint(["test_id"], ["test.id"]),
+        sa.Column("enrollment_created_date", sa.DateTime(), nullable=False),
+
         sa.ForeignKeyConstraint(["user_id"], ["user.id"]),
+        sa.ForeignKeyConstraint(["test_id"], ["test.id"]),
+
         sa.PrimaryKeyConstraint("id"),
     )
 
