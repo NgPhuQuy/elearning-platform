@@ -6,8 +6,8 @@ from flask import jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user, logout_user
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-
-from app import admin, app, dao, db, momo, oauth  # noqa: F401  # Register admin routes.
+from flask_socketio import emit,join_room,leave_room
+from app import admin, app, dao, db, momo, oauth ,socketio # noqa: F401  # Register admin routes.
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
 from app.models import Comment, Course, Post, PostCate, User, VoteType
@@ -733,6 +733,338 @@ def reply_comment(comment_id):
 
     return redirect(url_for("forum_detail", post_id=parent_comment.post_id))
 
+#chat
+
+@app.get("/api/users/search")
+@login_required
+def api_search_users():
+
+    keyword = request.args.get("keyword", "").strip()
+
+    if not keyword:
+        return jsonify([])
+
+    users = dao.search_users(
+        keyword,
+        current_user.id
+    )
+
+    return jsonify([
+        {
+            "id": user.id,
+            "username": user.username,
+            "full_name": f"{user.first_name} {user.last_name}".strip(),
+            "avatar": user.avatar
+        }
+        for user in users
+    ])
+
+
+@app.get("/messages")
+@login_required
+def messages():
+    return render_template( "chat/index.html",current_user_id=current_user.id)
+@app.get("/api/chat/conversations")
+@login_required
+def api_get_conversations():
+    conversations = dao.get_conversations(current_user.id)
+
+    data = []
+
+    for c in conversations:
+        other = dao.get_other_member(c.id, current_user.id)
+
+        last = dao.get_latest_message(c.id)
+
+        data.append({
+            "id": c.id,
+            "title": c.title,
+            "image": c.image,
+            "other_user": {
+                "id": other.id,
+                 "name": f"{other.first_name} {other.last_name}".strip(),
+                "avatar": other.avatar
+            } if other else None,
+            "last_message": last.content if last else "",
+            "updated_date": c.updated_date.isoformat()
+        })
+
+    return jsonify(data)
+
+@app.get("/api/chat/<int:conversation_id>/messages")
+@login_required
+def api_get_messages(conversation_id):
+
+    if not dao.is_member(
+        conversation_id,
+        current_user.id
+    ):
+        return jsonify({
+            "error": "Forbidden"
+        }), 403
+
+    messages = dao.get_messages(conversation_id)
+
+    data = []
+
+    for m in messages:
+        data.append({
+            "id": m.id,
+            "content": m.content,
+            "attachment": m.attachment,
+            "sender_id": m.sender_id,
+            "edited": m.is_edited,
+            "created_date": m.created_date.isoformat()
+        })
+
+    dao.update_last_read(
+        conversation_id,
+        current_user.id
+    )
+
+    return jsonify(data)
+
+@app.post("/api/chat/private/<int:user_id>")
+@login_required
+def api_create_private(user_id):
+
+    if user_id == current_user.id:
+        return jsonify({
+            "error": "Bạn không thể nhắn tin với chính mình."
+        }), 400
+
+    conversation = dao.create_private_conversation(
+        current_user.id,
+        user_id
+    )
+
+    if conversation is None:
+        return jsonify({
+            "error": "Cannot create conversation"
+        }), 400
+
+    return jsonify({
+        "conversation_id": conversation.id
+    })
+
+@app.get("/api/chat/<int:conversation_id>/search")
+@login_required
+def api_search_message(conversation_id):
+
+    if not dao.is_member(
+        conversation_id,
+        current_user.id
+    ):
+        return jsonify({
+            "error": "Forbidden"
+        }), 403
+
+    keyword = request.args.get("keyword", "").strip()
+
+    messages = dao.search_messages(
+        conversation_id,
+        keyword
+    )
+
+    return jsonify([
+        {
+            "id": m.id,
+            "content": m.content
+        }
+        for m in messages
+    ])
+
+@app.get("/api/chat/unread")
+@login_required
+def api_unread():
+
+    return jsonify({
+        "count":dao.count_unread(current_user.id)
+    })
+
+@socketio.on("join")
+def handle_join(data):
+
+    conversation_id=data["conversation_id"]
+
+    if not dao.is_member(conversation_id,current_user.id):
+        return
+
+    join_room(f"conversation_{conversation_id}")
+
+@socketio.on("leave")
+def handle_leave(data):
+
+    leave_room(f"conversation_{data['conversation_id']}")
+
+@socketio.on("send_message")
+def handle_send_message(data):
+
+    conversation_id=data["conversation_id"]
+
+    if not dao.is_member(conversation_id,current_user.id):
+        return
+
+    message=dao.send_message(
+        conversation_id=conversation_id,
+        sender_id=current_user.id,
+        content=data["content"],
+        attachment=data.get("attachment")
+    )
+
+    emit(
+        "new_message",
+        {
+            "id":message.id,
+            "conversation_id":conversation_id,
+            "content":message.content,
+            "attachment":message.attachment,
+            "sender_id":message.sender_id,
+            "created_date":message.created_date.isoformat()
+        },
+        room=f"conversation_{conversation_id}"
+    )
+
+@socketio.on("edit_message")
+def handle_edit(data):
+
+    message=dao.get_message(data["message_id"])
+
+    if not message:
+        return
+
+    if message.sender_id!=current_user.id:
+        return
+
+    message=dao.edit_message(
+        message.id,
+        data["content"]
+    )
+
+    emit(
+        "message_edited",
+        {
+            "id":message.id,
+            "content":message.content,
+            "edited":True
+        },
+        room=f"conversation_{message.conversation_id}"
+    )
+
+@socketio.on("delete_message")
+def handle_delete(data):
+
+    message=dao.get_message(data["message_id"])
+
+    if not message:
+        return
+
+    if message.sender_id!=current_user.id:
+        return
+
+    conversation_id=message.conversation_id
+
+    dao.delete_message(message.id)
+
+    emit(
+        "message_deleted",
+        {
+            "id":message.id
+        },
+        room=f"conversation_{conversation_id}"
+    )
+
+@socketio.on("react_message")
+def handle_reaction(data):
+
+    message=dao.get_message(data["message_id"])
+
+    if not message:
+        return
+
+    dao.react_message(
+        message.id,
+        current_user.id,
+        data["emoji"]
+    )
+
+    reactions=dao.get_message_reactions(message.id)
+
+    emit(
+        "message_reacted",
+        {
+            "message_id":message.id,
+            "reactions":[
+                {
+                    "user_id":r.user_id,
+                    "emoji":r.emoji
+                }
+                for r in reactions
+            ]
+        },
+        room=f"conversation_{message.conversation_id}"
+    )
+
+@socketio.on("remove_reaction")
+def handle_remove_reaction(data):
+
+    message=dao.get_message(data["message_id"])
+
+    if not message:
+        return
+
+    dao.remove_reaction(
+        message.id,
+        current_user.id
+    )
+
+    reactions=dao.get_message_reactions(message.id)
+
+    emit(
+        "message_reacted",
+        {
+            "message_id":message.id,
+            "reactions":[
+                {
+                    "user_id":r.user_id,
+                    "emoji":r.emoji
+                }
+                for r in reactions
+            ]
+        },
+        room=f"conversation_{message.conversation_id}"
+    )
+
+@socketio.on("read_conversation")
+def handle_read(data):
+
+    dao.update_last_read(
+        data["conversation_id"],
+        current_user.id
+    )
+
+    emit(
+        "conversation_read",
+        {
+            "conversation_id":data["conversation_id"],
+            "user_id":current_user.id
+        },
+        room=f"conversation_{data['conversation_id']}"
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @app.route("/courses/<int:course_id>/checkout", methods=["GET", "POST"])
 @login_required
@@ -785,5 +1117,11 @@ def payment_history():
     return render_template("profile/payment-history.html", payments=payments)
 
 
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    HOST = "127.0.0.1"
+    PORT = 5000
+
+    print(f"Running on http://{HOST}:{PORT}")
+
+    socketio.run(app, host=HOST, port=PORT, debug=True)
