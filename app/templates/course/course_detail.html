@@ -121,11 +121,18 @@
                        class="btn btn-indigo d-flex align-items-center justify-content-center gap-2">
                         <i class="bi bi-play-circle"></i> Vào học
                     </a>
-                {% else %}
+                {% elif course.price and course.price > 0 %}
                     <a href="{{ url_for('checkout_course', course_id=course.id) }}"
                        class="btn btn-indigo">
-                        {% if course.price > 0 %}Mua khóa học{% else %}Học ngay - Miễn phí{% endif %}
+                        Mua khóa học
                     </a>
+                {% else %}
+                    <button type="button"
+                            id="enroll-btn"
+                            class="btn btn-indigo w-100"
+                            data-course-id="{{ course.id }}">
+                        Học ngay - Miễn phí
+                    </button>
                 {% endif %}
 
                 <div class="d-flex flex-column gap-2 border-top pt-3">
@@ -151,4 +158,5 @@
         </aside>
     </div>
 
+    <script src="{{ url_for('static', filename='js/course_detail.js') }}"></script>
 {% endblock %}
