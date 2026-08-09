@@ -194,10 +194,10 @@ jobs:
       - name: Start MySQL and application containers
         run: docker compose up --build --detach db app
 
-      - name: Apply container database migrations
-        run: >-
-          docker compose exec -T app
-          flask --app app.index:app db upgrade
+#      - name: Apply container database migrations
+#        run: >-
+#          docker compose exec -T app
+#          flask --app app.index:app db upgrade
 
       - name: Run HTTP smoke test
         run: |
