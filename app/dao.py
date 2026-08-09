@@ -25,8 +25,6 @@ from app.models import (
     LessonType,
     Message,
     MessageReaction,
-    Payment,
-    PaymentStatus,
     Post,
     PostCate,
     Question,
