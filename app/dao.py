@@ -11,6 +11,8 @@ from app.models import (
     Category,
     Chapter,
     Comment,
+    Conversation,
+    ConversationMember,
     Course,
     CourseCategory,
     CourseOutcome,
@@ -20,6 +22,8 @@ from app.models import (
     Lesson,
     LessonProgress,
     LessonType,
+    Message,
+    MessageReaction,
     Payment,
     PaymentStatus,
     Post,
@@ -30,10 +34,6 @@ from app.models import (
     TeacherApplication,
     User,
     VideoContent,
-    Conversation,
-    ConversationMember,
-    Message,
-    MessageReaction,
 )
 
 

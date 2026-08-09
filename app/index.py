@@ -4,9 +4,10 @@ import uuid
 import cloudinary.uploader
 from flask import jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user, logout_user
+from flask_socketio import emit, join_room, leave_room
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from flask_socketio import emit, join_room, leave_room
+
 from app import admin, app, dao, db, momo, oauth, socketio  # noqa: F401  # Register admin routes.
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
