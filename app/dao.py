@@ -6,13 +6,35 @@ import cloudinary.uploader
 from flask_login import current_user
 
 from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login, mailer, momo
-from app.models import (ApplicationStatus, Category, Chapter, Comment, Course,
-                        CourseCategory, CourseOutcome, DocContent, Enrollment,
-                        EnrollmentStatus, Lesson, LessonProgress, LessonType,
-                        Payment, PaymentStatus, Post, PostCate, ReactionComment,
-                        ReactionPost, Teacher, TeacherApplication, User,
-                        VideoContent, Conversation, ConversationMember, Message,
-                        MessageReaction, )
+from app.models import (
+    ApplicationStatus,
+    Category,
+    Chapter,
+    Comment,
+    Course,
+    CourseCategory,
+    CourseOutcome,
+    DocContent,
+    Enrollment,
+    EnrollmentStatus,
+    Lesson,
+    LessonProgress,
+    LessonType,
+    Payment,
+    PaymentStatus,
+    Post,
+    PostCate,
+    ReactionComment,
+    ReactionPost,
+    Teacher,
+    TeacherApplication,
+    User,
+    VideoContent,
+    Conversation,
+    ConversationMember,
+    Message,
+    MessageReaction,
+)
 
 
 @login.user_loader
@@ -741,9 +763,11 @@ def add_comment(post_id, user_id, content, parent_comment_id=None):
     db.session.add(c)
     db.session.commit()
 
-#chat
+
+# chat
 def get_conversation(conversation_id):
     return Conversation.query.get(conversation_id)
+
 
 def get_conversations(user_id):
     return (
@@ -752,6 +776,7 @@ def get_conversations(user_id):
         .order_by(Conversation.updated_date.desc())
         .all()
     )
+
 
 def get_private_conversation(user1_id, user2_id):
     conversations = (
@@ -768,6 +793,7 @@ def get_private_conversation(user1_id, user2_id):
 
     return None
 
+
 def create_private_conversation(user1_id, user2_id):
 
     if user1_id == user2_id:
@@ -783,9 +809,14 @@ def create_private_conversation(user1_id, user2_id):
         db.session.add(conversation)
         db.session.flush()
 
-        db.session.add(ConversationMember(conversation_id=conversation.id,user_id=user1_id,))
+        db.session.add(
+            ConversationMember(
+                conversation_id=conversation.id,
+                user_id=user1_id,
+            )
+        )
 
-        db.session.add(ConversationMember(conversation_id=conversation.id,user_id=user2_id))
+        db.session.add(ConversationMember(conversation_id=conversation.id, user_id=user2_id))
 
         db.session.commit()
 
@@ -795,49 +826,46 @@ def create_private_conversation(user1_id, user2_id):
         db.session.rollback()
         return None
 
+
 def get_message(message_id):
     return Message.query.get(message_id)
 
+
 def get_messages(conversation_id):
-    return (
-        Message.query.filter_by(conversation_id=conversation_id)
-        .order_by(Message.created_date.asc())
-        .all()
-    )
+    return Message.query.filter_by(conversation_id=conversation_id).order_by(Message.created_date.asc()).all()
+
 
 def get_latest_message(conversation_id):
-    return (
-        Message.query.filter_by(conversation_id=conversation_id)
-        .order_by(Message.created_date.desc())
-        .first()
-    )
+    return Message.query.filter_by(conversation_id=conversation_id).order_by(Message.created_date.desc()).first()
+
 
 def get_other_member(conversation_id, current_user_id):
-    member = (
-        ConversationMember.query.filter(
-            ConversationMember.conversation_id == conversation_id,
-            ConversationMember.user_id != current_user_id,
-        )
-        .first()
-    )
+    member = ConversationMember.query.filter(
+        ConversationMember.conversation_id == conversation_id,
+        ConversationMember.user_id != current_user_id,
+    ).first()
 
     if not member:
         return None
 
     return User.query.get(member.user_id)
 
+
 def is_member(conversation_id, user_id):
-    return ConversationMember.query.filter_by(conversation_id=conversation_id,user_id=user_id).first() is not None
+    return ConversationMember.query.filter_by(conversation_id=conversation_id, user_id=user_id).first() is not None
+
 
 def get_message_reactions(message_id):
     return MessageReaction.query.filter_by(message_id=message_id).all()
-def send_message(conversation_id,sender_id,content,attachment=None):
+
+
+def send_message(conversation_id, sender_id, content, attachment=None):
     conversation = Conversation.query.get(conversation_id)
 
     if not conversation:
         return None
 
-    message = Message(conversation_id=conversation_id,sender_id=sender_id,content=content,attachment=attachment)
+    message = Message(conversation_id=conversation_id, sender_id=sender_id, content=content, attachment=attachment)
 
     try:
         db.session.add(message)
@@ -851,6 +879,7 @@ def send_message(conversation_id,sender_id,content,attachment=None):
     except Exception:
         db.session.rollback()
         return None
+
 
 def delete_message(message_id):
     message = Message.query.get(message_id)
@@ -867,7 +896,11 @@ def delete_message(message_id):
         db.session.rollback()
         return False
 
-def edit_message(message_id,content,):
+
+def edit_message(
+    message_id,
+    content,
+):
     message = Message.query.get(message_id)
 
     if not message:
@@ -884,14 +917,26 @@ def edit_message(message_id,content,):
         db.session.rollback()
         return None
 
-def react_message(message_id,user_id,emoji,):
-    reaction = MessageReaction.query.filter_by(message_id=message_id,user_id=user_id,).first()
+
+def react_message(
+    message_id,
+    user_id,
+    emoji,
+):
+    reaction = MessageReaction.query.filter_by(
+        message_id=message_id,
+        user_id=user_id,
+    ).first()
 
     try:
         if reaction:
             reaction.emoji = emoji
         else:
-            reaction = MessageReaction(message_id=message_id,user_id=user_id,emoji=emoji,)
+            reaction = MessageReaction(
+                message_id=message_id,
+                user_id=user_id,
+                emoji=emoji,
+            )
             db.session.add(reaction)
 
         db.session.commit()
@@ -902,8 +947,15 @@ def react_message(message_id,user_id,emoji,):
         db.session.rollback()
         return None
 
-def remove_reaction(message_id,user_id,):
-    reaction = MessageReaction.query.filter_by(message_id=message_id,user_id=user_id,).first()
+
+def remove_reaction(
+    message_id,
+    user_id,
+):
+    reaction = MessageReaction.query.filter_by(
+        message_id=message_id,
+        user_id=user_id,
+    ).first()
 
     if not reaction:
         return False
@@ -917,8 +969,15 @@ def remove_reaction(message_id,user_id,):
         db.session.rollback()
         return False
 
-def update_last_read(conversation_id,user_id,):
-    member = ConversationMember.query.filter_by(conversation_id=conversation_id,user_id=user_id,).first()
+
+def update_last_read(
+    conversation_id,
+    user_id,
+):
+    member = ConversationMember.query.filter_by(
+        conversation_id=conversation_id,
+        user_id=user_id,
+    ).first()
 
     if not member:
         return False
@@ -932,6 +991,7 @@ def update_last_read(conversation_id,user_id,):
     except Exception:
         db.session.rollback()
         return False
+
 
 def count_unread(user_id):
     total = 0
@@ -951,7 +1011,11 @@ def count_unread(user_id):
 
     return total
 
-def search_messages(conversation_id,keyword,):
+
+def search_messages(
+    conversation_id,
+    keyword,
+):
     return (
         Message.query.filter(
             Message.conversation_id == conversation_id,
@@ -961,8 +1025,10 @@ def search_messages(conversation_id,keyword,):
         .all()
     )
 
+
 def get_user_by_username(username):
     return User.query.filter_by(username=username).first()
+
 
 def search_users(keyword, current_user_id):
     keyword = keyword.strip()
@@ -973,39 +1039,18 @@ def search_users(keyword, current_user_id):
     pattern = f"%{keyword}%"
 
     return (
-        User.query
-        .filter(
+        User.query.filter(
             User.id != current_user_id,
             db.or_(
                 User.username.ilike(pattern),
                 User.first_name.ilike(pattern),
                 User.last_name.ilike(pattern),
-                db.func.concat(
-                    User.first_name,
-                    " ",
-                    User.last_name
-                ).ilike(pattern)
-            )
+                db.func.concat(User.first_name, " ", User.last_name).ilike(pattern),
+            ),
         )
         .limit(10)
         .all()
     )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def get_courses_by_teacher_id(teacher_id):
