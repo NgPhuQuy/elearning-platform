@@ -116,7 +116,10 @@ jobs:
         run: python -m compileall -q app scripts tests migrations/versions
 
       - name: Apply CI database migrations
-        run: flask --app app.index:app db upgrade
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot-ci-password -e "DROP DATABASE IF EXISTS elearning;"
+          mysql -h 127.0.0.1 -uroot -proot-ci-password -e "CREATE DATABASE elearning CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+          flask --app app.index:app db upgrade
 
       - name: Check model and migration consistency
         run: flask --app app.index:app db check
