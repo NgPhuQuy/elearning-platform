@@ -1,0 +1,58 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+Tin nhắn
+{% endblock %}
+
+
+
+{% block content %}
+
+<div class="chat-page">
+
+    <!-- Conversation list -->
+    <aside class="chat-sidebar">
+
+        {% include "chat/_conversation_list.html" %}
+
+    </aside>
+
+
+    <!-- Chat -->
+    <section class="chat-main">
+
+        {% include "chat/_chat_header.html" %}
+
+        {% include "chat/_message_list.html" %}
+
+        {% include "chat/_chat_input.html" %}
+
+    </section>
+
+
+    <!-- Information -->
+    <aside class="chat-info d-none d-xl-flex">
+
+        {% include "chat/_info_panel.html" %}
+
+    </aside>
+
+</div>
+
+
+{% include "chat/_emoji_picker.html" %}
+
+{% include "chat/_search_modal.html" %}
+
+{% endblock %}
+
+
+{% block scripts %}
+    <script>
+    window.CURRENT_USER_ID = {{ current_user_id }};
+</script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+
+{% endblock %}

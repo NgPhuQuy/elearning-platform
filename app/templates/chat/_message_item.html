@@ -1,0 +1,278 @@
+{% set is_me = message.sender_id == current_user.id %}
+
+<div
+    id="message-{{ message.id }}"
+    class="d-flex mb-3 {% if is_me %}justify-content-end{% else %}justify-content-start{% endif %}">
+
+    {% if not is_me %}
+
+    <!-- Avatar -->
+
+    <img
+        src="{{ message.sender.avatar or url_for('static', filename='images/default-avatar.png') }}"
+        class="rounded-circle flex-shrink-0 me-2"
+        width="38"
+        height="38"
+        style="object-fit:cover">
+
+    {% endif %}
+
+    <div
+        class="d-flex flex-column {% if is_me %}align-items-end{% else %}align-items-start{% endif %}"
+        style="max-width:70%;">
+
+        <!-- Sender -->
+
+        {% if not is_me and active_conversation.is_group %}
+
+        <small class="fw-semibold text-secondary mb-1">
+
+            {{ message.sender.full_name }}
+
+        </small>
+
+        {% endif %}
+
+        <!-- Reply -->
+
+        {% if message.reply_to %}
+
+        <div class="border-start border-3 ps-2 mb-1 small text-muted">
+
+            <div class="fw-semibold">
+
+                {{ message.reply_to.sender.full_name }}
+
+            </div>
+
+            <div class="text-truncate">
+
+                {{ message.reply_to.content }}
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+        <!-- Bubble -->
+
+        <div
+            class="dropdown">
+
+            <div
+                class="rounded-4 px-3 py-2 shadow-sm
+                {% if is_me %}
+                    bg-primary text-white
+                {% else %}
+                    bg-white border
+                {% endif %}"
+
+                data-bs-toggle="dropdown">
+
+                <!-- Text -->
+
+                {% if message.content %}
+
+                <div style="white-space:pre-wrap">
+
+                    {{ message.content }}
+
+                </div>
+
+                {% endif %}
+
+                <!-- Image -->
+
+                {% if message.attachment and message.attachment.endswith(('png','jpg','jpeg','gif','webp')) %}
+
+                <img
+                    src="{{ message.attachment }}"
+                    class="img-fluid rounded mt-2">
+
+                {% endif %}
+
+                <!-- File -->
+
+                {% if message.attachment
+                      and not message.attachment.endswith(('png','jpg','jpeg','gif','webp')) %}
+
+                <div class="mt-2">
+
+                    <a
+                        href="{{ message.attachment }}"
+                        target="_blank"
+                        class="{% if is_me %}text-white{% endif %}">
+
+                        <i class="bi bi-paperclip me-1"></i>
+
+                        Tệp đính kèm
+
+                    </a>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+            <!-- Dropdown -->
+
+            <ul class="dropdown-menu">
+
+                <li>
+
+                    <button
+                        class="dropdown-item reply-message"
+                        data-id="{{ message.id }}">
+
+                        <i class="bi bi-reply me-2"></i>
+
+                        Trả lời
+
+                    </button>
+
+                </li>
+
+                <li>
+
+                    <button
+                        class="dropdown-item react-message"
+                        data-id="{{ message.id }}">
+
+                        <i class="bi bi-emoji-smile me-2"></i>
+
+                        Cảm xúc
+
+                    </button>
+
+                </li>
+
+                <li>
+
+                    <button
+                        class="dropdown-item copy-message"
+                        data-id="{{ message.id }}">
+
+                        <i class="bi bi-copy me-2"></i>
+
+                        Sao chép
+
+                    </button>
+
+                </li>
+
+                {% if is_me %}
+
+                <li>
+
+                    <button
+                        class="dropdown-item edit-message"
+                        data-id="{{ message.id }}">
+
+                        <i class="bi bi-pencil me-2"></i>
+
+                        Chỉnh sửa
+
+                    </button>
+
+                </li>
+
+                <li>
+
+                    <button
+                        class="dropdown-item text-danger delete-message"
+                        data-id="{{ message.id }}">
+
+                        <i class="bi bi-trash me-2"></i>
+
+                        Xóa
+
+                    </button>
+
+                </li>
+
+                {% endif %}
+
+            </ul>
+
+        </div>
+
+        <!-- Reactions -->
+
+        {% if message.reactions %}
+
+        <div class="mt-1 d-flex gap-1 flex-wrap">
+
+            {% for reaction in message.reactions %}
+
+            <span
+                class="badge rounded-pill bg-light text-dark border">
+
+                {{ reaction.emoji }}
+
+            </span>
+
+            {% endfor %}
+
+        </div>
+
+        {% endif %}
+
+        <!-- Footer -->
+
+        <div
+            class="small text-muted mt-1 d-flex align-items-center gap-2">
+
+            <span>
+
+                {{ message.created_date.strftime("%H:%M") }}
+
+            </span>
+
+            {% if message.is_edited %}
+
+            <span>
+
+                • Đã chỉnh sửa
+
+            </span>
+
+            {% endif %}
+
+            {% if is_me %}
+
+            <span>
+
+                {% if message.is_read %}
+
+                    <i class="bi bi-check2-all text-primary"></i>
+
+                {% else %}
+
+                    <i class="bi bi-check2"></i>
+
+                {% endif %}
+
+            </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    {% if is_me %}
+
+    <!-- Avatar -->
+
+    <img
+        src="{{ current_user.avatar or url_for('static', filename='images/default-avatar.png') }}"
+        class="rounded-circle flex-shrink-0 ms-2"
+        width="38"
+        height="38"
+        style="object-fit:cover">
+
+    {% endif %}
+
+</div>

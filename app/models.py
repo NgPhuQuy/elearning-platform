@@ -50,6 +50,91 @@ class Teacher(BaseModel):
     )
 
 
+class Conversation(BaseModel):
+    title = Column(String(255), nullable=True)
+    image = Column(String(500), default="")
+    is_group = Column(Boolean, default=False)
+    members = relationship("ConversationMember", back_populates="conversation", cascade="all, delete-orphan", lazy=True)
+    messages = relationship(
+        "Message",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        lazy=True,
+    )
+
+
+class ConversationMember(db.Model):
+    conversation_id = Column(
+        Integer,
+        ForeignKey("conversation.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    user_id = Column(
+        Integer,
+        ForeignKey("user.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    joined_date = Column(DateTime, default=datetime.now)
+    last_read = Column(DateTime)
+    conversation = relationship(
+        "Conversation",
+        back_populates="members",
+    )
+    user = relationship(
+        "User",
+        backref="conversation_members",
+    )
+
+
+class Message(BaseModel):
+    content = Column(Text, nullable=False)
+    attachment = Column(String(500))
+    is_edited = Column(Boolean, default=False)
+    conversation_id = Column(
+        Integer,
+        ForeignKey("conversation.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    sender_id = Column(
+        Integer,
+        ForeignKey("user.id"),
+        nullable=False,
+    )
+    conversation = relationship(
+        "Conversation",
+        back_populates="messages",
+    )
+    sender = relationship(
+        "User",
+        backref="messages",
+    )
+    reactions = relationship(
+        "MessageReaction",
+        back_populates="message",
+        cascade="all, delete-orphan",
+        lazy=True,
+    )
+
+
+class MessageReaction(BaseModel):
+    emoji = Column(String(20), nullable=False)
+    message_id = Column(
+        Integer,
+        ForeignKey("message.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id = Column(
+        Integer,
+        ForeignKey("user.id"),
+        nullable=False,
+    )
+    message = relationship("Message", back_populates="reactions")
+    user = relationship(
+        "User",
+        backref="message_reactions",
+    )
+
+
 class Chapter(BaseModel):
     description = Column(Text)
     order = Column(Integer, default=1)
