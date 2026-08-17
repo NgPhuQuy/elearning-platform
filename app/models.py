@@ -5,7 +5,7 @@ from flask_login import UserMixin
 from sqlalchemy import DECIMAL, Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import backref, relationship
 
-from app import db, app
+from app import app, db
 
 
 class BaseModel(db.Model):
