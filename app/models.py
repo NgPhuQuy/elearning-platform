@@ -5,7 +5,7 @@ from flask_login import UserMixin
 from sqlalchemy import DECIMAL, Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import backref, relationship
 
-from app import db
+from app import db, app
 
 
 class BaseModel(db.Model):
@@ -387,3 +387,8 @@ class Payment(BaseModel):
 
     user = relationship("User", backref="payments")
     course = relationship("Course", backref="payments")
+
+if __name__=="__main__":
+    with app.app_context():
+        db.create_all()
+        db.session.commit()
