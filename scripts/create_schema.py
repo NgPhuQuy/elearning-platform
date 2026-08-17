@@ -1,4 +1,4 @@
-from flask_migrate import upgrade
+from flask_migrate import upgrade  # noqa: F401
 
 from app import app as flask_app
 from app import db
