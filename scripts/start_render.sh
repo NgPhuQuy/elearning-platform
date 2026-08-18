@@ -5,13 +5,8 @@ set -eu
 echo "[release-start] Waiting for the database..."
 python -m scripts.wait_for_db
 
-if [ "${BASELINE_EXISTING_DATABASE:-false}" = "true" ]; then
-    echo "[release-start] Checking the one-time migration baseline..."
-    python -m scripts.baseline_existing_database
-fi
-
-echo "[release-start] Applying database migrations..."
-flask --app app.index:app db upgrade
+echo "[release-start] Ensuring database schema exists..."
+python -m scripts.create_schema
 
 echo "[release-start] Starting Gunicorn..."
 exec gunicorn \
