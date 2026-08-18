@@ -1,4 +1,3 @@
-import hashlib
 from datetime import datetime
 from enum import Enum as MyEnum
 
@@ -11,17 +10,17 @@ from app import db
 
 class BaseModel(db.Model):
     __abstract__ = True
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255))
-    created_date = Column(DateTime, default=datetime.now())
-    updated_date = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
+    created_date = Column(DateTime, default=datetime.now)
+    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     is_active = Column(Boolean, default=True)
 
 
 class User(BaseModel, UserMixin):
     username = Column(String(255), unique=True)
     password = Column(String(255))
-    google_sub = Column(String(255))
+    google_sub = Column(String(255), unique=True)
     first_name = Column(String(255))
     last_name = Column(String(255))
     avatar = Column(String(255), default="")
@@ -29,7 +28,7 @@ class User(BaseModel, UserMixin):
     phone = Column(String(255))
     teacher_profile = relationship("Teacher", backref="user", uselist=False, lazy=True)
     bio = Column(String(255), default="")
-    enrollment = relationship("Enrollment", backref="user", lazy=True)
+    enrollments = relationship("Enrollment", backref="user", lazy=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -45,10 +44,6 @@ class Teacher(BaseModel):
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), unique=True)
     note = Column(String(255), default="")
     courses = relationship("Course", backref="teacher", lazy=True)
-
-
-class Chapter(BaseModel):
-    description = Column(Text)
 
 
 class Conversation(db.Model):
@@ -71,8 +66,6 @@ class ConversationMember(db.Model):
     conversation = relationship("Conversation", back_populates="members")
     user = relationship("User", backref="conversation_members")
 
-    order = Column(Integer, default=1)
-
 
 class Message(BaseModel):
     content = Column(Text)
@@ -83,8 +76,6 @@ class Message(BaseModel):
     conversation = relationship("Conversation", back_populates="messages")
     sender = relationship("User", backref="messages")
     reactions = relationship("MessageReaction", back_populates="message", cascade="all, delete-orphan", lazy=True)
-
-    lessons = relationship("Lesson", backref="chapter", cascade="all, delete-orphan", lazy=True)
 
 
 class MessageReaction(BaseModel):
@@ -109,7 +100,7 @@ class Category(BaseModel):
 
 class CourseCategory(db.Model):
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), primary_key=True)
-    category_id = Column(Integer, ForeignKey("category.id"), primary_key=True)
+    category_id = Column(Integer, ForeignKey("category.id", ondelete="CASCADE"), primary_key=True)
 
 
 class CourseLevel(MyEnum):
@@ -145,7 +136,7 @@ class VideoContent(db.Model):
 
 
 class DocContent(db.Model):
-    lesson_id = Column(Integer, ForeignKey("lesson.id"), primary_key=True)
+    lesson_id = Column(Integer, ForeignKey("lesson.id", ondelete="CASCADE"), primary_key=True)
     content_text = Column(Text)
     file_url = Column(String(500))
     file_ext = Column(String(20))
@@ -264,7 +255,7 @@ class Comment(BaseModel):
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
     parent_comment_id = Column(Integer, ForeignKey("comment.id", ondelete="CASCADE"))
     replies = relationship("Comment", backref=backref("parent", remote_side="Comment.id"))
-    reactions = relationship("ReactionComment", backref="comment", cascade="all, delete-orphan")
+    reactions = relationship("ReactionComment", backref="comment", cascade="all, delete-orphan", lazy="selectin")
     user = relationship("User", backref="comments")
 
 
