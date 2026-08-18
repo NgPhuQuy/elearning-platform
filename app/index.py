@@ -1,13 +1,15 @@
 import json
 import uuid
+from datetime import datetime
 
 import cloudinary.uploader
 from flask import jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user, logout_user
+from flask_socketio import emit, join_room, leave_room
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from app import admin, app, dao, db, momo, oauth  # noqa: F401  # Register admin routes.
+from app import admin, app, dao, db, momo, oauth, socketio  # noqa: F401  # Register admin routes.
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
 from app.models import Comment, Course, Post, PostCate, User, VoteType
@@ -107,18 +109,20 @@ def forgot_password():
     pass
 
 
-@app.route("/login-admin", methods=["POST"])
+@app.route("/login-admin", methods=["GET", "POST"])
 def login_admin_process():
     username = request.form.get("username")
     password = request.form.get("password")
 
     user = dao.auth_user(username, password)
 
-    if user:
+    if not user:
         login_user(user)
-        return redirect("/admin")
-    else:
-        return redirect("/admin")
+
+    if not user.admin:
+        return jsonify({"success": True, "redirect": "/"})
+
+    return redirect("/admin")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -140,7 +144,7 @@ def login():
             )
         if not user.is_active:
             return (
-                jsonify({"success": False, "error": "Tài khoản của bạn đã bị cấm!"}),
+                jsonify({"success": False, "error": "Tài khoản của bạn đã bị khóa!"}),
                 403,
             )
         login_user(user)
@@ -408,6 +412,7 @@ def learn_course(course_id):
     if enrollment:
         dao.recalc_enrollment_progress(enrollment)
     progress_map = dao.get_lesson_progress_map(current_user.id, course_id)
+    course_tests = dao.get_course_tests(course_id)
 
     return render_template(
         "course/learn.html",
@@ -417,6 +422,7 @@ def learn_course(course_id):
         doc_kind=doc_kind,
         enrollment=enrollment,
         progress_map=progress_map,
+        course_tests=course_tests,
     )
 
 
@@ -425,6 +431,65 @@ def learn_course(course_id):
 def complete_lesson(course_id, lesson_id):
     ok, error = dao.mark_lesson_completed(current_user.id, course_id, lesson_id)
     return jsonify({"success": ok, "error": error})
+
+
+@app.route("/courses/<int:course_id>/tests/<int:test_id>")
+@login_required
+def take_test(course_id, test_id):
+    test = dao.get_test_details(test_id)
+    if not test or test.course_id != course_id:
+        return redirect(url_for("course_detail", course_id=course_id))
+
+    ok, error = dao.can_take_test(current_user.id, test)
+    if not ok:
+        return render_template(
+            "course/test_blocked.html",
+            course_id=course_id,
+            test=test,
+            error=error,
+        )
+
+    attempts = dao.get_test_attempts(current_user.id, course_id, test_id)
+    attempts_used = len(attempts)
+    attempts_left = test.max_attempts - attempts_used if test.max_attempts and test.max_attempts > 0 else None
+    best_score = max((a.score_value for a in attempts), default=None)
+
+    # Lưu thời điểm bắt đầu vào session (theo đúng lượt làm hiện tại), để đồng hồ
+    # không bị reset khi người dùng rời trang rồi quay lại giữa chừng.
+    remaining_seconds = None
+    if test.duration and test.duration > 0:
+        session_key = f"test_start_{test_id}_{attempts_used}"
+        if session_key not in session:
+            session[session_key] = datetime.now().isoformat()
+        start_time = datetime.fromisoformat(session[session_key])
+        elapsed = (datetime.now() - start_time).total_seconds()
+        remaining_seconds = max(int(test.duration * 60 - elapsed), 0)
+
+    return render_template(
+        "course/test.html",
+        course_id=course_id,
+        test=test,
+        attempts=attempts,
+        attempts_left=attempts_left,
+        best_score=best_score,
+        remaining_seconds=remaining_seconds,
+    )
+
+
+@app.route("/courses/<int:course_id>/tests/<int:test_id>/submit", methods=["POST"])
+@login_required
+def submit_test(course_id, test_id):
+    # Đáp án gửi lên dạng: answer_<question_id> = <answer_id>
+    answers = {}
+    for key, value in request.form.items():
+        if key.startswith("answer_"):
+            question_id = key.replace("answer_", "")
+            answers[question_id] = value
+
+    attempts_before = dao.get_test_attempts(current_user.id, course_id, test_id)
+    session.pop(f"test_start_{test_id}_{len(attempts_before)}", None)
+
+    score, error = dao.submit_test_score(current_user.id, course_id, test_id, answers)
 
 
 def get_doc_kind(ext):
@@ -478,6 +543,17 @@ def update_course(course_id):
         return redirect(url_for("my_courses"))
 
     if request.method == "POST":
+        tests_data_raw = request.form.get("tests_data")
+        if tests_data_raw:
+            try:
+                tests_data = json.loads(tests_data_raw)
+            except (ValueError, TypeError):
+                tests_data = []
+            dao.sync_tests(
+                course_id=course_id,
+                teacher_id=current_user.teacher_profile.id,
+                tests_data=tests_data,
+            )
         image = request.files.get("image")
         image_url = None
         if image and image.filename:
@@ -566,51 +642,47 @@ def activate_course(course_id):
     return redirect(url_for("my_courses"))
 
 
-@app.route("/courses/<int:course_id>/content", methods=["GET", "POST"])
-@login_required
-@teacher_required
-def manage_content(course_id):
-    course = dao.get_course_details(course_id, teacher_id=current_user.teacher_profile.id)
-    if not course:
-        return redirect(url_for("my_courses"))
-
-    action = request.form.get("action")
-
-    if action == "add_chapter":
-        dao.create_chapter(
-            course_id=course_id,
-            teacher_id=current_user.teacher_profile.id,
-            name=request.form.get("chapter_name"),
-            description=request.form.get("chapter_description", ""),
-        )
-    elif action == "add_lesson":
-        dao.create_lesson(
-            teacher_id=current_user.teacher_profile.id,
-            chapter_id=request.form.get("chapter_id"),
-            name=request.form.get("lesson_name"),
-            description=request.form.get("lesson_description", ""),
-            lesson_type=request.form.get("lesson_type"),
-        )
-
-    return redirect(url_for("update_course", course_id=course_id) + "#cc-content")
-
-
 @app.route("/chapters/<int:chapter_id>/delete", methods=["POST"])
 @login_required
 @teacher_required
 def delete_chapter(chapter_id):
-    course_id = request.form.get("course_id")
     dao.delete_chapter(chapter_id, teacher_id=current_user.teacher_profile.id)
-    return redirect(url_for("manage_content", course_id=course_id))
+    return jsonify({"success": True})
 
 
 @app.route("/lessons/<int:lesson_id>/delete", methods=["POST"])
 @login_required
 @teacher_required
 def delete_lesson(lesson_id):
-    course_id = request.form.get("course_id")
+
     dao.delete_lesson(lesson_id, teacher_id=current_user.teacher_profile.id)
-    return redirect(url_for("manage_content", course_id=course_id))
+    return jsonify({"success": True})
+
+
+@app.route("/courses/<int:course_id>/tests/<int:test_id>/questions", methods=["GET", "POST"])
+@login_required
+@teacher_required
+def manage_test_questions(course_id, test_id):
+    test = dao.get_test_for_teacher(test_id, current_user.teacher_profile.id)
+    if not test or test.course_id != course_id:
+        return redirect(url_for("update_course", course_id=course_id))
+
+    if request.method == "POST":
+        questions_data_raw = request.form.get("questions_data")
+        if questions_data_raw:
+            try:
+                questions_data = json.loads(questions_data_raw)
+            except (ValueError, TypeError):
+                questions_data = []
+            dao.sync_questions(
+                test_id=test_id,
+                teacher_id=current_user.teacher_profile.id,
+                questions_data=questions_data,
+            )
+        return redirect(url_for("update_course", course_id=course_id, test_id=test_id))
+
+    questions = dao.get_questions(test_id)
+    return render_template("course/test_questions.html", course_id=course_id, test=test, questions=questions)
 
 
 # forum
@@ -734,6 +806,269 @@ def reply_comment(comment_id):
     return redirect(url_for("forum_detail", post_id=parent_comment.post_id))
 
 
+# chat
+
+
+@app.get("/api/users/search")
+@login_required
+def api_search_users():
+
+    keyword = request.args.get("keyword", "").strip()
+
+    if not keyword:
+        return jsonify([])
+
+    users = dao.search_users(keyword, current_user.id)
+
+    return jsonify(
+        [
+            {
+                "id": user.id,
+                "username": user.username,
+                "full_name": f"{user.first_name} {user.last_name}".strip(),
+                "avatar": user.avatar,
+            }
+            for user in users
+        ]
+    )
+
+
+@app.get("/messages")
+@login_required
+def messages():
+    return render_template("chat/index.html", current_user_id=current_user.id)
+
+
+@app.get("/api/chat/conversations")
+@login_required
+def api_get_conversations():
+    conversations = dao.get_conversations(current_user.id)
+
+    data = []
+
+    for c in conversations:
+        other = dao.get_other_member(c.id, current_user.id)
+
+        last = dao.get_latest_message(c.id)
+
+        data.append(
+            {
+                "id": c.id,
+                "title": c.title,
+                "image": c.image,
+                "other_user": {
+                    "id": other.id,
+                    "name": f"{other.first_name} {other.last_name}".strip(),
+                    "avatar": other.avatar,
+                }
+                if other
+                else None,
+                "last_message": last.content if last else "",
+                "updated_date": c.updated_date.isoformat(),
+            }
+        )
+
+    return jsonify(data)
+
+
+@app.get("/api/chat/<int:conversation_id>/messages")
+@login_required
+def api_get_messages(conversation_id):
+
+    if not dao.is_member(conversation_id, current_user.id):
+        return jsonify({"error": "Forbidden"}), 403
+
+    messages = dao.get_messages(conversation_id)
+
+    data = []
+
+    for m in messages:
+        data.append(
+            {
+                "id": m.id,
+                "content": m.content,
+                "attachment": m.attachment,
+                "sender_id": m.sender_id,
+                "edited": m.is_edited,
+                "created_date": m.created_date.isoformat(),
+            }
+        )
+
+    dao.update_last_read(conversation_id, current_user.id)
+
+    return jsonify(data)
+
+
+@app.post("/api/chat/private/<int:user_id>")
+@login_required
+def api_create_private(user_id):
+
+    if user_id == current_user.id:
+        return jsonify({"error": "Bạn không thể nhắn tin với chính mình."}), 400
+
+    conversation = dao.create_private_conversation(current_user.id, user_id)
+
+    if conversation is None:
+        return jsonify({"error": "Cannot create conversation"}), 400
+
+    return jsonify({"conversation_id": conversation.id})
+
+
+@app.get("/api/chat/<int:conversation_id>/search")
+@login_required
+def api_search_message(conversation_id):
+
+    if not dao.is_member(conversation_id, current_user.id):
+        return jsonify({"error": "Forbidden"}), 403
+
+    keyword = request.args.get("keyword", "").strip()
+
+    messages = dao.search_messages(conversation_id, keyword)
+
+    return jsonify([{"id": m.id, "content": m.content} for m in messages])
+
+
+@app.get("/api/chat/unread")
+@login_required
+def api_unread():
+
+    return jsonify({"count": dao.count_unread(current_user.id)})
+
+
+@socketio.on("join")
+def handle_join(data):
+
+    conversation_id = data["conversation_id"]
+
+    if not dao.is_member(conversation_id, current_user.id):
+        return
+
+    join_room(f"conversation_{conversation_id}")
+
+
+@socketio.on("leave")
+def handle_leave(data):
+
+    leave_room(f"conversation_{data['conversation_id']}")
+
+
+@socketio.on("send_message")
+def handle_send_message(data):
+
+    conversation_id = data["conversation_id"]
+
+    if not dao.is_member(conversation_id, current_user.id):
+        return
+
+    message = dao.send_message(
+        conversation_id=conversation_id,
+        sender_id=current_user.id,
+        content=data["content"],
+        attachment=data.get("attachment"),
+    )
+
+    emit(
+        "new_message",
+        {
+            "id": message.id,
+            "conversation_id": conversation_id,
+            "content": message.content,
+            "attachment": message.attachment,
+            "sender_id": message.sender_id,
+            "created_date": message.created_date.isoformat(),
+        },
+        room=f"conversation_{conversation_id}",
+    )
+
+
+@socketio.on("edit_message")
+def handle_edit(data):
+
+    message = dao.get_message(data["message_id"])
+
+    if not message:
+        return
+
+    if message.sender_id != current_user.id:
+        return
+
+    message = dao.edit_message(message.id, data["content"])
+
+    emit(
+        "message_edited",
+        {"id": message.id, "content": message.content, "edited": True},
+        room=f"conversation_{message.conversation_id}",
+    )
+
+
+@socketio.on("delete_message")
+def handle_delete(data):
+
+    message = dao.get_message(data["message_id"])
+
+    if not message:
+        return
+
+    if message.sender_id != current_user.id:
+        return
+
+    conversation_id = message.conversation_id
+
+    dao.delete_message(message.id)
+
+    emit("message_deleted", {"id": message.id}, room=f"conversation_{conversation_id}")
+
+
+@socketio.on("react_message")
+def handle_reaction(data):
+
+    message = dao.get_message(data["message_id"])
+
+    if not message:
+        return
+
+    dao.react_message(message.id, current_user.id, data["emoji"])
+
+    reactions = dao.get_message_reactions(message.id)
+
+    emit(
+        "message_reacted",
+        {"message_id": message.id, "reactions": [{"user_id": r.user_id, "emoji": r.emoji} for r in reactions]},
+        room=f"conversation_{message.conversation_id}",
+    )
+
+
+@socketio.on("remove_reaction")
+def handle_remove_reaction(data):
+
+    message = dao.get_message(data["message_id"])
+
+    if not message:
+        return
+
+    dao.remove_reaction(message.id, current_user.id)
+
+    reactions = dao.get_message_reactions(message.id)
+
+    emit(
+        "message_reacted",
+        {"message_id": message.id, "reactions": [{"user_id": r.user_id, "emoji": r.emoji} for r in reactions]},
+        room=f"conversation_{message.conversation_id}",
+    )
+
+
+@socketio.on("read_conversation")
+def handle_read(data):
+
+    dao.update_last_read(data["conversation_id"], current_user.id)
+
+    emit(
+        "conversation_read",
+        {"conversation_id": data["conversation_id"], "user_id": current_user.id},
+        room=f"conversation_{data['conversation_id']}",
+    )
+
+
 @app.route("/courses/<int:course_id>/checkout", methods=["GET", "POST"])
 @login_required
 def checkout_course(course_id):
@@ -786,4 +1121,9 @@ def payment_history():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    HOST = "127.0.0.1"
+    PORT = 5000
+
+    print(f"Running on http://{HOST}:{PORT}")
+
+    socketio.run(app, host=HOST, port=PORT, debug=True)

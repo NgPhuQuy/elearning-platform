@@ -94,6 +94,38 @@
   <p class="text-muted-ef">Khóa học chưa có chương nào.</p>
   {% endfor %}
 
+  <!-- Danh sách bài kiểm tra -->
+  <div class="border rounded-3">
+    <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom">
+      <span class="small fw-semibold">Bài kiểm tra</span>
+    </div>
+    <div class="p-2">
+      {% for test in course.tests %}
+      <div class="d-flex align-items-center gap-2 px-2 py-2 border-bottom">
+        <i class="bi bi-clipboard-check text-indigo"></i>
+        <span class="small flex-grow-1">
+          {% if test.chapter_id %}
+            Kiểm tra chương: {{ test.chapter.name }}
+          {% else %}
+            Thi cuối khóa
+          {% endif %}
+        </span>
+        <span class="text-muted-ef small">
+          {{ test.duration if test.duration else "Không giới hạn" }} phút ·
+          {{ test.max_attempts if test.max_attempts else "Không giới hạn" }} lần
+        </span>
+      </div>
+      {% else %}
+      <p class="text-muted-ef small px-2 py-2 mb-0">Chưa có bài kiểm tra nào.</p>
+      {% endfor %}
+
+      <button type="button" class="btn btn-sm btn-outline-secondary mt-2 d-flex align-items-center gap-1"
+              data-bs-toggle="modal" data-bs-target="#addTestModal">
+        <i class="bi bi-plus"></i> Thêm bài kiểm tra
+      </button>
+    </div>
+  </div>
+
   <button type="button" class="btn btn-outline-indigo d-flex align-items-center gap-2 align-self-start"
           data-bs-toggle="modal" data-bs-target="#addChapterModal">
     <i class="bi bi-plus-circle"></i> Thêm chương mới
@@ -118,6 +150,44 @@
           <div class="mb-3">
             <label class="form-label small fw-semibold">Mô tả</label>
             <textarea name="chapter_description" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-indigo">Thêm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal thêm bài kiểm tra -->
+<div class="modal fade" id="addTestModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('manage_content', course_id=course.id) }}">
+        <input type="hidden" name="action" value="add_test">
+        <div class="modal-header">
+          <h5 class="modal-title fs-6">Thêm bài kiểm tra</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Áp dụng cho chương</label>
+            <select name="chapter_id" class="form-select">
+              <option value="">-- Thi cuối khóa --</option>
+              {% for chapter in chapters %}
+                <option value="{{ chapter.id }}">{{ chapter.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Thời gian làm bài (phút, 0 = không giới hạn)</label>
+            <input type="number" name="duration" class="form-control" min="0" value="0">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Số lần làm tối đa (0 = không giới hạn)</label>
+            <input type="number" name="max_attempts" class="form-control" min="0" value="0">
           </div>
         </div>
         <div class="modal-footer">

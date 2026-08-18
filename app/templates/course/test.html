@@ -1,0 +1,111 @@
+{% extends "layout/base.html" %}
+
+{% block title %}{{ test.name or 'Bài kiểm tra' }} · EduForum{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-3" style="max-width:800px; margin:0 auto;">
+
+    <div class="card-ef p-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h1 class="font-display fs-4 mb-1">{{ test.name or 'Bài kiểm tra' }}</h1>
+            <p class="text-muted-ef small mb-0">
+                {{ test.questions|length }} câu hỏi
+                {% if test.duration and test.duration > 0 %}
+                    · Thời gian: {{ test.duration }} phút
+                {% endif %}
+                {% if attempts_left is not none %}
+                    · Còn {{ attempts_left }} lượt làm
+                {% endif %}
+            </p>
+        </div>
+       {% if test.duration and test.duration > 0 %}
+        <div class="card-ef px-3 py-2 d-flex align-items-center gap-2" style="border-color:var(--ef-indigo-300)!important;">
+            <i class="bi bi-clock-history text-indigo"></i>
+            <span id="countdown" class="font-display fs-5 text-indigo mb-0">--:--</span>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if attempts %}
+    <div class="card-ef p-3 d-flex align-items-center gap-3 flex-wrap" style="background:var(--ef-slate-50, #f8fafc);">
+        <span class="small text-muted-ef">
+            <i class="bi bi-arrow-repeat"></i> Đã làm {{ attempts|length }} lần
+        </span>
+        {% if best_score is not none %}
+        <span class="small fw-semibold {% if best_score >= 5 %}text-success{% else %}text-danger{% endif %}">
+            <i class="bi bi-star-fill"></i> Điểm cao nhất: {{ best_score }}/10
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('submit_test', course_id=course_id, test_id=test.id) }}" id="testForm" class="d-flex flex-column gap-3">
+
+        {% for question in test.questions %}
+        <div class="card-ef p-4">
+            <p class="fw-semibold mb-3">
+                <span class="badge-ef badge-ef-primary me-2">Câu {{ loop.index }}</span>
+                {{ question.content }}
+            </p>
+            <div class="d-flex flex-column gap-2">
+                {% for answer in question.answers %}
+                <label class="d-flex align-items-center gap-2 p-2 rounded-3 border" style="cursor:pointer;">
+                    <input type="radio" name="answer_{{ question.id }}" value="{{ answer.id }}" class="form-check-input" required>
+                    <span class="small">{{ answer.content }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="card-ef p-5 text-center text-muted-ef">
+            <i class="bi bi-journal-x fs-1"></i>
+            <p class="mt-2 mb-0">Bài kiểm tra chưa có câu hỏi nào.</p>
+        </div>
+        {% endfor %}
+
+        {% if test.questions %}
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('course_detail', course_id=course_id) }}" class="btn btn-outline-secondary">Hủy</a>
+            <button type="submit" class="btn btn-indigo d-flex align-items-center gap-2">
+                <i class="bi bi-send-check"></i> Nộp bài
+            </button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var remainingFromServer = {{ (remaining_seconds if remaining_seconds is not none else -1)|tojson }};
+    var countdownEl = document.getElementById('countdown');
+    var form = document.getElementById('testForm');
+
+    if (remainingFromServer < 0 || !countdownEl || !form) return;
+
+    var remaining = remainingFromServer;
+
+    function formatTime(sec) {
+        var m = Math.floor(sec / 60);
+        var s = sec % 60;
+        return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    countdownEl.textContent = formatTime(remaining);
+
+    var timer = setInterval(function () {
+        remaining -= 1;
+        countdownEl.textContent = formatTime(Math.max(remaining, 0));
+
+        if (remaining <= 60) {
+            countdownEl.classList.add('text-danger');
+            countdownEl.classList.remove('text-indigo');
+        }
+
+        if (remaining <= 0) {
+            clearInterval(timer);
+            form.submit();
+        }
+    }, 1000);
+});
+</script>
+{% endblock %}

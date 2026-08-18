@@ -6,10 +6,12 @@ from dotenv import load_dotenv
 from flask import Flask
 from flask_login import LoginManager
 from flask_migrate import Migrate
+from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 
 load_dotenv()
 app = Flask(__name__)
+
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DB_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
@@ -23,6 +25,10 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
+socketio = SocketIO(
+    app,
+    cors_allowed_origins="*",
+)
 db = SQLAlchemy(app)
 
 migrate = Migrate(app, db)
@@ -40,3 +46,5 @@ oauth.register(
     server_metadata_url=GOOGLE_DISCOVERY_URL,
     client_kwargs={"scope": "openid email profile"},
 )
+
+from app import models  # noqa: F401,E402
