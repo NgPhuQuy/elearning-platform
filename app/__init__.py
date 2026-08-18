@@ -5,6 +5,7 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from flask import Flask
 from flask_login import LoginManager
+from flask_migrate import Migrate
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 
@@ -30,7 +31,7 @@ socketio = SocketIO(
 )
 db = SQLAlchemy(app)
 
-# migrate = Migrate(app, db)
+migrate = Migrate(app, db)
 
 login = LoginManager(app)
 
@@ -45,3 +46,5 @@ oauth.register(
     server_metadata_url=GOOGLE_DISCOVERY_URL,
     client_kwargs={"scope": "openid email profile"},
 )
+
+from app import models  # noqa: F401,E402

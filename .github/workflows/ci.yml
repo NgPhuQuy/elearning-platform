@@ -115,8 +115,8 @@ jobs:
       - name: Compile Python source
         run: python -m compileall -q app scripts tests
 
-      - name: Create CI database
-        run: python -m scripts.create_schema
+      - name: Run database migrations
+        run: flask db upgrade
 
       - name: Run infrastructure tests
         run: |
@@ -194,7 +194,7 @@ jobs:
       - name: Create container database
         run: >-
           docker compose exec -T app
-          python -m scripts.create_schema
+          flask db upgrade
       - name: Run HTTP smoke test
         run: |
           docker compose exec -T app \

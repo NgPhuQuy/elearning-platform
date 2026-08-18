@@ -716,10 +716,7 @@ def recalc_enrollment_progress(enrollment):
 
     if enrollment.progress >= 100:
         if tests:
-            all_passed = all(
-                best_scores.get(t.id, 0) >= t.pass_score
-                for t in tests
-            )
+            all_passed = all(best_scores.get(t.id, 0) >= t.pass_score for t in tests)
             if all_passed:
                 enrollment.status = EnrollmentStatus.COMPLETED
                 enrollment.completed_date = datetime.now()
