@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum as MyEnum
 
 from flask_login import UserMixin
-from sqlalchemy import Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import DECIMAL, Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import backref, relationship
 
 from app import db
@@ -49,8 +49,8 @@ class Teacher(BaseModel):
 
 class Chapter(BaseModel):
     description = Column(Text)
-    
-    
+
+
 class Conversation(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_date = Column(DateTime, default=datetime.now)
@@ -73,6 +73,7 @@ class ConversationMember(db.Model):
 
     order = Column(Integer, default=1)
 
+
 class Message(BaseModel):
     content = Column(Text)
     attachment = Column(String(500))
@@ -84,6 +85,7 @@ class Message(BaseModel):
     reactions = relationship("MessageReaction", back_populates="message", cascade="all, delete-orphan", lazy=True)
 
     lessons = relationship("Lesson", backref="chapter", cascade="all, delete-orphan", lazy=True)
+
 
 class MessageReaction(BaseModel):
     emoji = Column(String(20))
