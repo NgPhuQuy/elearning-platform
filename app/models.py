@@ -8,6 +8,7 @@ from sqlalchemy.orm import backref, relationship
 from app import db
 
 
+
 class BaseModel(db.Model):
     __abstract__ = True
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -187,7 +188,7 @@ class LessonProgress(db.Model):
     last_watched_at = Column(DateTime)
     lesson = relationship("Lesson")
 
-
+    
 class Test(BaseModel):
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
     chapter_id = Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"))

@@ -12,8 +12,8 @@ from app.models import (
     Category,
     Chapter,
     Comment,
-    #Conversation,
-    #ConversationMember,
+    Conversation,
+    ConversationMember,
     Course,
     CourseCategory,
     CourseOutcome,
@@ -23,8 +23,8 @@ from app.models import (
     Lesson,
     LessonProgress,
     LessonType,
-    #Message,
-    #MessageReaction,
+    Message,
+    MessageReaction,
     Post,
     PostCate,
     Question,
@@ -679,18 +679,22 @@ def sync_questions(test_id, teacher_id, questions_data):
         return False
 
 
-def _get_best_scores_map(user_id, course_id, enrollment_created_date):
-    """Trả về {test_id: điểm cao nhất} trong LẦN HỌC HIỆN TẠI."""
+def _get_best_scores_map(enrollment_id):
+    """Trả về {test_id: điểm cao nhất} trong enrollment hiện tại."""
+
     rows = Score.query.filter_by(
-        user_id=user_id,
-        course_id=course_id,
-        enrollment_created_date=enrollment_created_date,
+        enrollment_id=enrollment_id
     ).all()
 
     best = {}
+
     for row in rows:
-        if row.test_id not in best or row.score_value > best[row.test_id]:
+        if (
+            row.test_id not in best
+            or row.score_value > best[row.test_id]
+        ):
             best[row.test_id] = row.score_value
+
     return best
 
 
@@ -698,25 +702,50 @@ def recalc_enrollment_progress(enrollment):
     course = enrollment.course
     tests = course.tests
 
-    total_lessons = sum(1 for ch in course.chapters for lesson in ch.lessons if _lesson_has_content(lesson))
+    total_lessons = sum(
+        1
+        for ch in course.chapters
+        for lesson in ch.lessons
+        if _lesson_has_content(lesson)
+    )
+
     done_lessons = LessonProgress.query.filter_by(
-        user_id=enrollment.user_id,
-        course_id=enrollment.course_id,
-        enrollment_created_date=enrollment.created_date,
+        enrollment_id=enrollment.id,
         is_completed=True,
     ).count()
 
-    best_scores = _get_best_scores_map(enrollment.user_id, enrollment.course_id, enrollment.created_date)
+    # Lấy điểm cao nhất của từng test trong enrollment hiện tại
+    scores = Score.query.filter_by(
+        enrollment_id=enrollment.id
+    ).all()
+
+    best_scores = {}
+
+    for row in scores:
+        if (
+            row.test_id not in best_scores
+            or row.score_value > best_scores[row.test_id]
+        ):
+            best_scores[row.test_id] = row.score_value
+
     tests_taken = len(best_scores)
 
     total_items = total_lessons + len(tests)
     done_items = done_lessons + tests_taken
 
-    enrollment.progress = int(done_items / total_items * 100) if total_items else 0
+    enrollment.progress = (
+        int(done_items / total_items * 100)
+        if total_items
+        else 0
+    )
 
     if enrollment.progress >= 100:
         if tests:
-            all_passed = all(best_scores.get(t.id, 0) >= t.pass_score for t in tests)
+            all_passed = all(
+                best_scores.get(t.id, 0) >= t.pass_score
+                for t in tests
+            )
+
             if all_passed:
                 enrollment.status = EnrollmentStatus.COMPLETED
                 enrollment.completed_date = datetime.now()
@@ -726,7 +755,8 @@ def recalc_enrollment_progress(enrollment):
         else:
             enrollment.status = EnrollmentStatus.COMPLETED
             enrollment.completed_date = datetime.now()
-    elif enrollment.progress < 100 and enrollment.status in (
+
+    elif enrollment.status in (
         EnrollmentStatus.COMPLETED,
         EnrollmentStatus.FAILED,
     ):
@@ -751,29 +781,29 @@ def _ensure_lesson_completable(lesson):
 def mark_lesson_completed(user_id, course_id, lesson_id):
 
     enrollment = get_latest_enrollment(user_id, course_id)
+
     if not enrollment or enrollment.status == EnrollmentStatus.FAILED:
         return False, "Bạn chưa đăng ký khóa học này."
 
     lesson = Lesson.query.get(lesson_id)
+
     if not lesson or lesson.chapter.course_id != course_id:
         return False, "Bài học không hợp lệ."
 
     ok, error = _ensure_lesson_completable(lesson)
+
     if not ok:
         return False, error
 
+    # LessonProgress liên kết với Enrollment thông qua enrollment_id
     lp = LessonProgress.query.filter_by(
-        user_id=user_id,
-        course_id=course_id,
-        enrollment_created_date=enrollment.created_date,
+        enrollment_id=enrollment.id,
         lesson_id=lesson_id,
     ).first()
 
     if not lp:
         lp = LessonProgress(
-            user_id=user_id,
-            course_id=course_id,
-            enrollment_created_date=enrollment.created_date,
+            enrollment_id=enrollment.id,
             lesson_id=lesson_id,
         )
         db.session.add(lp)
@@ -789,48 +819,61 @@ def mark_lesson_completed(user_id, course_id, lesson_id):
         return False, "Hệ thống lỗi, vui lòng thử lại sau!"
 
     recalc_enrollment_progress(enrollment)
+
     return True, None
 
 
 def get_lesson_progress_map(user_id, course_id):
 
     enrollment = get_latest_enrollment(user_id, course_id)
+
     if not enrollment:
         return {}
 
     rows = LessonProgress.query.filter_by(
-        user_id=user_id,
-        course_id=course_id,
-        enrollment_created_date=enrollment.created_date,
+        enrollment_id=enrollment.id,
         is_completed=True,
     ).all()
-    return {row.lesson_id: True for row in rows}
+
+    return {
+        row.lesson_id: True
+        for row in rows
+    }
 
 
 def is_chapter_completed(user_id, course_id, chapter_id):
+
     enrollment = get_latest_enrollment(user_id, course_id)
+
     if not enrollment or enrollment.status == EnrollmentStatus.FAILED:
         return False
 
     chapter = Chapter.query.get(chapter_id)
+
     if not chapter or chapter.course_id != course_id:
         return False
 
-    lessons_with_content = [lesson for lesson in chapter.lessons if _lesson_has_content(lesson)]
+    lessons_with_content = [
+        lesson
+        for lesson in chapter.lessons
+        if _lesson_has_content(lesson)
+    ]
+
     if not lessons_with_content:
         return True
 
     completed_ids = {
         row.lesson_id
         for row in LessonProgress.query.filter_by(
-            user_id=user_id,
-            course_id=course_id,
-            enrollment_created_date=enrollment.created_date,
+            enrollment_id=enrollment.id,
             is_completed=True,
         ).all()
     }
 
-    return all(lesson.id in completed_ids for lesson in lessons_with_content)
+    return all(
+        lesson.id in completed_ids
+        for lesson in lessons_with_content
+    )
 
 
 def get_test_details(test_id):
@@ -842,17 +885,17 @@ def get_course_tests(course_id):
 
 
 def get_test_attempts(user_id, course_id, test_id):
-    """Lịch sử các lần làm bài test này trong LẦN HỌC HIỆN TẠI, mới nhất trước."""
+    """Lịch sử các lần làm bài test trong lần enrollment hiện tại."""
+
     enrollment = get_latest_enrollment(user_id, course_id)
+
     if not enrollment:
         return []
 
     return (
         Score.query.filter_by(
-            user_id=user_id,
-            course_id=course_id,
+            enrollment_id=enrollment.id,
             test_id=test_id,
-            enrollment_created_date=enrollment.created_date,
         )
         .order_by(Score.attempt_number.desc())
         .all()
@@ -860,72 +903,100 @@ def get_test_attempts(user_id, course_id, test_id):
 
 
 def can_take_test(user_id, test):
-    enrollment = get_latest_enrollment(user_id, test.course_id)
+
+    enrollment = get_latest_enrollment(
+        user_id,
+        test.course_id
+    )
+
     if not enrollment or enrollment.status == EnrollmentStatus.FAILED:
         return False, "Bạn cần đăng ký khóa học này trước khi làm bài kiểm tra."
 
     if test.chapter_id:
-        if not is_chapter_completed(user_id, test.course_id, test.chapter_id):
+        if not is_chapter_completed(
+            user_id,
+            test.course_id,
+            test.chapter_id
+        ):
             return False, "Bạn cần học xong chương này trước khi làm bài kiểm tra."
 
     if test.max_attempts and test.max_attempts > 0:
+
         attempts_used = Score.query.filter_by(
-            user_id=user_id,
-            course_id=test.course_id,
+            enrollment_id=enrollment.id,
             test_id=test.id,
-            enrollment_created_date=enrollment.created_date,
         ).count()
+
         if attempts_used >= test.max_attempts:
-            return False, f"Bạn đã hết số lần làm bài cho phép ({test.max_attempts} lần)."
+            return (
+                False,
+                f"Bạn đã hết số lần làm bài cho phép ({test.max_attempts} lần)."
+            )
 
     return True, None
 
 
 def submit_test_score(user_id, course_id, test_id, answers):
-    test = Test.query.filter_by(id=test_id, course_id=course_id).first()
+
+    test = Test.query.filter_by(
+        id=test_id,
+        course_id=course_id
+    ).first()
+
     if not test:
         return None, "Bài kiểm tra không tồn tại."
 
     ok, error = can_take_test(user_id, test)
+
     if not ok:
         return None, error
 
-    enrollment = get_latest_enrollment(user_id, course_id)
+    enrollment = get_latest_enrollment(
+        user_id,
+        course_id
+    )
 
     questions = test.questions
     total = len(questions)
+
     if total == 0:
         return None, "Bài kiểm tra chưa có câu hỏi nào."
 
     correct = 0
+
     for question in questions:
-        selected_answer_id = answers.get(question.id) or answers.get(str(question.id))
+
+        selected_answer_id = (
+            answers.get(question.id)
+            or answers.get(str(question.id))
+        )
+
         if not selected_answer_id:
             continue
 
-        selected_answer = Answer.query.filter_by(id=int(selected_answer_id), question_id=question.id).first()
+        selected_answer = Answer.query.filter_by(
+            id=int(selected_answer_id),
+            question_id=question.id
+        ).first()
 
         if selected_answer and selected_answer.is_correct:
             correct += 1
 
     score_value = round(correct / total * 10, 2)
+
     is_passed = score_value >= test.pass_score
 
     attempt_number = (
         Score.query.filter_by(
-            user_id=user_id,
-            course_id=course_id,
+            enrollment_id=enrollment.id,
             test_id=test_id,
-            enrollment_created_date=enrollment.created_date,
         ).count()
         + 1
     )
 
     score = Score(
-        user_id=user_id,
-        course_id=course_id,
+        enrollment_id=enrollment.id,
         test_id=test_id,
-        enrollment_created_date=enrollment.created_date,
         attempt_number=attempt_number,
         score_value=score_value,
         is_passed=is_passed,
@@ -935,6 +1006,7 @@ def submit_test_score(user_id, course_id, test_id, answers):
     try:
         db.session.add(score)
         db.session.commit()
+
     except Exception:
         db.session.rollback()
         return None, "Hệ thống lỗi, vui lòng thử lại sau!"
@@ -1374,7 +1446,11 @@ def create_chapter(course_id, teacher_id, name, description):
 
 
 def sync_tests(course_id, teacher_id, tests_data):
-    course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
+    course = Course.query.filter_by(
+        id=course_id,
+        teacher_id=teacher_id
+    ).first()
+
     if not course:
         return False
 
@@ -1387,55 +1463,66 @@ def sync_tests(course_id, teacher_id, tests_data):
         chapter_id = test_data.get("chapter_id") or None
 
         if chapter_id:
-            chapter = Chapter.query.filter_by(id=int(chapter_id), course_id=course_id).first()
-            if not chapter:
+            try:
+                chapter = Chapter.query.filter_by(
+                    id=int(chapter_id),
+                    course_id=course_id
+                ).first()
+
+                if not chapter:
+                    chapter_id = None
+            except (TypeError, ValueError):
                 chapter_id = None
 
         try:
             duration = int(test_data.get("duration") or 0)
         except (TypeError, ValueError):
             duration = 0
+
         try:
             max_attempts = int(test_data.get("max_attempts") or 0)
         except (TypeError, ValueError):
             max_attempts = 0
-        try:
-            pass_score = float(test_data.get("pass_score") or 5)
-        except (TypeError, ValueError):
-            pass_score = 5
-        pass_score = min(max(pass_score, 0), 10)
 
         if test_id:
-            test = Test.query.filter_by(id=int(test_id), course_id=course_id).first()
+            test = Test.query.filter_by(
+                id=int(test_id),
+                course_id=course_id
+            ).first()
+
             if not test:
                 continue
+
             test.name = name
             test.chapter_id = chapter_id
             test.duration = duration
             test.max_attempts = max_attempts
-            test.pass_score = pass_score
+
         else:
             test = Test(
                 course_id=course_id,
                 chapter_id=chapter_id,
                 name=name,
                 duration=duration,
-                max_attempts=max_attempts,
-                pass_score=pass_score,
+                max_attempts=max_attempts
             )
+
             db.session.add(test)
 
         db.session.flush()
         kept_test_ids.add(test.id)
 
+    # Xóa các test cũ không còn tồn tại trong dữ liệu gửi lên
     for old_id in existing_test_ids - kept_test_ids:
         old_test = Test.query.get(old_id)
+
         if old_test:
             db.session.delete(old_test)
 
     try:
         db.session.commit()
         return True
+
     except Exception:
         db.session.rollback()
         return False

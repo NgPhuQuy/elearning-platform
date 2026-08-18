@@ -155,33 +155,61 @@ document.addEventListener('DOMContentLoaded', function () {
         return row;
     }
 
-    function chapterBlockTemplate(name) {
-        const wrap = document.createElement('div');
-        wrap.className = 'border rounded-3 mb-3 chapter-block';
-        wrap.innerHTML = `
-      <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom">
-        <div>
-          <span class="small fw-semibold chapter-name">${name}</span>
-          <span class="small text-muted-ef chapter-description d-none"></span>
+   function chapterBlockTemplate(name) {
+    const wrap = document.createElement('div');
+
+    wrap.className = 'border rounded-3 mb-3 chapter-block';
+
+    wrap.innerHTML = `
+        <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom">
+            <div>
+                <span class="small fw-semibold chapter-name">${name}</span>
+                <span class="small text-muted-ef chapter-description d-none"></span>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <button type="button"
+                        class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-chapter">
+                    <i class="bi bi-pencil"></i>
+                </button>
+
+                <button type="button"
+                        class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-chapter">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
         </div>
-        <div class="d-flex align-items-center gap-3">
-          <button type="button" class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-chapter">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button type="button" class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-chapter">
-            <i class="bi bi-trash"></i>
-          </button>
+
+        <div class="p-2">
+
+            <!-- DANH SÁCH BÀI HỌC -->
+            <div class="lesson-list"></div>
+
+            <!-- DANH SÁCH TEST CỦA CHƯƠNG -->
+            <div class="chapter-test-list mt-2"></div>
+
+            <!-- NÚT THÊM -->
+            <div class="d-flex align-items-center gap-2 mt-2">
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-add-lesson">
+                    <i class="bi bi-plus"></i>
+                    Thêm bài học
+                </button>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-add-test">
+                    <i class="bi bi-plus"></i>
+                    Thêm bài test
+                </button>
+
+            </div>
+
         </div>
-      </div>
-      <div class="p-2">
-        <div class="lesson-list"></div>
-        <button type="button" class="btn btn-sm btn-outline-secondary mt-2 d-flex align-items-center gap-1 btn-add-lesson">
-          <i class="bi bi-plus"></i> Thêm bài học
-        </button>
-      </div>
     `;
-        return wrap;
-    }
+
+    return wrap;
+}
 
     function updateLessonIcon(row) {
     const type = row.querySelector('.lesson-type-select').value;
@@ -413,72 +441,205 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ===== Tab "Nội dung": quản lý bài kiểm tra =====
 document.addEventListener('DOMContentLoaded', function () {
-    const testList = document.getElementById('testList');
-    const btnAddTest = document.getElementById('btnAddTest');
+    const chapterList = document.getElementById('chapterList');
     const testsDataInput = document.getElementById('testsDataInput');
-    if (!testList || !btnAddTest) return;
 
-    function testRowTemplate() {
+    if (!chapterList || !testsDataInput) return;
+
+    // =====================================================
+    // Tạo bài test mới cho một chương
+    // =====================================================
+    function testRowTemplate(chapterBlock) {
+        const chapterId = chapterBlock.dataset.chapterId || '';
+
+        const chapterName =
+            chapterBlock.querySelector('.chapter-name')?.textContent.trim()
+            || 'Chương mới';
+
         const row = document.createElement('div');
-        row.className = 'd-flex align-items-end gap-2 px-2 py-2 border-bottom test-row';
 
-        let chapterOptions = '<option value="">-- Thi cuối khóa --</option>';
-        document.querySelectorAll('#chapterList .chapter-block').forEach(function (block) {
-            const id = block.dataset.chapterId;
-            const name = block.querySelector('.chapter-name').textContent.trim();
-            if (id) chapterOptions += `<option value="${id}">${name}</option>`;
-        });
+        row.className = 'chapter-test-row border rounded-2 p-2 mb-2';
+
+        row.dataset.testId = '';
 
         row.innerHTML = `
-      <i class="bi bi-clipboard-check text-indigo mb-2"></i>
-      <div>
-        <label class="small text-muted-ef mb-1 d-block">Áp dụng cho</label>
-        <select class="form-select form-select-sm test-chapter-select" style="max-width:220px;">${chapterOptions}</select>
-      </div>
-      <div>
-        <label class="small text-muted-ef mb-1 d-block">Thời gian (phút)</label>
-        <input type="number" class="form-control form-control-sm test-duration" style="max-width:110px;" min="1" value="1">
-      </div>
-      <div>
-        <label class="small text-muted-ef mb-1 d-block">Số lần làm tối đa</label>
-        <input type="number" class="form-control form-control-sm test-max-attempts" style="max-width:110px;" min="1" value="1">
-      </div>
-      <button type="button" class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-test ms-auto mb-2">
-        <i class="bi bi-x-lg"></i>
-      </button>
-    `;
+            <div class="d-flex align-items-center gap-2">
+
+                <i class="bi bi-clipboard-check text-indigo"></i>
+
+                <span class="small fw-semibold flex-grow-1">
+                    Bài kiểm tra
+                </span>
+
+                <button type="button"
+                        class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-chapter-test">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+
+            </div>
+
+            <div class="d-flex align-items-end gap-3 mt-2">
+
+                <div>
+                    <label class="small text-muted-ef mb-1 d-block">
+                        Áp dụng cho
+                    </label>
+
+                    <span class="small fw-semibold test-chapter-name">
+                        ${chapterName}
+                    </span>
+                </div>
+
+                <div>
+                    <label class="small text-muted-ef mb-1 d-block">
+                        Thời gian (phút)
+                    </label>
+
+                    <input type="number"
+                           class="form-control form-control-sm test-duration"
+                           style="max-width:110px;"
+                           min="1"
+                           value="1">
+                </div>
+
+                <div>
+                    <label class="small text-muted-ef mb-1 d-block">
+                        Số lần làm tối đa
+                    </label>
+
+                    <input type="number"
+                           class="form-control form-control-sm test-max-attempts"
+                           style="max-width:110px;"
+                           min="1"
+                           value="1">
+                </div>
+
+            </div>
+        `;
+
         return row;
     }
 
-    btnAddTest.addEventListener('click', function () {
-        const emptyMsg = testList.querySelector('.empty-test-msg');
-        if (emptyMsg) emptyMsg.remove();
-        testList.appendChild(testRowTemplate());
-    });
 
-    testList.addEventListener('click', function (e) {
-        const removeBtn = e.target.closest('.btn-remove-test');
-        if (removeBtn) removeBtn.closest('.test-row').remove();
-    });
+    // =====================================================
+    // Thêm test vào đúng chương
+    // =====================================================
+    chapterList.addEventListener('click', function (e) {
 
-    const courseForm = testList.closest('form');
-    if (courseForm && testsDataInput) {
-        courseForm.addEventListener('submit', function () {
-            const testsData = [];
-            testList.querySelectorAll('.test-row').forEach(function (row) {
-                testsData.push({
-                    id: row.dataset.testId || null,
-                    chapter_id: row.querySelector('.test-chapter-select').value || null,
-                    duration: row.querySelector('.test-duration').value || 0,
-                    max_attempts: row.querySelector('.test-max-attempts').value || 0
-                });
+        const addTestBtn = e.target.closest('.btn-add-test');
+
+        if (addTestBtn) {
+
+            const chapterBlock =
+                addTestBtn.closest('.chapter-block');
+
+            if (!chapterBlock) return;
+
+            const testList =
+                chapterBlock.querySelector('.chapter-test-list');
+
+            if (!testList) return;
+
+            const testRow =
+                testRowTemplate(chapterBlock);
+
+            testList.appendChild(testRow);
+
+            testRow.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
             });
-            testsDataInput.value = JSON.stringify(testsData);
-        });
-    }
-});
 
-// ===== Preview ảnh khi chọn file (tạo mới hoặc sửa khóa học) =====
+            return;
+        }
+
+
+        // =================================================
+        // Xóa test
+        // =================================================
+        const removeTestBtn =
+            e.target.closest('.btn-remove-chapter-test');
+
+        if (removeTestBtn) {
+
+            const testRow =
+                removeTestBtn.closest('.chapter-test-row');
+
+            if (!testRow) return;
+
+            testRow.remove();
+
+            return;
+        }
+
+    });
+
+
+    // =====================================================
+    // Trước khi submit -> gom toàn bộ test thành JSON
+    // =====================================================
+    const courseForm =
+        chapterList.closest('form');
+
+    if (courseForm) {
+
+        courseForm.addEventListener('submit', function () {
+
+            const testsData = [];
+
+            chapterList
+                .querySelectorAll('.chapter-block')
+                .forEach(function (chapterBlock) {
+
+                    const chapterId =
+                        chapterBlock.dataset.chapterId || null;
+
+                    chapterBlock
+                        .querySelectorAll('.chapter-test-row')
+                        .forEach(function (testRow) {
+
+                            const durationInput =
+                                testRow.querySelector('.test-duration');
+
+                            const maxAttemptsInput =
+                                testRow.querySelector('.test-max-attempts');
+
+
+                            testsData.push({
+
+                                id:
+                                    testRow.dataset.testId || null,
+
+                                chapter_id:
+                                    chapterId,
+
+                                duration:
+                                    parseInt(
+                                        durationInput?.value || '1',
+                                        10
+                                    ),
+
+                                max_attempts:
+                                    parseInt(
+                                        maxAttemptsInput?.value || '1',
+                                        10
+                                    )
+
+                            });
+
+                        });
+
+                });
+
+
+            testsDataInput.value =
+                JSON.stringify(testsData);
+
+        });
+
+    }
+
+});
 document.addEventListener('DOMContentLoaded', function () {
     const imageInput = document.getElementById('imageInput');
     const previewWrap = document.getElementById('imagePreviewWrap');
