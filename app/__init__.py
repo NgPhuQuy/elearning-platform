@@ -47,4 +47,4 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
-from app import models  # noqa: E402
+from app import models  # noqa: F401,E402
