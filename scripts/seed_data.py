@@ -1,11 +1,5 @@
-import hashlib
-
-from app import app, db
+from app import app, dao, db
 from app.models import Admin, Category, PostCate, Teacher, User
-
-
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
 def seed_data():
@@ -15,7 +9,7 @@ def seed_data():
         if not User.query.filter_by(username="admin").first():
             admin_user = User(
                 username="admin",
-                password=hash_password("11111111"),
+                password=dao.hash_password("11111111"),
                 first_name="Nguyen Tran",
                 last_name="Admin",
                 email="admin@gmail.com",
@@ -24,12 +18,12 @@ def seed_data():
             db.session.add(admin_user)
             db.session.flush()
             db.session.add(Admin(user_id=admin_user.id, note="System Super Admin"))
-            print("✅ Đã tạo tài khoản Admin.")
+            print("Đã tạo tài khoản Admin.")
 
         if not User.query.filter_by(username="teacher01").first():
             teacher_user = User(
                 username="teacher01",
-                password=hash_password("11111111"),
+                password=dao.hash_password("11111111"),
                 first_name="Giảng viên",
                 last_name="Python",
                 email="teacher01@gmail.com",
@@ -37,7 +31,7 @@ def seed_data():
             db.session.add(teacher_user)
             db.session.flush()
             db.session.add(Teacher(user_id=teacher_user.id, note="Chuyên gia Backend"))
-            print("✅ Đã tạo tài khoản Teacher.")
+            print("Đã tạo tài khoản Teacher.")
 
         course_categories = ["Lập trình", "Thiết kế", "Marketing", "Data Science"]
         for cat in course_categories:
@@ -50,7 +44,7 @@ def seed_data():
                 db.session.add(PostCate(name=p_cat))
 
         db.session.commit()
-        print("🎉 Seed data hoàn tất!")
+        print("Seed data hoàn tất!")
 
 
 if __name__ == "__main__":
