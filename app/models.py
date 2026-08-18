@@ -6,7 +6,7 @@ from flask_login import UserMixin
 from sqlalchemy import Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import backref, relationship
 
-from app import app, db
+from app import db
 
 
 class BaseModel(db.Model):
@@ -25,7 +25,7 @@ class User(BaseModel, UserMixin):
     first_name = Column(String(255))
     last_name = Column(String(255))
     avatar = Column(String(255), default="")
-    email = Column(String(255), nullable=False, unique=True)
+    email = Column(String(255), unique=True)
     phone = Column(String(255))
     teacher_profile = relationship("Teacher", backref="user", uselist=False, lazy=True)
     bio = Column(String(255), default="")
@@ -35,26 +35,70 @@ class User(BaseModel, UserMixin):
         return f"{self.first_name} {self.last_name}"
 
 
-class Teacher(BaseModel):
-    user_id = Column(Integer, ForeignKey("user.id"), unique=True, nullable=False)
+class Admin(BaseModel):
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), unique=True)
+    admin = relationship("User", backref="admin", uselist=False, lazy=True)
     note = Column(String(255), default="")
-    courses = relationship(
-        "Course",
-        backref="teacher",
-        lazy=True,
-    )
+
+
+class Teacher(BaseModel):
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), unique=True)
+    note = Column(String(255), default="")
+    courses = relationship("Course", backref="teacher", lazy=True)
 
 
 class Chapter(BaseModel):
     description = Column(Text)
+    
+    
+class Conversation(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_date = Column(DateTime, default=datetime.now)
+    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    is_active = Column(Boolean, default=True)
+    title = Column(String(255))
+    image = Column(String(500), default="")
+    is_group = Column(Boolean, default=False)
+    members = relationship("ConversationMember", back_populates="conversation", cascade="all, delete-orphan", lazy=True)
+    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan", lazy=True)
+
+
+class ConversationMember(db.Model):
+    conversation_id = Column(Integer, ForeignKey("conversation.id", ondelete="CASCADE"), primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), primary_key=True)
+    joined_date = Column(DateTime, default=datetime.now)
+    last_read = Column(DateTime)
+    conversation = relationship("Conversation", back_populates="members")
+    user = relationship("User", backref="conversation_members")
 
     order = Column(Integer, default=1)
 
-    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
+class Message(BaseModel):
+    content = Column(Text)
+    attachment = Column(String(500))
+    is_edited = Column(Boolean, default=False)
+    conversation_id = Column(Integer, ForeignKey("conversation.id", ondelete="CASCADE"))
+    sender_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
+    conversation = relationship("Conversation", back_populates="messages")
+    sender = relationship("User", backref="messages")
+    reactions = relationship("MessageReaction", back_populates="message", cascade="all, delete-orphan", lazy=True)
 
     lessons = relationship("Lesson", backref="chapter", cascade="all, delete-orphan", lazy=True)
 
-    tests = relationship("Test", backref="chapter", cascade="all, delete-orphan", lazy=True)
+class MessageReaction(BaseModel):
+    emoji = Column(String(20))
+    message_id = Column(Integer, ForeignKey("message.id", ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
+    message = relationship("Message", back_populates="reactions")
+    user = relationship("User", backref="message_reactions")
+
+
+class Chapter(BaseModel):
+    description = Column(Text)
+    order = Column(Integer, default=1)
+    course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
+    lessons = relationship("Lesson", backref="chapter", cascade="all, delete-orphan", lazy="selectin")
+    tests = relationship("Test", backref="chapter", cascade="all, delete-orphan", lazy="selectin")
 
 
 class Category(BaseModel):
@@ -74,17 +118,15 @@ class CourseLevel(MyEnum):
 
 class Course(BaseModel):
     is_sale = Column(Boolean, default=True)
-    price = Column(Integer, nullable=False, default=0)
-    activate = Column(Boolean, nullable=False, default=False)
-    description = Column(String(1000), nullable=False)
-    image = Column(String(500), nullable=False, default="")
-
-    teacher_id = Column(Integer, ForeignKey("teacher.id"), nullable=False)
-
-    chapters = relationship("Chapter", backref="course", cascade="all, delete-orphan", lazy=True)
+    price = Column(Integer, default=0)
+    activate = Column(Boolean, default=False)
+    description = Column(String(1000))
+    image = Column(String(500), default="")
+    teacher_id = Column(Integer, ForeignKey("teacher.id"))
+    chapters = relationship("Chapter", backref="course", cascade="all, delete-orphan", lazy="selectin")
     course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True)
-    level = Column(Enum(CourseLevel), nullable=False, default=CourseLevel.BASIC)
-    enrollment = relationship("Enrollment", backref="course", cascade="all, delete-orphan", lazy=True)
+    level = Column(Enum(CourseLevel), default=CourseLevel.BASIC)
+    enrollments = relationship("Enrollment", backref="course", cascade="all, delete-orphan", lazy=True)
     tests = relationship("Test", backref="course", cascade="all, delete-orphan", lazy=True)
 
 
@@ -95,8 +137,8 @@ class LessonType(MyEnum):
 
 
 class VideoContent(db.Model):
-    lesson_id = Column(Integer, ForeignKey("lesson.id"), primary_key=True)
-    video_url = Column(String(500), nullable=False)
+    lesson_id = Column(Integer, ForeignKey("lesson.id", ondelete="CASCADE"), primary_key=True)
+    video_url = Column(String(500))
     duration = Column(Integer, default=0)
 
 
@@ -108,19 +150,17 @@ class DocContent(db.Model):
 
 
 class Lesson(BaseModel):
-    type = Column(Enum(LessonType), nullable=False, default=LessonType.NONE)
-    chapter_id = Column(Integer, ForeignKey("chapter.id"), nullable=False)
-    description = Column(String(255), nullable=False)
+    type = Column(Enum(LessonType), default=LessonType.NONE)
+    chapter_id = Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"))
+    description = Column(String(255))
     video_content = relationship("VideoContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
     doc_content = relationship("DocContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
 
 
 class CourseOutcome(BaseModel):
-    content = Column(String(255), nullable=False)
-
-    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
-
-    course = relationship("Course", backref="outcomes")
+    content = Column(String(255))
+    course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
+    course = relationship("Course", backref=backref("outcomes", cascade="all, delete-orphan"))
 
 
 class EnrollmentStatus(MyEnum):
@@ -130,97 +170,83 @@ class EnrollmentStatus(MyEnum):
 
 
 class Enrollment(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_date = Column(DateTime, default=datetime.now)
+    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     progress = Column(Integer, default=0)
-    price = Column(Integer, nullable=False, default=0)
+    price = Column(Integer, default=0)
     completed_date = Column(DateTime)
-    status = Column(Enum(EnrollmentStatus), nullable=False, default=EnrollmentStatus.IN_PROGRESS)
-    created_date = Column(DateTime, nullable=False, default=datetime.now(), primary_key=True)
-    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, primary_key=True)
-    course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"), nullable=False, primary_key=True)
+    status = Column(Enum(EnrollmentStatus), default=EnrollmentStatus.IN_PROGRESS)
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
+    course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
+    lesson_progresses = relationship("LessonProgress", backref="enrollment", cascade="all, delete-orphan", lazy=True)
+    scores = relationship("Score", backref="enrollment", cascade="all, delete-orphan", lazy=True)
 
 
 class LessonProgress(db.Model):
-    id = Column(Integer, primary_key=True)
-    lesson_id = Column(Integer, ForeignKey("lesson.id", ondelete="CASCADE"), nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_date = Column(DateTime, default=datetime.now)
+    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    enrollment_id = Column(Integer, ForeignKey("enrollment.id", ondelete="CASCADE"))
+    lesson_id = Column(Integer, ForeignKey("lesson.id", ondelete="CASCADE"))
     is_completed = Column(Boolean, default=False)
-    completed_at = Column(DateTime, nullable=True)
-    last_watched_at = Column(DateTime, nullable=True)
-
-    enrollment_created_date = Column(DateTime, nullable=False)
-    user_id = Column(Integer, nullable=False)
-    course_id = Column(Integer, nullable=False)
-
+    completed_at = Column(DateTime)
+    last_watched_at = Column(DateTime)
     lesson = relationship("Lesson")
-
-    __table_args__ = (
-        db.ForeignKeyConstraint(
-            ["enrollment_created_date", "user_id", "course_id"],
-            ["enrollment.created_date", "enrollment.user_id", "enrollment.course_id"],
-            ondelete="CASCADE",
-        ),
-        db.UniqueConstraint(
-            "user_id",
-            "course_id",
-            "enrollment_created_date",
-            "lesson_id",
-            name="uix_progress_per_attempt",
-        ),
-    )
 
 
 class Test(BaseModel):
-    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
-    chapter_id = Column(Integer, ForeignKey("chapter.id"), nullable=True)  # null nếu là bài thi cuối khóa
-    duration = Column(Integer, default=0)  # phút, 0 = không giới hạn thời gian
-    max_attempts = Column(Integer, default=1)  # 0 = không giới hạn số lần làm
-    pass_score = Column(Float, nullable=False, default=5)
-    questions = relationship("Question", backref="test", cascade="all, delete-orphan", lazy=True)
+    course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
+    chapter_id = Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"))
+    duration = Column(Integer, default=0)
+    max_attempts = Column(Integer, default=1)
+    questions = relationship("Question", backref="test", cascade="all, delete-orphan", lazy="selectin")
     scores = relationship("Score", backref="test", cascade="all, delete-orphan", lazy=True)
 
 
 class Question(BaseModel):
-    test_id = Column(Integer, ForeignKey("test.id"), nullable=False)
-    content = Column(Text, nullable=False)
-
-    answers = relationship("Answer", backref="question", cascade="all, delete-orphan", lazy=True)
+    test_id = Column(Integer, ForeignKey("test.id", ondelete="CASCADE"))
+    content = Column(Text)
+    answers = relationship("Answer", backref="question", cascade="all, delete-orphan", lazy="selectin")
 
 
 class Answer(BaseModel):
-    question_id = Column(Integer, ForeignKey("question.id"), nullable=False)
-    content = Column(String(500), nullable=False)
+    question_id = Column(Integer, ForeignKey("question.id", ondelete="CASCADE"))
+    content = Column(String(500))
     is_correct = Column(Boolean, default=False)
 
 
 class Score(db.Model):
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-    course_id = Column(Integer, nullable=False)
-    test_id = Column(Integer, ForeignKey("test.id"), nullable=False)
+    enrollment_id = Column(Integer, ForeignKey("enrollment.id", ondelete="CASCADE"))
+    test_id = Column(Integer, ForeignKey("test.id", ondelete="CASCADE"))
     attempt_number = Column(Integer, default=1)
-    score_value = Column(Float, nullable=False)
+    score_value = Column(DECIMAL(10, 2))
     is_passed = Column(Boolean, default=False)
     started_at = Column(DateTime, default=datetime.now)
     completed_at = Column(DateTime)
-    enrollment_created_date = Column(DateTime, nullable=False)  # chỉ để lọc, không ràng buộc gì
-
-    user = relationship("User", backref="scores")
+    __table_args__ = (db.UniqueConstraint("enrollment_id", "test_id", "attempt_number", name="uix_score_per_attempt"),)
 
 
 class PostCate(BaseModel):
-    description = Column(String(255), nullable=True)
-    posts = relationship("Post", secondary="post_category", back_populates="categories", lazy=True)
+    description = Column(String(255))
+    posts = relationship("Post", secondary="post_category", back_populates="categories", lazy="selectin")
 
 
-class Post(BaseModel):
-    title = Column(String(255), nullable=False)
-    content = Column(Text, nullable=False)
+class Post(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_date = Column(DateTime, default=datetime.now)
+    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    is_active = Column(Boolean, default=True)
+    title = Column(String(255))
+    content = Column(Text)
     image = Column(String(500), default="")
     view_count = Column(Integer, default=0)
     is_solved = Column(Boolean, default=False)
-    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
-    categories = relationship("PostCate", secondary="post_category", back_populates="posts", lazy=True)
-    comments = relationship("Comment", backref="post", cascade="all, delete-orphan", lazy=True)
-    reactions = relationship("ReactionPost", backref="post", cascade="all, delete-orphan", lazy=True)
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
+    categories = relationship("PostCate", secondary="post_category", back_populates="posts", lazy="selectin")
+    comments = relationship("Comment", backref="post", cascade="all, delete-orphan", lazy="selectin")
+    reactions = relationship("ReactionPost", backref="post", cascade="all, delete-orphan", lazy="selectin")
     user = relationship("User", backref="posts")
 
 
@@ -230,11 +256,11 @@ class PostCategory(db.Model):
 
 
 class Comment(BaseModel):
-    content = Column(Text, nullable=False)
+    content = Column(Text)
     is_accepted = Column(Boolean, default=False)
-    post_id = Column(Integer, ForeignKey(Post.id), nullable=False)
-    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
-    parent_comment_id = Column(Integer, ForeignKey("comment.id"))
+    post_id = Column(Integer, ForeignKey("post.id", ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
+    parent_comment_id = Column(Integer, ForeignKey("comment.id", ondelete="CASCADE"))
     replies = relationship("Comment", backref=backref("parent", remote_side="Comment.id"))
     reactions = relationship("ReactionComment", backref="comment", cascade="all, delete-orphan")
     user = relationship("User", backref="comments")
@@ -248,17 +274,19 @@ class VoteType(MyEnum):
 class Reactable(db.Model):
     __abstract__ = True
     id = Column(Integer, primary_key=True)
-    vote_type = Column(Enum(VoteType), nullable=False)
-    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    vote_type = Column(Enum(VoteType))
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
     created_date = Column(DateTime, default=datetime.now)
 
 
 class ReactionPost(Reactable):
-    post_id = Column(Integer, ForeignKey(Post.id), nullable=False)
+    post_id = Column(Integer, ForeignKey("post.id", ondelete="CASCADE"))
+    __table_args__ = (db.UniqueConstraint("user_id", "post_id", name="uix_vote_per_user_post"),)
 
 
 class ReactionComment(Reactable):
-    comment_id = Column(Integer, ForeignKey(Comment.id), nullable=False)
+    comment_id = Column(Integer, ForeignKey("comment.id", ondelete="CASCADE"))
+    __table_args__ = (db.UniqueConstraint("user_id", "comment_id", name="uix_vote_per_user_comment"),)
 
 
 class ApplicationStatus(MyEnum):
@@ -267,35 +295,29 @@ class ApplicationStatus(MyEnum):
     REJECTED = "Từ chối"
 
 
-class TeacherApplication(BaseModel):
-    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-
-    # Bước 1: thông tin cá nhân
+class TeacherApplication(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_date = Column(DateTime, default=datetime.now)
+    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
     workplace = Column(String(255))
     degree = Column(String(50))
-    major = Column(String(255), nullable=False)
-    bio = Column(String(500), nullable=False)
-
-    # Bước 2: hồ sơ chuyên môn
+    major = Column(String(255))
+    bio = Column(String(500))
     expertise = Column(String(500))
     experience = Column(String(50))
     teach_style = Column(String(20))
     linkedin = Column(String(255))
     website = Column(String(255))
-
-    # Bước 3: tài liệu xác minh
-    id_card_file = Column(String(500), nullable=False)
-    degree_file = Column(String(500), nullable=False)
-    cv_file = Column(String(500), nullable=False)
+    id_card_file = Column(String(500))
+    degree_file = Column(String(500))
+    cv_file = Column(String(500))
     extra_cert_file = Column(String(500))
     video_file = Column(String(500))
-
-    # Duyệt
-    status = Column(Enum(ApplicationStatus), nullable=False, default=ApplicationStatus.PENDING)
+    status = Column(Enum(ApplicationStatus), default=ApplicationStatus.PENDING)
     reject_reason = Column(String(500))
     reviewed_by = Column(Integer, ForeignKey("user.id"))
     reviewed_at = Column(DateTime)
-
     user = relationship("User", foreign_keys="TeacherApplication.user_id", backref="teacher_applications")
     reviewer = relationship("User", foreign_keys="TeacherApplication.reviewed_by")
 
@@ -307,98 +329,19 @@ class PaymentStatus(MyEnum):
     CANCELLED = "Đã hủy"
 
 
-class Payment(BaseModel):
-    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-    course_id = Column(Integer, ForeignKey("course.id"), nullable=False)
-
-    order_id = Column(String(50), unique=True, nullable=False)
-    request_id = Column(String(50), nullable=False)
+class Payment(db.Model):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_date = Column(DateTime, default=datetime.now)
+    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
+    course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
+    order_id = Column(String(50), unique=True)
+    request_id = Column(String(50))
     momo_trans_id = Column(String(50))
-
-    amount = Column(Integer, nullable=False)  # số tiền VND
-    status = Column(Enum(PaymentStatus), nullable=False, default=PaymentStatus.PENDING)
+    amount = Column(Integer)
+    status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)
     pay_type = Column(String(50))
     paid_at = Column(DateTime)
     invoice_sent = Column(Boolean, default=False)
-
     user = relationship("User", backref="payments")
     course = relationship("Course", backref="payments")
-
-
-if __name__ == "__main__":
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-        db.session.commit()
-        password = hashlib.sha256(b"11111111").hexdigest()
-        admin = User(
-            username="admin", password=password, first_name="Nguyen Tran Ad", last_name="Min", email="", phone=""
-        )
-        db.session.add(admin)
-
-        teacher_user1 = User(
-            username="teacher01",
-            password=password,
-            first_name="Nguyen",
-            last_name="An",
-            email="an.teacher@gmail.com",
-            phone="0911111111",
-        )
-
-        teacher_user2 = User(
-            username="teacher02",
-            password=password,
-            first_name="Tran",
-            last_name="Binh",
-            email="binh.teacher@gmail.com",
-            phone="0922222222",
-        )
-
-        user1 = User(
-            username="user01",
-            password=password,
-            first_name="Le",
-            last_name="Nam",
-            email="nam@gmail.com",
-            phone="0933333333",
-        )
-
-        user2 = User(
-            username="user02",
-            password=password,
-            first_name="Pham",
-            last_name="Hoa",
-            email="hoa@gmail.com",
-            phone="0944444444",
-        )
-
-        db.session.add_all([user1, user2, teacher_user1, teacher_user2])
-        db.session.commit()
-
-        teacher1 = Teacher(user_id=teacher_user1.id, note="Giảng viên lập trình Python và Flask")
-
-        teacher2 = Teacher(user_id=teacher_user2.id, note="Giảng viên Java Spring Boot")
-
-        db.session.add_all([teacher1, teacher2])
-        db.session.commit()
-
-        cate1 = PostCate(name="Công nghệ")
-        cate2 = PostCate(name="Lập trình")
-        cate3 = PostCate(name="Hỏi đáp")
-        cate4 = PostCate(name="Chia sẻ kinh nghiệm")
-
-        db.session.add_all([cate1, cate2, cate3, cate4])
-        cate1 = Category(name="Lập trình")
-        cate2 = Category(name="Thiết kế")
-        cate3 = Category(name="Marketing")
-        cate4 = Category(name="Kinh doanh")
-        cate5 = Category(name="Ngoại ngữ")
-        cate6 = Category(name="Data Science")
-        cate7 = Category(name="Trí tuệ nhân tạo")
-        cate8 = Category(name="An ninh mạng")
-        cate9 = Category(name="Phát triển Web")
-        cate10 = Category(name="Phát triển Mobile")
-
-        db.session.add_all([cate1, cate2, cate3, cate4, cate5, cate6, cate7, cate8, cate9, cate10])
-
-        db.session.commit()
