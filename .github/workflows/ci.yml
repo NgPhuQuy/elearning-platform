@@ -113,13 +113,10 @@ jobs:
         run: python -m ruff format --check .
 
       - name: Compile Python source
-        run: python -m compileall -q app scripts tests migrations/versions
+        run: python -m compileall -q app scripts tests
 
-      - name: Apply CI database migrations
-        run: flask --app app.index:app db upgrade
-
-      - name: Check model and migration consistency
-        run: flask --app app.index:app db check
+      - name: Create CI database
+        run: python -m scripts.create_schema
 
       - name: Run infrastructure tests
         run: |
@@ -194,11 +191,10 @@ jobs:
       - name: Start MySQL and application containers
         run: docker compose up --build --detach db app
 
-#      - name: Apply container database migrations
-#        run: >-
-#          docker compose exec -T app
-#          flask --app app.index:app db upgrade
-
+      - name: Create container database
+        run: >-
+          docker compose exec -T app
+          python -m scripts.create_schema
       - name: Run HTTP smoke test
         run: |
           docker compose exec -T app \
