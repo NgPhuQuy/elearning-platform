@@ -712,8 +712,11 @@ def recalc_enrollment_progress(enrollment):
 
     if enrollment.progress >= 100:
         if tests:
-            avg_score = sum(best_scores.values()) / len(best_scores) if best_scores else 0
-            if avg_score >= 5:
+            all_passed = all(
+                best_scores.get(t.id, 0) >= t.pass_score
+                for t in tests
+            )
+            if all_passed:
                 enrollment.status = EnrollmentStatus.COMPLETED
                 enrollment.completed_date = datetime.now()
             else:
@@ -905,7 +908,7 @@ def submit_test_score(user_id, course_id, test_id, answers):
             correct += 1
 
     score_value = round(correct / total * 10, 2)
-    is_passed = score_value >= 5
+    is_passed = score_value >= test.pass_score
 
     attempt_number = (
         Score.query.filter_by(
@@ -1090,6 +1093,7 @@ def sync_tests(course_id, teacher_id, tests_data):
 
     for test_data in tests_data:
         test_id = test_data.get("id")
+        name = (test_data.get("name") or "").strip()
         chapter_id = test_data.get("chapter_id") or None
 
         if chapter_id:
@@ -1105,16 +1109,30 @@ def sync_tests(course_id, teacher_id, tests_data):
             max_attempts = int(test_data.get("max_attempts") or 0)
         except (TypeError, ValueError):
             max_attempts = 0
+        try:
+            pass_score = float(test_data.get("pass_score") or 5)
+        except (TypeError, ValueError):
+            pass_score = 5
+        pass_score = min(max(pass_score, 0), 10)
 
         if test_id:
             test = Test.query.filter_by(id=int(test_id), course_id=course_id).first()
             if not test:
                 continue
+            test.name = name
             test.chapter_id = chapter_id
             test.duration = duration
             test.max_attempts = max_attempts
+            test.pass_score = pass_score
         else:
-            test = Test(course_id=course_id, chapter_id=chapter_id, duration=duration, max_attempts=max_attempts)
+            test = Test(
+                course_id=course_id,
+                chapter_id=chapter_id,
+                name=name,
+                duration=duration,
+                max_attempts=max_attempts,
+                pass_score=pass_score,
+            )
             db.session.add(test)
 
         db.session.flush()
