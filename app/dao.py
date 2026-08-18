@@ -612,70 +612,167 @@ def get_questions(test_id):
     return Question.query.filter_by(test_id=test_id).all()
 
 
-def sync_questions(test_id, teacher_id, questions_data):
+def sync_questions(test_id, teacher_id, questions_data, pass_score=5):
     test = get_test_for_teacher(test_id, teacher_id)
+
     if not test:
         return False
 
+    # ==============================
+    # LƯU ĐIỂM ĐẠT CỦA BÀI TEST
+    # ==============================
+    try:
+        pass_score = int(pass_score)
+    except (TypeError, ValueError):
+        pass_score = 5
+
+    # Giới hạn điểm đạt từ 0 -> 10
+    pass_score = max(0, min(pass_score, 10))
+
+    test.pass_score = pass_score
+
+    # ==============================
+    # ĐỒNG BỘ CÂU HỎI
+    # ==============================
     existing_question_ids = {q.id for q in test.questions}
     kept_question_ids = set()
 
     for question_data in questions_data:
+
         question_id = question_data.get("id")
-        content = (question_data.get("content") or "").strip()
+
+        content = (
+            question_data.get("content") or ""
+        ).strip()
+
+        # Câu hỏi trống thì bỏ qua
         if not content:
             continue
 
+        # --------------------------
+        # CÂU HỎI CŨ
+        # --------------------------
         if question_id:
-            question = Question.query.filter_by(id=int(question_id), test_id=test_id).first()
+
+            question = Question.query.filter_by(
+                id=int(question_id),
+                test_id=test_id
+            ).first()
+
             if not question:
                 continue
+
             question.content = content
+
+        # --------------------------
+        # CÂU HỎI MỚI
+        # --------------------------
         else:
-            question = Question(test_id=test_id, content=content)
+
+            question = Question(
+                test_id=test_id,
+                content=content
+            )
+
             db.session.add(question)
             db.session.flush()
 
         kept_question_ids.add(question.id)
 
-        existing_answer_ids = {a.id for a in question.answers}
+        # ==========================
+        # ĐỒNG BỘ ĐÁP ÁN
+        # ==========================
+        existing_answer_ids = {
+            answer.id
+            for answer in question.answers
+        }
+
         kept_answer_ids = set()
 
-        for answer_data in question_data.get("answers", []):
-            answer_id = answer_data.get("id")
-            a_content = (answer_data.get("content") or "").strip()
-            if not a_content:
-                continue
-            is_correct = bool(answer_data.get("is_correct"))
+        answers_data = question_data.get("answers", [])
 
+        # Backend cũng giới hạn tối đa 4 đáp án
+        answers_data = answers_data[:4]
+
+        for answer_data in answers_data:
+
+            answer_id = answer_data.get("id")
+
+            answer_content = (
+                answer_data.get("content") or ""
+            ).strip()
+
+            # Đáp án trống thì bỏ qua
+            if not answer_content:
+                continue
+
+            is_correct = bool(
+                answer_data.get("is_correct")
+            )
+
+            # ----------------------
+            # ĐÁP ÁN CŨ
+            # ----------------------
             if answer_id:
-                answer = Answer.query.filter_by(id=int(answer_id), question_id=question.id).first()
+
+                answer = Answer.query.filter_by(
+                    id=int(answer_id),
+                    question_id=question.id
+                ).first()
+
                 if not answer:
                     continue
-                answer.content = a_content
+
+                answer.content = answer_content
                 answer.is_correct = is_correct
+
+            # ----------------------
+            # ĐÁP ÁN MỚI
+            # ----------------------
             else:
-                answer = Answer(question_id=question.id, content=a_content, is_correct=is_correct)
+
+                answer = Answer(
+                    question_id=question.id,
+                    content=answer_content,
+                    is_correct=is_correct
+                )
+
                 db.session.add(answer)
                 db.session.flush()
 
             kept_answer_ids.add(answer.id)
 
+        # Xóa đáp án đã bị xóa trên giao diện
         for old_id in existing_answer_ids - kept_answer_ids:
+
             old_answer = Answer.query.get(old_id)
+
             if old_answer:
                 db.session.delete(old_answer)
 
+    # ==============================
+    # XÓA CÂU HỎI ĐÃ BỊ XÓA
+    # ==============================
     for old_id in existing_question_ids - kept_question_ids:
+
         old_question = Question.query.get(old_id)
+
         if old_question:
             db.session.delete(old_question)
 
+    # ==============================
+    # COMMIT
+    # ==============================
     try:
+
         db.session.commit()
+
         return True
+
     except Exception:
+
         db.session.rollback()
+
         return False
 
 

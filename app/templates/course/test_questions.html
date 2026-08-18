@@ -1,6 +1,6 @@
 {% extends "layout/base.html" %}
 
-{% block title %}Tạo bài kiểm tra · EduForum{% endblock %}
+{% block title %}Quản lý câu hỏi · EduForum{% endblock %}
 
 {% block content %}
 
@@ -24,7 +24,7 @@
 
         <div>
           <div class="test-title">
-            Tạo bài kiểm tra
+            Quản lý câu hỏi
           </div>
 
           <div class="test-subtitle">
@@ -52,7 +52,7 @@
     <!-- FORM -->
     <form method="POST" id="questionsForm">
 
-      <!-- JS sẽ đưa JSON câu hỏi vào đây -->
+      <!-- Dữ liệu câu hỏi -->
       <input
         type="hidden"
         name="questions_data"
@@ -64,14 +64,18 @@
         type="hidden"
         name="pass_score"
         id="passScoreInput"
-        value="{{ test.pass_score|default(5) }}"
+        value="{{ test.pass_score if test.pass_score is not none else 5 }}"
       >
 
 
       <!-- BODY -->
       <div class="test-modal-body">
 
-        <!-- CÀI ĐẶT -->
+
+        <!-- =========================================
+             CÀI ĐẶT BÀI TEST
+        ========================================== -->
+
         <div class="test-settings">
 
           <div class="settings-title">
@@ -89,10 +93,11 @@
               class="pass-score-value"
               id="passScoreValue"
             >
-              {{ test.pass_score|default(5) }}
+              {{ test.pass_score if test.pass_score is not none else 5 }}
             </div>
 
           </div>
+
 
           <input
             type="range"
@@ -101,8 +106,9 @@
             min="0"
             max="10"
             step="1"
-            value="{{ test.pass_score|default(5) }}"
+            value="{{ test.pass_score if test.pass_score is not none else 5 }}"
           >
+
 
           <div class="score-scale">
             <span>0</span>
@@ -113,7 +119,10 @@
         </div>
 
 
-        <!-- DANH SÁCH CÂU HỎI -->
+        <!-- =========================================
+             DANH SÁCH CÂU HỎI
+        ========================================== -->
+
         <div
           id="questionList"
           class="question-list"
@@ -128,6 +137,7 @@
           >
 
             <!-- HEADER CÂU HỎI -->
+
             <div class="question-header">
 
               <span class="question-number">
@@ -151,7 +161,10 @@
             </div>
 
 
-            <!-- ĐÁP ÁN -->
+            <!-- =====================================
+                 ĐÁP ÁN
+            ====================================== -->
+
             <div class="question-body">
 
               <div class="answer-list">
@@ -163,6 +176,8 @@
                   data-answer-id="{{ answer.id }}"
                 >
 
+                  <!-- ĐÁP ÁN ĐÚNG -->
+
                   <input
                     type="radio"
                     class="answer-correct-radio"
@@ -170,9 +185,15 @@
                     {% if answer.is_correct %}checked{% endif %}
                   >
 
+
+                  <!-- A / B / C / D -->
+
                   <span class="answer-label">
                     {{ 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[loop.index0] }}
                   </span>
+
+
+                  <!-- NỘI DUNG ĐÁP ÁN -->
 
                   <input
                     type="text"
@@ -180,6 +201,9 @@
                     value="{{ answer.content }}"
                     placeholder="Đáp án {{ 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[loop.index0] }}..."
                   >
+
+
+                  <!-- XÓA ĐÁP ÁN -->
 
                   <button
                     type="button"
@@ -195,6 +219,8 @@
 
               </div>
 
+
+              <!-- THÊM ĐÁP ÁN -->
 
               {% if question.answers|length < 4 %}
 
@@ -217,7 +243,10 @@
         </div>
 
 
-        <!-- THÊM CÂU HỎI -->
+        <!-- =========================================
+             THÊM CÂU HỎI
+        ========================================== -->
+
         <button
           type="button"
           id="btnAddQuestion"
@@ -228,8 +257,11 @@
         </button>
 
 
+        <!-- NOTE -->
+
         <div class="question-note">
           <i class="bi bi-info-circle"></i>
+
           Mỗi câu hỏi bắt đầu với 2 đáp án và tối đa 4 đáp án.
           Tick chọn đáp án đúng cho mỗi câu hỏi.
         </div>
@@ -237,18 +269,26 @@
       </div>
 
 
-      <!-- FOOTER -->
+      <!-- =========================================
+           FOOTER
+      ========================================== -->
+
       <div class="test-modal-footer">
 
         <div class="test-summary">
+
           <strong id="questionCount">
             {{ questions|length }}
           </strong>
+
           câu · Đạt ≥
+
           <strong id="footerPassScore">
-            {{ test.pass_score|default(5) }}
+            {{ test.pass_score if test.pass_score is not none else 5 }}
           </strong>/10
+
         </div>
+
 
         <div class="test-footer-actions">
 
@@ -259,12 +299,13 @@
             Hủy
           </a>
 
+
           <button
             type="submit"
             class="btn-save-test"
           >
             <i class="bi bi-check-lg"></i>
-            Tạo bài test
+            Lưu câu hỏi
           </button>
 
         </div>
@@ -278,7 +319,7 @@
 </div>
 
 
-<!-- JS CŨ CỦA MÀY -->
+<!-- JS -->
 <script src="{{ url_for('static', filename='js/test_questions.js') }}"></script>
 
 {% endblock %}

@@ -196,7 +196,7 @@ class Test(BaseModel):
     max_attempts = Column(Integer, default=1)
     questions = relationship("Question", backref="test", cascade="all, delete-orphan", lazy="selectin")
     scores = relationship("Score", backref="test", cascade="all, delete-orphan", lazy=True)
-
+    pass_score = Column(DECIMAL(10, 2), default=5)
 
 class Question(BaseModel):
     test_id = Column(Integer, ForeignKey("test.id", ondelete="CASCADE"))
