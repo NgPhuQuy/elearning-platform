@@ -445,29 +445,19 @@ def take_test(course_id, test_id):
         return redirect(url_for("course_detail", course_id=course_id))
 
     # LẤY LỊCH SỬ LÀM BÀI TRƯỚC
-    attempts = dao.get_test_attempts(
-        current_user.id,
-        course_id,
-        test_id
-    )
+    attempts = dao.get_test_attempts(current_user.id, course_id, test_id)
 
     # SỐ LẦN ĐÃ LÀM
     attempts_used = len(attempts)
 
     # SỐ LẦN CÒN LẠI
     if test.max_attempts and test.max_attempts > 0:
-        attempts_left = max(
-            test.max_attempts - attempts_used,
-            0
-        )
+        attempts_left = max(test.max_attempts - attempts_used, 0)
     else:
         attempts_left = None
 
     # ĐIỂM CAO NHẤT
-    best_score = max(
-        (float(a.score_value) for a in attempts),
-        default=None
-    )
+    best_score = max((float(a.score_value) for a in attempts), default=None)
 
     return render_template(
         "course/test_info.html",
@@ -479,18 +469,14 @@ def take_test(course_id, test_id):
         best_score=best_score,
     )
 
-@app.route(
-    "/courses/<int:course_id>/tests/<int:test_id>/start",
-    methods=["POST"]
-)
+
+@app.route("/courses/<int:course_id>/tests/<int:test_id>/start", methods=["POST"])
 @login_required
 def start_test(course_id, test_id):
     test = dao.get_test_details(test_id)
 
     if not test or test.course_id != course_id:
-        return redirect(
-            url_for("course_detail", course_id=course_id)
-        )
+        return redirect(url_for("course_detail", course_id=course_id))
 
     ok, error = dao.can_take_test(current_user.id, test)
 
@@ -511,20 +497,10 @@ def start_test(course_id, test_id):
         session[session_key] = datetime.now().isoformat()
         session.modified = True
 
-    return redirect(
-        url_for(
-            "do_test",
-            course_id=course_id,
-            test_id=test_id
-        )
-    )
+    return redirect(url_for("do_test", course_id=course_id, test_id=test_id))
 
 
-
-@app.route(
-    "/courses/<int:course_id>/tests/<int:test_id>/submit",
-    methods=["POST"]
-)
+@app.route("/courses/<int:course_id>/tests/<int:test_id>/submit", methods=["POST"])
 @login_required
 def submit_test(course_id, test_id):
 
@@ -536,18 +512,10 @@ def submit_test(course_id, test_id):
             answers[question_id] = value
 
     # Xóa timer của attempt hiện tại
-    session.pop(
-        f"test_start_{test_id}",
-        None
-    )
+    session.pop(f"test_start_{test_id}", None)
     session.modified = True
 
-    score, error = dao.submit_test_score(
-        current_user.id,
-        course_id,
-        test_id,
-        answers
-    )
+    score, error = dao.submit_test_score(current_user.id, course_id, test_id, answers)
 
     if error:
         return render_template(
@@ -557,43 +525,24 @@ def submit_test(course_id, test_id):
             error=error,
         )
 
-    return redirect(
-        url_for(
-            "test_result",
-            course_id=course_id,
-            test_id=test_id
-        )
-    )
+    return redirect(url_for("test_result", course_id=course_id, test_id=test_id))
+
+
 @app.route("/courses/<int:course_id>/tests/<int:test_id>/result")
 @login_required
 def test_result(course_id, test_id):
     test = dao.get_test_details(test_id)
 
     if not test or test.course_id != course_id:
-        return redirect(
-            url_for("course_detail", course_id=course_id)
-        )
+        return redirect(url_for("course_detail", course_id=course_id))
 
-    attempts = dao.get_test_attempts(
-        current_user.id,
-        course_id,
-        test_id
-    )
+    attempts = dao.get_test_attempts(current_user.id, course_id, test_id)
 
     if not attempts:
-        return redirect(
-            url_for(
-                "take_test",
-                course_id=course_id,
-                test_id=test_id
-            )
-        )
+        return redirect(url_for("take_test", course_id=course_id, test_id=test_id))
 
     # Lấy lần có điểm cao nhất
-    best_attempt = max(
-        attempts,
-        key=lambda a: float(a.score_value)
-    )
+    best_attempt = max(attempts, key=lambda a: float(a.score_value))
 
     return render_template(
         "course/test_result.html",
@@ -603,20 +552,16 @@ def test_result(course_id, test_id):
         attempts=attempts,
     )
 
+
 @app.route("/courses/<int:course_id>/tests/<int:test_id>/do")
 @login_required
 def do_test(course_id, test_id):
     test = dao.get_test_details(test_id)
 
     if not test or test.course_id != course_id:
-        return redirect(
-            url_for("course_detail", course_id=course_id)
-        )
+        return redirect(url_for("course_detail", course_id=course_id))
 
-    ok, error = dao.can_take_test(
-        current_user.id,
-        test
-    )
+    ok, error = dao.can_take_test(current_user.id, test)
 
     if not ok:
         return render_template(
@@ -631,26 +576,16 @@ def do_test(course_id, test_id):
     # ==============================
     # LỊCH SỬ LÀM BÀI / ĐIỂM CAO NHẤT
     # ==============================
-    attempts = dao.get_test_attempts(
-        current_user.id,
-        course_id,
-        test_id
-    )
+    attempts = dao.get_test_attempts(current_user.id, course_id, test_id)
 
     attempts_used = len(attempts)
 
     if test.max_attempts and test.max_attempts > 0:
-        attempts_left = max(
-            test.max_attempts - attempts_used,
-            0
-        )
+        attempts_left = max(test.max_attempts - attempts_used, 0)
     else:
         attempts_left = None
 
-    best_score = max(
-        (float(a.score_value) for a in attempts),
-        default=None
-    )
+    best_score = max((float(a.score_value) for a in attempts), default=None)
 
     # ==============================
     # LẤY THỜI GIAN BẮT ĐẦU
@@ -661,19 +596,13 @@ def do_test(course_id, test_id):
     remaining_seconds = None
 
     if test.duration and test.duration > 0:
-
         if start_time_str:
             try:
                 start_time = datetime.fromisoformat(start_time_str)
 
-                elapsed_seconds = (
-                    datetime.now() - start_time
-                ).total_seconds()
+                elapsed_seconds = (datetime.now() - start_time).total_seconds()
 
-                remaining_seconds = max(
-                    0,
-                    int(test.duration * 60 - elapsed_seconds)
-                )
+                remaining_seconds = max(0, int(test.duration * 60 - elapsed_seconds))
 
             except (ValueError, TypeError):
                 remaining_seconds = 0
@@ -709,6 +638,7 @@ def do_test(course_id, test_id):
         attempts_left=attempts_left,
         best_score=best_score,
     )
+
 
 def get_doc_kind(ext):
     ext = ext.lower()
@@ -881,16 +811,12 @@ def delete_lesson(lesson_id):
 @login_required
 @teacher_required
 def manage_test_questions(course_id, test_id):
-    test = dao.get_test_for_teacher(
-        test_id,
-        current_user.teacher_profile.id
-    )
+    test = dao.get_test_for_teacher(test_id, current_user.teacher_profile.id)
 
     if not test or test.course_id != course_id:
         return redirect(url_for("update_course", course_id=course_id))
 
     if request.method == "POST":
-
         # ==============================
         # LẤY ĐIỂM ĐẠT
         # ==============================
@@ -937,12 +863,9 @@ def manage_test_questions(course_id, test_id):
     # ==============================
     questions = dao.get_questions(test_id)
 
-    return render_template(
-        "course/test_questions.html",
-        course_id=course_id,
-        test=test,
-        questions=questions
-    )
+    return render_template("course/test_questions.html", course_id=course_id, test=test, questions=questions)
+
+
 # forum
 
 
