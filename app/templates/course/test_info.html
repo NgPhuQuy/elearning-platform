@@ -4,6 +4,17 @@
 
 {% block content %}
 
+{# Tính số lượt đã dùng và còn lại trực tiếp từ danh sách attempts #}
+{% set attempts_used_calculated = attempts|length %}
+
+{% if test.max_attempts is not none and test.max_attempts > 0 %}
+    {% set max_attempts_value = test.max_attempts %}
+    {% set attempts_left_calculated = [max_attempts_value - attempts_used_calculated, 0]|max %}
+{% else %}
+    {% set max_attempts_value = none %}
+    {% set attempts_left_calculated = none %}
+{% endif %}
+
 <div class="d-flex flex-column gap-4" style="max-width: 900px; margin: 0 auto;">
 
     <!-- HEADER -->
@@ -25,6 +36,7 @@
             </div>
 
             <div>
+
                 <div
                     class="fw-semibold mb-1"
                     style="color:#7226ff;"
@@ -37,7 +49,9 @@
                 </h1>
 
                 <div class="text-muted-ef">
+
                     {{ test.questions|length }} câu
+
                     {% if test.duration and test.duration > 0 %}
                         · {{ test.duration }} phút
                     {% endif %}
@@ -45,7 +59,9 @@
                     {% if test.pass_score is not none %}
                         · Điểm đạt: {{ test.pass_score }}/10
                     {% endif %}
+
                 </div>
+
             </div>
 
         </div>
@@ -64,31 +80,58 @@
                     background:#f7f8ff;
                 "
             >
-                {% if attempts_left is none %}
+
+                {% if attempts_left_calculated is none %}
+
                     <span
                         class="font-display"
                         style="font-size:28px;color:#4338ca;"
                     >
                         ∞
                     </span>
+
                     <small class="text-muted-ef">
                         không giới hạn
                     </small>
+
                 {% else %}
+
                     <span
                         class="font-display"
-                        style="font-size:32px;color:#4338ca;"
+                        style="
+                            font-size:32px;
+                            color:
+                            {% if attempts_left_calculated > 0 %}
+                                #4338ca
+                            {% else %}
+                                #dc2626
+                            {% endif %};
+                        "
                     >
-                        {{ attempts_left }}
+                        {{ attempts_left_calculated }}
                     </span>
+
                     <small class="text-muted-ef">
                         lần còn lại
                     </small>
+
                 {% endif %}
+
             </div>
 
             <div class="small text-muted-ef mt-2">
-                Đã làm {{ attempts_used }}/{{ test.max_attempts or '∞' }}
+
+                Đã làm
+                {{ attempts_used_calculated }}
+
+                /
+
+                {% if max_attempts_value is none %}
+                    ∞
+                {% else %}
+                    {{ max_attempts_value }}
+                {% endif %}
+
             </div>
 
         </div>
@@ -123,11 +166,15 @@
 
 
         <p class="text-muted-ef mb-1">
+
             {{ test.questions|length }} câu hỏi trắc nghiệm
+
             {% if test.duration and test.duration > 0 %}
                 · Thời gian ~ {{ test.duration }} phút
             {% endif %}
+
         </p>
+
 
         <p class="text-muted-ef">
             Đọc kỹ câu hỏi trước khi chọn đáp án.
@@ -140,29 +187,49 @@
         >
 
             <span class="text-indigo">
+
                 <i class="bi bi-list-check me-1"></i>
+
                 {{ test.questions|length }} câu
+
             </span>
 
 
-            {% if attempts_left is none %}
+            {% if attempts_left_calculated is none %}
+
                 <span class="text-indigo">
+
                     <i class="bi bi-arrow-repeat me-1"></i>
+
                     Không giới hạn lượt
+
                 </span>
+
             {% else %}
-                <span class="text-indigo">
+
+                <span
+                    class="{% if attempts_left_calculated > 0 %}text-indigo{% else %}text-danger{% endif %}"
+                >
+
                     <i class="bi bi-arrow-repeat me-1"></i>
-                    {{ attempts_left }} lần còn lại
+
+                    {{ attempts_left_calculated }} lần còn lại
+
                 </span>
+
             {% endif %}
 
 
             {% if test.pass_score is not none %}
+
                 <span style="color:#00a878;">
+
                     <i class="bi bi-award me-1"></i>
+
                     Đạt ≥ {{ test.pass_score }}/10
+
                 </span>
+
             {% endif %}
 
         </div>
@@ -170,6 +237,7 @@
 
         <!-- ĐIỂM CAO NHẤT -->
         {% if best_score is not none %}
+
         <div
             class="mb-4"
             style="
@@ -181,6 +249,7 @@
                 background:#f8fafc;
             "
         >
+
             <i class="bi bi-star-fill text-warning"></i>
 
             <span class="small text-muted-ef">
@@ -190,41 +259,56 @@
             <strong>
                 {{ best_score }}/10
             </strong>
+
         </div>
+
         {% endif %}
 
 
-        <!-- START -->
-        {% if attempts_left is none or attempts_left > 0 %}
+        <!-- NÚT BẮT ĐẦU -->
+        {% if attempts_left_calculated is none or attempts_left_calculated > 0 %}
 
-        <form
-            method="POST"
-            action="{{ url_for(
-                'start_test',
-                course_id=course_id,
-                test_id=test.id
-            ) }}"
-        >
-
-            <button
-                type="submit"
-                class="btn btn-indigo px-5 py-3 d-inline-flex align-items-center gap-2"
-                style="
-                    font-size:18px;
-                    border-radius:14px;
-                "
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'start_test',
+                    course_id=course_id,
+                    test_id=test.id
+                ) }}"
             >
-                <i class="bi bi-play-fill"></i>
-                Bắt đầu làm bài
-            </button>
 
-        </form>
+                <button
+                    type="submit"
+                    class="btn btn-indigo px-5 py-3 d-inline-flex align-items-center gap-2"
+                    style="
+                        font-size:18px;
+                        border-radius:14px;
+                    "
+                >
+
+                    <i class="bi bi-play-fill"></i>
+
+                    Bắt đầu làm bài
+
+                </button>
+
+            </form>
 
         {% else %}
 
-        <div class="text-danger fw-semibold">
-            Bạn đã hết lượt làm bài.
-        </div>
+            <div class="d-flex flex-column align-items-center gap-2">
+
+                <div class="text-danger fw-semibold">
+                    Bạn đã hết lượt làm bài.
+                </div>
+
+                <small class="text-muted-ef">
+                    Bạn đã sử dụng
+                    {{ attempts_used_calculated }}/{{ max_attempts_value }}
+                    lượt.
+                </small>
+
+            </div>
 
         {% endif %}
 
@@ -236,9 +320,18 @@
 
     <div class="card-ef p-4">
 
-        <h3 class="font-display fs-5 mb-3">
-            Lịch sử làm bài
-        </h3>
+        <div class="d-flex align-items-center justify-content-between mb-3">
+
+            <h3 class="font-display fs-5 mb-0">
+                Lịch sử làm bài
+            </h3>
+
+            <span class="small text-muted-ef">
+                {{ attempts_used_calculated }} lần đã làm
+            </span>
+
+        </div>
+
 
         <div class="d-flex flex-column gap-2">
 
@@ -250,15 +343,24 @@
             >
 
                 <div>
+
                     <div class="fw-semibold">
-                        Lần {{ attempts|length - loop.index + 1 }}
+
+                        Lần
+                        {{ attempts_used_calculated - loop.index + 1 }}
+
                     </div>
 
                     {% if attempt.created_date %}
+
                     <div class="small text-muted-ef">
+
                         {{ attempt.created_date.strftime('%d/%m/%Y %H:%M') }}
+
                     </div>
+
                     {% endif %}
+
                 </div>
 
 
@@ -272,17 +374,24 @@
                             text-danger
                         {% endif %}"
                     >
+
                         {{ attempt.score_value }}/10
+
                     </div>
 
+
                     {% if attempt.score_value >= (test.pass_score or 5) %}
+
                         <small class="text-success">
                             Đạt
                         </small>
+
                     {% else %}
+
                         <small class="text-danger">
                             Chưa đạt
                         </small>
+
                     {% endif %}
 
                 </div>

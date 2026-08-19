@@ -60,7 +60,10 @@
   <div class="row g-4" id="courseGrid">
     {% for course in courses %}
     {% if not (current_user.is_authenticated and current_user.teacher_profile and course.teacher_id == current_user.teacher_profile.id) %}
-    <div class="col-md-6 col-lg-4 course-item" data-name="{{ course.name|lower }}" data-level="{{ course.level.name }}">
+    <div class="col-md-6 col-lg-4 course-item"
+         data-name="{{ course.name|lower }}"
+         data-teacher="{{ (course.teacher.user.first_name ~ ' ' ~ course.teacher.user.last_name)|lower if course.teacher and course.teacher.user else '' }}"
+         data-level="{{ course.level.name }}">
       <a href="{{ url_for('course_detail', course_id=course.id) }}" class="card-ef ef-course-card d-block text-decoration-none text-reset overflow-hidden h-100">
         <div class="position-relative bg-slate-100" style="height:160px; overflow:hidden;">
           {% if course.image %}

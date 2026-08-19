@@ -551,48 +551,128 @@ def delete_outcome(outcome_id):
 
 
 def get_latest_enrollment(user_id, course_id):
-    """Lấy lần enroll gần nhất của user với course này."""
+    """
+    Lấy enrollment hiện tại của user trong course.
+
+    Ưu tiên enrollment mới nhất theo created_date + id
+    để tránh trường hợp 2 enrollment có cùng thời gian tạo.
+    """
     return (
-        Enrollment.query.filter_by(user_id=user_id, course_id=course_id)
-        .order_by(Enrollment.created_date.desc())
+        Enrollment.query
+        .filter_by(
+            user_id=user_id,
+            course_id=course_id
+        )
+        .order_by(
+            Enrollment.created_date.desc(),
+            Enrollment.id.desc()
+        )
         .first()
     )
 
 
 def is_enrolled(user_id, course_id):
-    """Coi là 'đang enrolled' nếu lần học gần nhất KHÔNG phải FAILED."""
+    """
+    User được xem là đang có enrollment nếu enrollment mới nhất
+    tồn tại và chưa FAILED.
+    """
     latest = get_latest_enrollment(user_id, course_id)
-    return latest is not None and latest.status != EnrollmentStatus.FAILED
 
+    return (
+        latest is not None
+        and latest.status != EnrollmentStatus.FAILED
+    )
 
 def enroll_course(user_id, course_id):
     course = Course.query.get(course_id)
+
     if not course:
         return None, "Khóa học không tồn tại."
+
     if not course.activate:
         return None, "Khóa học chưa được công khai."
 
-    if course.teacher_id and current_user.is_authenticated and current_user.teacher_profile:
+    if (
+        course.teacher_id
+        and current_user.is_authenticated
+        and current_user.teacher_profile
+    ):
         if course.teacher_id == current_user.teacher_profile.id:
             return None, "Bạn không thể tự đăng ký khóa học do chính mình tạo."
 
-    if is_enrolled(user_id, course_id):
+    # ==========================================================
+    # LẤY ENROLLMENT MỚI NHẤT
+    # ==========================================================
+
+    enrollment = get_latest_enrollment(
+        user_id,
+        course_id
+    )
+
+    # ==========================================================
+    # ĐANG HỌC / ĐÃ HOÀN THÀNH
+    # ==========================================================
+
+    if enrollment and enrollment.status != EnrollmentStatus.FAILED:
         return None, "Bạn đang học hoặc đã hoàn thành khóa học này rồi."
+
+    # ==========================================================
+    # KHÓA HỌC CÓ PHÍ
+    # ==========================================================
 
     if course.price and course.price > 0:
         return None, "Khóa học có phí, vui lòng thanh toán trước khi đăng ký."
+
+    # ==========================================================
+    # NẾU ĐÃ FAILED -> HỌC LẠI
+    #
+    # Dùng lại enrollment cũ.
+    # Reset tiến độ bài học.
+    # Reset điểm/lần làm test của lần học trước.
+    # ==========================================================
+
+    if enrollment and enrollment.status == EnrollmentStatus.FAILED:
+
+        enrollment.status = EnrollmentStatus.IN_PROGRESS
+        enrollment.progress = 0
+        enrollment.completed_date = None
+
+        # Reset tiến độ bài học
+        LessonProgress.query.filter_by(
+            enrollment_id=enrollment.id
+        ).delete()
+
+        # Reset lịch sử làm test của lần học trước
+        Score.query.filter_by(
+            enrollment_id=enrollment.id
+        ).delete()
+
+        try:
+            db.session.commit()
+            return enrollment, None
+
+        except Exception:
+            db.session.rollback()
+            return None, "Hệ thống lỗi, vui lòng thử lại sau!"
+
+    # ==========================================================
+    # CHƯA TỪNG ĐĂNG KÝ
+    # ==========================================================
 
     enrollment = Enrollment(
         user_id=user_id,
         course_id=course_id,
         price=0,
         status=EnrollmentStatus.IN_PROGRESS,
+        progress=0,
     )
 
     try:
         db.session.add(enrollment)
         db.session.commit()
+
         return enrollment, None
+
     except Exception:
         db.session.rollback()
         return None, "Hệ thống lỗi, vui lòng thử lại sau!"
@@ -811,21 +891,46 @@ def recalc_enrollment_progress(enrollment):
         is_completed=True,
     ).count()
 
-    # Lấy điểm cao nhất của từng test trong enrollment hiện tại
+    # Lấy điểm cao nhất VÀ số lần đã làm của từng test trong enrollment hiện tại
     scores = Score.query.filter_by(
         enrollment_id=enrollment.id
     ).all()
 
     best_scores = {}
+    attempts_count = {}
 
     for row in scores:
+        attempts_count[row.test_id] = attempts_count.get(row.test_id, 0) + 1
+
         if (
             row.test_id not in best_scores
             or row.score_value > best_scores[row.test_id]
         ):
             best_scores[row.test_id] = row.score_value
 
-    tests_taken = len(best_scores)
+    def is_test_resolved(t):
+        """
+        Một test được coi là "đã xong" (tính vào tiến độ) khi:
+        - Đã đạt điểm pass_score, HOẶC
+        - Đã dùng hết số lần làm cho phép (không còn cơ hội thi lại).
+        Nếu vẫn còn lượt làm mà chưa đạt -> CHƯA xong, không được
+        tính vào tiến độ / không được kéo enrollment sang FAILED.
+        """
+        best = best_scores.get(t.id)
+
+        if best is None:
+            return False
+
+        if best >= t.pass_score:
+            return True
+
+        if t.max_attempts and t.max_attempts > 0:
+            return attempts_count.get(t.id, 0) >= t.max_attempts
+
+        # Không giới hạn số lần làm -> luôn còn cơ hội, chưa thể coi là xong
+        return False
+
+    tests_taken = sum(1 for t in tests if is_test_resolved(t))
 
     total_items = total_lessons + len(tests)
     done_items = done_lessons + tests_taken
@@ -866,7 +971,6 @@ def recalc_enrollment_progress(enrollment):
         db.session.rollback()
 
     return enrollment.progress
-
 
 def _ensure_lesson_completable(lesson):
 
@@ -982,19 +1086,28 @@ def get_course_tests(course_id):
 
 
 def get_test_attempts(user_id, course_id, test_id):
-    """Lịch sử các lần làm bài test trong lần enrollment hiện tại."""
+    """
+    Lấy toàn bộ lịch sử làm test của enrollment hiện tại.
+    """
 
-    enrollment = get_latest_enrollment(user_id, course_id)
+    enrollment = get_latest_enrollment(
+        user_id,
+        course_id
+    )
 
     if not enrollment:
         return []
 
     return (
-        Score.query.filter_by(
+        Score.query
+        .filter_by(
             enrollment_id=enrollment.id,
             test_id=test_id,
         )
-        .order_by(Score.attempt_number.desc())
+        .order_by(
+            Score.attempt_number.desc(),
+            Score.completed_at.desc()
+        )
         .all()
     )
 
@@ -1006,16 +1119,30 @@ def can_take_test(user_id, test):
         test.course_id
     )
 
-    if not enrollment or enrollment.status == EnrollmentStatus.FAILED:
+    if not enrollment:
         return False, "Bạn cần đăng ký khóa học này trước khi làm bài kiểm tra."
 
+    # Chỉ chặn nếu enrollment vẫn FAILED.
+    # Sau khi bấm "Làm lại", enroll_course() đã chuyển nó về IN_PROGRESS.
+    if enrollment.status == EnrollmentStatus.FAILED:
+        return False, "Bạn cần bấm Làm lại khóa học trước khi làm bài kiểm tra."
+
+    # ==========================================================
+    # KIỂM TRA CHƯƠNG
+    # ==========================================================
+
     if test.chapter_id:
+
         if not is_chapter_completed(
             user_id,
             test.course_id,
             test.chapter_id
         ):
             return False, "Bạn cần học xong chương này trước khi làm bài kiểm tra."
+
+    # ==========================================================
+    # KIỂM TRA SỐ LẦN LÀM
+    # ==========================================================
 
     if test.max_attempts and test.max_attempts > 0:
 
@@ -1131,7 +1258,27 @@ def activate_course(course_id, teacher_id):
 
 
 def get_my_enrollments(user_id):
-    return Enrollment.query.filter_by(user_id=user_id).order_by(Enrollment.created_date.desc()).all()
+    """
+    Lấy enrollment mới nhất của mỗi khóa học của user.
+
+    Nếu user đã học lại khóa học sau khi FAILED,
+    profile chỉ hiển thị lần enrollment mới nhất.
+    """
+
+    enrollments = (
+        Enrollment.query
+        .filter_by(user_id=user_id)
+        .order_by(Enrollment.created_date.desc())
+        .all()
+    )
+
+    latest_by_course = {}
+
+    for enrollment in enrollments:
+        if enrollment.course_id not in latest_by_course:
+            latest_by_course[enrollment.course_id] = enrollment
+
+    return list(latest_by_course.values())
 
 
 # forum
