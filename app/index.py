@@ -348,8 +348,10 @@ def course_detail(course_id):
     course = Course.query.get_or_404(course_id)
 
     is_enrolled = False
+    enrollment = None
     if current_user.is_authenticated:
         is_enrolled = dao.is_enrolled(current_user.id, course_id)
+        enrollment = dao.get_latest_enrollment(current_user.id, course_id)
 
     chapters = dao.get_chapters(course_id)
     outcomes = dao.get_outcomes(course_id)
@@ -360,6 +362,7 @@ def course_detail(course_id):
         chapters=chapters,
         outcomes=outcomes,
         is_enrolled=is_enrolled,
+        enrollment=enrollment,
     )
 
 
@@ -441,29 +444,26 @@ def take_test(course_id, test_id):
     if not test or test.course_id != course_id:
         return redirect(url_for("course_detail", course_id=course_id))
 
-    ok, error = dao.can_take_test(current_user.id, test)
-
-    if not ok:
-        return render_template(
-            "course/test_blocked.html",
-            course_id=course_id,
-            test=test,
-            error=error,
-        )
-
+    # LẤY LỊCH SỬ LÀM BÀI TRƯỚC
     attempts = dao.get_test_attempts(
         current_user.id,
         course_id,
         test_id
     )
 
+    # SỐ LẦN ĐÃ LÀM
     attempts_used = len(attempts)
 
+    # SỐ LẦN CÒN LẠI
     if test.max_attempts and test.max_attempts > 0:
-        attempts_left = test.max_attempts - attempts_used
+        attempts_left = max(
+            test.max_attempts - attempts_used,
+            0
+        )
     else:
         attempts_left = None
 
+    # ĐIỂM CAO NHẤT
     best_score = max(
         (float(a.score_value) for a in attempts),
         default=None
@@ -488,7 +488,9 @@ def start_test(course_id, test_id):
     test = dao.get_test_details(test_id)
 
     if not test or test.course_id != course_id:
-        return redirect(url_for("course_detail", course_id=course_id))
+        return redirect(
+            url_for("course_detail", course_id=course_id)
+        )
 
     ok, error = dao.can_take_test(current_user.id, test)
 
@@ -500,14 +502,14 @@ def start_test(course_id, test_id):
             error=error,
         )
 
-    # -----------------------------------------
-    # Nếu đang có một attempt chưa nộp
-    # thì KHÔNG reset thời gian
-    # -----------------------------------------
-    active_key = f"test_start_{test_id}"
+    # Một key duy nhất cho bài test đang làm
+    session_key = f"test_start_{test_id}"
 
-    if active_key not in session:
-        session[active_key] = datetime.now().isoformat()
+    # Chỉ tạo thời gian bắt đầu nếu chưa có
+    # Nếu người dùng rời trang rồi quay lại thì KHÔNG reset timer
+    if session_key not in session:
+        session[session_key] = datetime.now().isoformat()
+        session.modified = True
 
     return redirect(
         url_for(
@@ -516,6 +518,7 @@ def start_test(course_id, test_id):
             test_id=test_id
         )
     )
+
 
 
 @app.route(
@@ -537,6 +540,7 @@ def submit_test(course_id, test_id):
         f"test_start_{test_id}",
         None
     )
+    session.modified = True
 
     score, error = dao.submit_test_score(
         current_user.id,
@@ -622,52 +626,77 @@ def do_test(course_id, test_id):
             error=error,
         )
 
-    # ==============================
-    # LẤY THỜI ĐIỂM BẮT ĐẦU
-    # ==============================
+    questions = dao.get_questions(test_id)
 
-    active_key = f"test_start_{test_id}"
-    start_time_str = session.get(active_key)
+    # ==============================
+    # LỊCH SỬ LÀM BÀI / ĐIỂM CAO NHẤT
+    # ==============================
+    attempts = dao.get_test_attempts(
+        current_user.id,
+        course_id,
+        test_id
+    )
+
+    attempts_used = len(attempts)
+
+    if test.max_attempts and test.max_attempts > 0:
+        attempts_left = max(
+            test.max_attempts - attempts_used,
+            0
+        )
+    else:
+        attempts_left = None
+
+    best_score = max(
+        (float(a.score_value) for a in attempts),
+        default=None
+    )
+
+    # ==============================
+    # LẤY THỜI GIAN BẮT ĐẦU
+    # ==============================
+    session_key = f"test_start_{test_id}"
+    start_time_str = session.get(session_key)
 
     remaining_seconds = None
 
     if test.duration and test.duration > 0:
 
-        # Nếu somehow vào /do mà chưa start
-        # thì không cho tự tạo timer ở đây
-        if not start_time_str:
-            return redirect(
-                url_for(
-                    "take_test",
-                    course_id=course_id,
-                    test_id=test_id
+        if start_time_str:
+            try:
+                start_time = datetime.fromisoformat(start_time_str)
+
+                elapsed_seconds = (
+                    datetime.now() - start_time
+                ).total_seconds()
+
+                remaining_seconds = max(
+                    0,
+                    int(test.duration * 60 - elapsed_seconds)
                 )
-            )
 
-        try:
-            start_time = datetime.fromisoformat(start_time_str)
+            except (ValueError, TypeError):
+                remaining_seconds = 0
 
-            elapsed_seconds = (
-                datetime.now() - start_time
-            ).total_seconds()
+        else:
+            # Không có thời gian bắt đầu thì không tự tạo lại
+            remaining_seconds = 0
 
-            remaining_seconds = max(
-                0,
-                int(test.duration * 60 - elapsed_seconds)
-            )
-
-        except (ValueError, TypeError):
-            session.pop(active_key, None)
-
-            return redirect(
-                url_for(
-                    "take_test",
-                    course_id=course_id,
-                    test_id=test_id
-                )
-            )
-
-    questions = dao.get_questions(test_id)
+    # ==============================
+    # HẾT GIỜ
+    # ==============================
+    if remaining_seconds is not None and remaining_seconds <= 0:
+        return render_template(
+            "course/test.html",
+            course_id=course_id,
+            test=test,
+            questions=questions,
+            remaining_seconds=0,
+            time_expired=True,
+            attempts=attempts,
+            attempts_left=attempts_left,
+            best_score=best_score,
+        )
 
     return render_template(
         "course/test.html",
@@ -675,6 +704,10 @@ def do_test(course_id, test_id):
         test=test,
         questions=questions,
         remaining_seconds=remaining_seconds,
+        time_expired=False,
+        attempts=attempts,
+        attempts_left=attempts_left,
+        best_score=best_score,
     )
 
 def get_doc_kind(ext):
