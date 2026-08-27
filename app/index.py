@@ -331,7 +331,8 @@ def change_password():
 @app.route("/courses")
 def courses():
     courses = Course.query.filter_by(activate=True).order_by(Course.id.desc()).all()
-    return render_template("course/courses.html", courses=courses)
+    categories = dao.get_categories()
+    return render_template("course/courses.html", courses=courses, categories=categories)
 
 
 @app.route("/courses/manage")
