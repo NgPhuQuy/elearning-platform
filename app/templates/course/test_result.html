@@ -4,30 +4,54 @@
 
 {% block content %}
 <div class="d-flex flex-column gap-3" style="max-width:600px; margin:0 auto;">
+
     <div class="card-ef p-5 text-center">
+
         {% if score.is_passed %}
             <i class="bi bi-patch-check-fill text-success" style="font-size:3rem;"></i>
-            <h1 class="font-display fs-4 mt-3 mb-1 text-success">Đạt yêu cầu!</h1>
+
+            <h1 class="font-display fs-4 mt-3 mb-1 text-success">
+                Đạt yêu cầu!
+            </h1>
         {% else %}
             <i class="bi bi-x-circle-fill text-danger" style="font-size:3rem;"></i>
-            <h1 class="font-display fs-4 mt-3 mb-1 text-danger">Chưa đạt</h1>
+
+            <h1 class="font-display fs-4 mt-3 mb-1 text-danger">
+                Chưa đạt
+            </h1>
         {% endif %}
 
-        <p class="font-display fs-2 mb-1 {% if score.is_passed %}text-success{% else %}text-danger{% endif %}">
-            {{ score.score_value }}<span class="fs-6 text-muted-ef">/10</span>
+        <p class="font-display fs-2 mb-1
+            {% if score.is_passed %}text-success{% else %}text-danger{% endif %}">
+            {{ score.score_value }}
+            <span class="fs-6 text-muted-ef">/10</span>
         </p>
-        <p class="text-muted-ef small mb-4">Lần làm thứ {{ score.attempt_number }}</p>
+
+        <p class="text-muted-ef small mb-4">
+            Điểm cao nhất của bạn
+        </p>
 
         <div class="d-flex justify-content-center gap-2">
-            <a href="{{ url_for('learn_course', course_id=course_id) }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Về khóa học
+
+            <a href="{{ url_for('learn_course', course_id=course_id) }}"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+                Về khóa học
             </a>
+
             {% if not score.is_passed and test.max_attempts != 1 %}
-            <a href="{{ url_for('take_test', course_id=course_id, test_id=test.id) }}" class="btn btn-indigo">
-                <i class="bi bi-arrow-repeat"></i> Làm lại
+            <a href="{{ url_for('take_test',
+                                course_id=course_id,
+                                test_id=test.id) }}"
+               class="btn btn-indigo">
+                <i class="bi bi-arrow-repeat"></i>
+                Làm lại
             </a>
             {% endif %}
+
         </div>
+
     </div>
+
 </div>
 {% endblock %}

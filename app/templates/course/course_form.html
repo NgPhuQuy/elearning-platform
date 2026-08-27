@@ -5,143 +5,239 @@
 {% block content %}
     <div class="d-flex flex-column gap-3">
         <div>
-            <h1 class="font-display fs-3 mb-0">{{ 'Chỉnh sửa khóa học' if course else 'Tạo khóa học mới' }}</h1>
+            <h1 class="font-display fs-3 mb-0">
+                {{ 'Chỉnh sửa khóa học' if course else 'Tạo khóa học mới' }}
+            </h1>
             <p class="text-muted-ef small mb-0">
-                {% if course %}{{ course.name }}{% else %}Xây dựng nội dung khóa học từng bước{% endif %}
+                {% if course %}
+                    {{ course.name }}
+                {% else %}
+                    Xây dựng nội dung khóa học từng bước
+                {% endif %}
             </p>
         </div>
 
         <form method="POST" enctype="multipart/form-data" id="courseForm">
             <input type="hidden" name="chapters_data" id="chaptersDataInput">
             <input type="hidden" name="tests_data" id="testsDataInput">
+
             <ul class="nav nav-ef-tabs card-ef px-3 pt-2">
                 <li class="nav-item">
-                    <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#cc-info">Thông
-                        tin
+                    <button type="button"
+                            class="nav-link active"
+                            data-bs-toggle="tab"
+                            data-bs-target="#cc-info">
+                        Thông tin
                     </button>
                 </li>
+
                 {% if course %}
                     <li class="nav-item">
-                        <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#cc-content">Nội
-                            dung
+                        <button type="button"
+                                class="nav-link"
+                                data-bs-toggle="tab"
+                                data-bs-target="#cc-content">
+                            Nội dung
                         </button>
                     </li>
                 {% endif %}
+
                 <li class="nav-item">
-                    <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#cc-settings">Cài đặt
+                    <button type="button"
+                            class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#cc-settings">
+                        Cài đặt
                     </button>
                 </li>
             </ul>
 
             <div class="tab-content card-ef p-4">
-                <!-- TAB: Thông tin -->
+
+                <!-- ==================== THÔNG TIN ==================== -->
                 <div class="tab-pane fade show active" id="cc-info">
+
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Tên khóa học</label>
-                        <input type="text" name="name" class="form-control"
+                        <input type="text"
+                               name="name"
+                               class="form-control"
                                value="{{ course.name if course else '' }}"
-                               placeholder="Ví dụ: React & TypeScript từ cơ bản đến nâng cao" required>
+                               placeholder="Ví dụ: React & TypeScript từ cơ bản đến nâng cao"
+                               required>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Mô tả khóa học</label>
-                        <textarea name="description" class="form-control" rows="4"
+                        <textarea name="description"
+                                  class="form-control"
+                                  rows="4"
                                   placeholder="Mô tả khóa học: học viên sẽ học gì, đạt được gì..."
                                   required>{{ course.description if course else '' }}</textarea>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Ảnh khóa học</label>
-                        <div class="mb-2" id="imagePreviewWrap"
+
+                        <div class="mb-2"
+                             id="imagePreviewWrap"
                              {% if not (course and course.image) %}style="display:none;"{% endif %}>
-                            <img id="imagePreview" src="{{ course.image if course and course.image else '' }}"
+                            <img id="imagePreview"
+                                 src="{{ course.image if course and course.image else '' }}"
                                  style="max-width:200px; border-radius:.5rem;">
                         </div>
-                        <input type="file" name="image" id="imageInput" class="form-control"
-                               accept="image/*" {{ '' if course else 'required' }}>
+
+                        <input type="file"
+                               name="image"
+                               id="imageInput"
+                               class="form-control"
+                               accept="image/*"
+                               {{ '' if course else 'required' }}>
+
                         {% if course %}
-                            <span class="small text-muted-ef">Để trống nếu không muốn đổi ảnh</span>
+                            <span class="small text-muted-ef">
+                                Để trống nếu không muốn đổi ảnh
+                            </span>
                         {% endif %}
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Danh mục</label>
+
                             <div class="border rounded-3 p-2">
-                                <input type="text" id="categorySearch" class="form-control form-control-sm mb-2"
+                                <input type="text"
+                                       id="categorySearch"
+                                       class="form-control form-control-sm mb-2"
                                        placeholder="Tìm danh mục...">
-                                <div id="categoryList" style="max-height:180px; overflow-y:auto;">
+
+                                <div id="categoryList"
+                                     style="max-height:180px; overflow-y:auto;">
+
                                     {% set selected_ids = (course.course_category | map(attribute='category_id') | list) if course else [] %}
+
                                     {% for c in categories %}
-                                        <div class="form-check category-item" data-name="{{ c.name|lower }}">
-                                            <input class="form-check-input category-checkbox" type="checkbox"
-                                                   name="category_ids" value="{{ c.id }}" id="cate{{ c.id }}"
+                                        <div class="form-check category-item"
+                                             data-name="{{ c.name|lower }}">
+
+                                            <input class="form-check-input category-checkbox"
+                                                   type="checkbox"
+                                                   name="category_ids"
+                                                   value="{{ c.id }}"
+                                                   id="cate{{ c.id }}"
                                                    {% if c.id in selected_ids %}checked{% endif %}>
+
                                             <label class="form-check-label small"
-                                                   for="cate{{ c.id }}">{{ c.name }}</label>
+                                                   for="cate{{ c.id }}">
+                                                {{ c.name }}
+                                            </label>
                                         </div>
                                     {% endfor %}
                                 </div>
                             </div>
                         </div>
+
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Cấp độ</label>
+
                             <select name="level" class="form-select">
                                 <option value="BASIC"
-                                        {% if course and course.level.name == 'BASIC' %}selected{% endif %}>Cơ bản
+                                        {% if course and course.level.name == 'BASIC' %}selected{% endif %}>
+                                    Cơ bản
                                 </option>
+
                                 <option value="INTERMEDIATE"
-                                        {% if course and course.level.name == 'INTERMEDIATE' %}selected{% endif %}>Trung
-                                    cấp
+                                        {% if course and course.level.name == 'INTERMEDIATE' %}selected{% endif %}>
+                                    Trung cấp
                                 </option>
+
                                 <option value="ADVANCED"
-                                        {% if course and course.level.name == 'ADVANCED' %}selected{% endif %}>Nâng cao
+                                        {% if course and course.level.name == 'ADVANCED' %}selected{% endif %}>
+                                    Nâng cao
                                 </option>
                             </select>
                         </div>
                     </div>
 
-                    <label class="form-label small fw-semibold">Kết quả học tập</label>
+                    <label class="form-label small fw-semibold">
+                        Kết quả học tập
+                    </label>
+
                     <div id="outcomeList">
                         {% if outcomes %}
                             {% for outcome in outcomes %}
                                 <div class="input-group mb-2 outcome-item">
-                                    <input type="text" name="outcomes" class="form-control"
-                                           value="{{ outcome.content }}" placeholder="Kết quả học tập...">
-                                    <button type="button" class="btn btn-outline-secondary btn-remove-outcome"
+                                    <input type="text"
+                                           name="outcomes"
+                                           class="form-control"
+                                           value="{{ outcome.content }}"
+                                           placeholder="Kết quả học tập...">
+
+                                    <button type="button"
+                                            class="btn btn-outline-secondary btn-remove-outcome"
                                             onclick="this.closest('.outcome-item').remove()">
                                         <i class="bi bi-x"></i>
                                     </button>
                                 </div>
                             {% endfor %}
                         {% else %}
-                            <input type="text" name="outcomes" class="form-control mb-2"
+                            <input type="text"
+                                   name="outcomes"
+                                   class="form-control mb-2"
                                    placeholder="Kết quả học tập 1...">
-                            <input type="text" name="outcomes" class="form-control mb-2"
+
+                            <input type="text"
+                                   name="outcomes"
+                                   class="form-control mb-2"
                                    placeholder="Kết quả học tập 2...">
-                            <input type="text" name="outcomes" class="form-control mb-2"
+
+                            <input type="text"
+                                   name="outcomes"
+                                   class="form-control mb-2"
                                    placeholder="Kết quả học tập 3...">
                         {% endif %}
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addOutcomeInput()">
-                        <i class="bi bi-plus"></i> Thêm kết quả học tập
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            onclick="addOutcomeInput()">
+                        <i class="bi bi-plus"></i>
+                        Thêm kết quả học tập
                     </button>
                 </div>
 
+
+                <!-- ==================== NỘI DUNG ==================== -->
                 {% if course %}
                     <div class="tab-pane fade" id="cc-content">
+
                         <div id="chapterList">
+
                             {% for chapter in chapters %}
-                                <div class="border rounded-3 mb-3 chapter-block" data-chapter-id="{{ chapter.id }}">
+
+                                <div class="border rounded-3 mb-3 chapter-block"
+                                     data-chapter-id="{{ chapter.id }}">
+
+                                    <!-- HEADER CHƯƠNG -->
                                     <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom">
+
                                         <div>
-                                            <span class="small fw-semibold chapter-name">{{ chapter.name }}</span>
-                                            <span class="small text-muted-ef chapter-description d-none">{{ chapter.description if chapter.description is defined else '' }}</span>
+                                            <span class="small fw-semibold chapter-name">
+                                                {{ chapter.name }}
+                                            </span>
+
+                                            <span class="small text-muted-ef chapter-description d-none">
+                                                {{ chapter.description if chapter.description is defined else '' }}
+                                            </span>
                                         </div>
+
                                         <div class="d-flex align-items-center gap-3">
+
                                             <button type="button"
-                                                    class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-chapter"><i
-                                                    class="bi bi-pencil"></i></button>
+                                                    class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-chapter">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+
                                             <button type="button"
                                                     class="btn btn-sm p-0 border-0 text-muted-ef btn-delete-chapter"
                                                     data-chapter-id="{{ chapter.id }}"
@@ -149,30 +245,61 @@
                                                     data-delete-url="{{ url_for('delete_chapter', chapter_id=chapter.id) }}">
                                                 <i class="bi bi-trash"></i>
                                             </button>
+
                                         </div>
                                     </div>
+
+
+                                    <!-- NỘI DUNG CHƯƠNG -->
                                     <div class="p-2">
+
+                                        <!-- ==================== BÀI HỌC ==================== -->
                                         <div class="lesson-list">
+
                                             {% for lesson in chapter.lessons %}
+
                                                 <div class="d-flex flex-column gap-1 px-2 py-2 border-bottom lesson-row"
                                                      data-lesson-id="{{ lesson.id }}">
+
                                                     <div class="d-flex align-items-center gap-2">
+
                                                         <i class="bi bi-grip-vertical text-muted-ef"></i>
-                                                        <i class="bi {{ 'bi-camera-video' if lesson.type.name == 'VIDEO' else ('bi-file-earmark-text' if lesson.type.name == 'DOCUMENT' else 'bi-question-circle') }} text-indigo lesson-type-icon"></i>
-                                                        <span class="small flex-grow-1 lesson-name">{{ lesson.name }}</span>
-                                                        <span class="small text-muted-ef lesson-description d-none">{{ lesson.description if lesson.description is defined else '' }}</span>
+
+                                                        <i class="bi
+                                                            {{ 'bi-camera-video' if lesson.type.name == 'VIDEO'
+                                                            else ('bi-file-earmark-text' if lesson.type.name == 'DOCUMENT'
+                                                            else 'bi-question-circle') }}
+                                                            text-indigo lesson-type-icon">
+                                                        </i>
+
+                                                        <span class="small flex-grow-1 lesson-name">
+                                                            {{ lesson.name }}
+                                                        </span>
+
+                                                        <span class="small text-muted-ef lesson-description d-none">
+                                                            {{ lesson.description if lesson.description is defined else '' }}
+                                                        </span>
+
                                                         <select class="form-select form-select-sm w-auto lesson-type-select"
                                                                 style="max-width:110px;">
-                                                            <option value="VIDEO" {{ 'selected' if lesson.type.name == 'VIDEO' else '' }}>
+
+                                                            <option value="VIDEO"
+                                                                    {{ 'selected' if lesson.type.name == 'VIDEO' else '' }}>
                                                                 Video
                                                             </option>
-                                                            <option value="DOCUMENT" {{ 'selected' if lesson.type.name == 'DOCUMENT' else '' }}>
+
+                                                            <option value="DOCUMENT"
+                                                                    {{ 'selected' if lesson.type.name == 'DOCUMENT' else '' }}>
                                                                 Doc
                                                             </option>
-                                                            <option value="NONE" {{ 'selected' if lesson.type.name == 'NONE' else '' }}>
+
+                                                            <option value="NONE"
+                                                                    {{ 'selected' if lesson.type.name == 'NONE' else '' }}>
                                                                 Chưa chọn
                                                             </option>
+
                                                         </select>
+
 
                                                         {% if lesson.video_content and lesson.video_content.video_url %}
                                                             <a href="{{ lesson.video_content.video_url }}"
@@ -184,6 +311,7 @@
                                                             </a>
                                                         {% endif %}
 
+
                                                         <button type="button"
                                                                 class="btn btn-sm p-0 border-0 text-muted-ef btn-upload-video"
                                                                 title="Tải video"
@@ -193,14 +321,17 @@
                                                             <i class="bi bi-camera-video-fill"></i>
                                                         </button>
 
+
                                                         {% if lesson.doc_content and lesson.doc_content.file_url %}
-                                                            <a href="{{ lesson.doc_content.file_url }}" target="_blank"
+                                                            <a href="{{ lesson.doc_content.file_url }}"
+                                                               target="_blank"
                                                                class="btn btn-sm p-0 border-0 text-success doc-view-link"
                                                                title="Xem tài liệu hiện tại"
                                                                {% if lesson.type.name != 'DOCUMENT' %}style="display:none;"{% endif %}>
                                                                 <i class="bi bi-file-earmark-text-fill"></i>
                                                             </a>
                                                         {% endif %}
+
 
                                                         <button type="button"
                                                                 class="btn btn-sm p-0 border-0 text-muted-ef btn-upload-doc"
@@ -211,9 +342,12 @@
                                                             <i class="bi bi-file-earmark-arrow-up-fill"></i>
                                                         </button>
 
+
                                                         <button type="button"
                                                                 class="btn btn-sm p-0 border-0 text-muted-ef btn-edit-lesson">
-                                                            <i class="bi bi-pencil"></i></button>
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+
 
                                                         <button type="button"
                                                                 class="btn btn-sm p-0 border-0 text-muted-ef btn-delete-lesson"
@@ -223,225 +357,568 @@
                                                             <i class="bi bi-x-lg"></i>
                                                         </button>
 
-                                                        <input type="file" name="video_file_lesson_{{ lesson.id }}"
-                                                               id="videoFileHidden{{ lesson.id }}" class="d-none"
+
+                                                        <input type="file"
+                                                               name="video_file_lesson_{{ lesson.id }}"
+                                                               id="videoFileHidden{{ lesson.id }}"
+                                                               class="d-none"
                                                                accept="video/*">
-                                                        <input type="file" name="doc_file_lesson_{{ lesson.id }}"
-                                                               id="docFileHidden{{ lesson.id }}" class="d-none">
+
+                                                        <input type="file"
+                                                               name="doc_file_lesson_{{ lesson.id }}"
+                                                               id="docFileHidden{{ lesson.id }}"
+                                                               class="d-none">
+
                                                     </div>
+
                                                     <span class="small text-warning pending-media-note d-none ms-4"></span>
+
                                                 </div>
+
                                             {% else %}
-                                                <p class="text-muted-ef small px-2 py-2 mb-0 empty-lesson-msg">Chưa có
-                                                    bài học nào.</p>
+
+                                                <p class="text-muted-ef small px-2 py-2 mb-0 empty-lesson-msg">
+                                                    Chưa có bài học nào.
+                                                </p>
+
                                             {% endfor %}
+
                                         </div>
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-secondary mt-2 d-flex align-items-center gap-1 btn-add-lesson">
-                                            <i class="bi bi-plus"></i> Thêm bài học
-                                        </button>
-                                    </div>
-                                </div>
-                            {% else %}
-                                <p class="text-muted-ef empty-chapter-msg">Khóa học chưa có chương nào.</p>
-                            {% endfor %}
-                        </div>
 
-                        <button type="button" id="btnAddChapter"
-                                class="btn btn-outline-indigo d-flex align-items-center gap-2">
-                            <i class="bi bi-plus-circle"></i> Thêm chương mới
-                        </button>
 
-                        <hr class="my-4">
-                        <h6 class="fw-semibold mb-2">Bài kiểm tra</h6>
-                        <div id="testList">
-                            {% for test in course.tests %}
-                                <div class="d-flex align-items-end gap-2 px-2 py-2 border-bottom test-row"
-                                     data-test-id="{{ test.id }}">
-                                    <i class="bi bi-clipboard-check text-indigo mb-2"></i>
-                                    <div>
-                                        <label class="small text-muted-ef mb-1 d-block">Áp dụng cho</label>
-                                        <select class="form-select form-select-sm test-chapter-select"
-                                                style="max-width:220px;">
-                                            <option value="">-- Thi cuối khóa --</option>
-                                            {% for chapter in chapters %}
-                                                <option value="{{ chapter.id }}" {{ 'selected' if test.chapter_id == chapter.id else '' }}>{{ chapter.name }}</option>
+                                        <!-- ==================== TEST CỦA CHƯƠNG ==================== -->
+                                        <!-- TEST LUÔN NẰM SAU TOÀN BỘ BÀI HỌC -->
+
+                                        <div class="chapter-test-list mt-2">
+
+                                            {% for test in chapter.tests %}
+
+                                                <div class="chapter-test-row border rounded-2 p-2 mb-2"
+                                                     data-test-id="{{ test.id }}"
+                                                     data-chapter-id="{{ chapter.id }}">
+
+                                                    <div class="d-flex align-items-center gap-2">
+
+                                                        <i class="bi bi-clipboard-check text-indigo"></i>
+
+                                                        <span class="small fw-semibold flex-grow-1">
+                                                            Bài kiểm tra
+                                                        </span>
+
+                                                        <button type="button"
+                                                                class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-chapter-test">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+
+                                                    </div>
+
+
+                                                    <div class="d-flex align-items-end gap-3 mt-2">
+
+                                                        <!-- ÁP DỤNG CHO -->
+                                                        <div>
+                                                            <label class="small text-muted-ef mb-1 d-block">
+                                                                Áp dụng cho
+                                                            </label>
+
+                                                            <select class="form-select form-select-sm test-chapter-select"
+                                                                    style="max-width:220px;"
+                                                                    data-test-id="{{ test.id }}">
+
+                                                                {% for target_chapter in chapters %}
+
+                                                                    <option value="{{ target_chapter.id }}"
+                                                                            {% if test.chapter_id == target_chapter.id %}
+                                                                                selected
+                                                                            {% endif %}>
+                                                                        {{ target_chapter.name }}
+                                                                    </option>
+
+                                                                {% endfor %}
+
+                                                            </select>
+                                                        </div>
+
+
+                                                        <!-- THỜI GIAN -->
+                                                        <div>
+                                                            <label class="small text-muted-ef mb-1 d-block">
+                                                                Thời gian (phút)
+                                                            </label>
+
+                                                            <input type="number"
+                                                                   class="form-control form-control-sm test-duration"
+                                                                   style="max-width:110px;"
+                                                                   min="1"
+                                                                   value="{{ test.duration }}">
+                                                        </div>
+
+
+                                                        <!-- SỐ LẦN LÀM -->
+                                                        <div>
+                                                            <label class="small text-muted-ef mb-1 d-block">
+                                                                Số lần làm tối đa
+                                                            </label>
+
+                                                            <input type="number"
+                                                                   class="form-control form-control-sm test-max-attempts"
+                                                                   style="max-width:110px;"
+                                                                   min="1"
+                                                                   value="{{ test.max_attempts }}">
+                                                        </div>
+
+
+                                                        <!-- CÂU HỎI -->
+                                                        {% if test.id %}
+
+                                                            <a href="{{ url_for(
+                                                                'manage_test_questions',
+                                                                course_id=course.id,
+                                                                test_id=test.id
+                                                            ) }}"
+                                                               class="btn btn-sm btn-outline-secondary">
+
+                                                                <i class="bi bi-list-check"></i>
+                                                                Câu hỏi
+
+                                                            </a>
+
+                                                        {% endif %}
+
+                                                    </div>
+
+                                                </div>
+
                                             {% endfor %}
-                                        </select>
+
+                                        </div>
+
+
+                                        <!-- ==================== NÚT THÊM ==================== -->
+                                        <div class="d-flex align-items-center gap-2 mt-2">
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-add-lesson">
+
+                                                <i class="bi bi-plus"></i>
+                                                Thêm bài học
+
+                                            </button>
+
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 btn-add-test"
+                                                    data-chapter-id="{{ chapter.id }}"
+                                                    data-chapter-name="{{ chapter.name }}">
+
+                                                <i class="bi bi-plus"></i>
+                                                Thêm bài test
+
+                                            </button>
+
+                                        </div>
+
                                     </div>
-                                    <div>
-                                        <label class="small text-muted-ef mb-1 d-block">Thời gian (phút)</label>
-                                        <input type="number" class="form-control form-control-sm test-duration"
-                                               style="max-width:110px;" min="0" value="{{ test.duration }}">
-                                    </div>
-                                    <div>
-                                        <label class="small text-muted-ef mb-1 d-block">Số lần làm tối đa</label>
-                                        <input type="number" class="form-control form-control-sm test-max-attempts"
-                                               style="max-width:110px;" min="0" value="{{ test.max_attempts }}">
-                                    </div>
-                                    {% if test.id %}
-                                        <a href="{{ url_for('manage_test_questions', course_id=course.id, test_id=test.id) }}"
-                                           class="btn btn-sm btn-outline-secondary mb-2" target="_blank">
-                                            <i class="bi bi-list-check"></i> Câu hỏi
-                                        </a>
-                                    {% endif %}
-                                    <button type="button"
-                                            class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-test ms-auto mb-2">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
+
                                 </div>
+
                             {% else %}
-                                <p class="text-muted-ef small px-2 py-2 mb-0 empty-test-msg">Chưa có bài kiểm tra
-                                    nào.</p>
+
+                                <p class="text-muted-ef empty-chapter-msg">
+                                    Khóa học chưa có chương nào.
+                                </p>
+
                             {% endfor %}
+
                         </div>
-                        <button type="button" id="btnAddTest"
-                                class="btn btn-sm btn-outline-secondary mt-2 d-flex align-items-center gap-1">
-                            <i class="bi bi-plus"></i> Thêm bài kiểm tra
-                        </button>
+
+
+                        <!-- ==================== THÊM CHƯƠNG ==================== -->
+                        <div class="d-flex justify-content-end mb-3">
+
+                            <button type="button"
+                                    id="btnAddChapter"
+                                    class="btn btn-outline-indigo d-flex align-items-center gap-2">
+
+                                <i class="bi bi-plus-circle"></i>
+                                Thêm chương mới
+
+                            </button>
+
+                        </div>
+
+
+                        <!-- KHÔNG CÒN #testList Ở ĐÂY -->
+
 
                         <p class="small text-muted-ef mt-2 mb-0">
+
                             <i class="bi bi-info-circle"></i>
+
                             Chọn video/tài liệu ở đây chỉ được lưu thật khi bạn bấm
-                            "{{ 'Công khai khóa học' if (course and not course.activate) else 'Lưu thay đổi' }}" bên
-                            dưới.
+                            "{{ 'Công khai khóa học' if (course and not course.activate) else 'Lưu thay đổi' }}"
+                            bên dưới.
+
                             Bài học mới thêm cần được lưu 1 lần trước khi có thể tải video/tài liệu.
+
                         </p>
+
                     </div>
                 {% endif %}
 
-                <!-- TAB: Cài đặt -->
+
+                <!-- ==================== CÀI ĐẶT ==================== -->
                 <div class="tab-pane fade" id="cc-settings">
+
                     <div class="row g-3 mb-3">
+
                         <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Giá bán (₫)</label>
-                            <input type="number" name="price" id="priceInput" class="form-control" min="0" step="1000"
+
+                            <label class="form-label small fw-semibold">
+                                Giá bán (₫)
+                            </label>
+
+                            <input type="number"
+                                   name="price"
+                                   id="priceInput"
+                                   class="form-control"
+                                   min="0"
+                                   step="1000"
                                    inputmode="numeric"
                                    value="{{ course.price if course and course.price else '' }}"
                                    placeholder="Ví dụ: 890000"
                                    onkeydown="if(['-','+','e','E'].includes(event.key)) event.preventDefault();"
                                    oninput="if(this.value < 0) this.value = 0;"
                                    {% if course and course.activate %}disabled{% endif %}>
+
                         </div>
+
+
                         <div class="col-md-6 d-flex align-items-end">
+
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="freeCourse"
+
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="freeCourse"
                                        {% if not course or not course.price %}checked{% endif %}
                                        {% if course and course.activate %}disabled{% endif %}>
-                                <label class="form-check-label small" for="freeCourse">Khóa học miễn phí</label>
+
+                                <label class="form-check-label small"
+                                       for="freeCourse">
+                                    Khóa học miễn phí
+                                </label>
+
                             </div>
+
                         </div>
+
                     </div>
 
+
                     {% if course and course.activate %}
+
                         <div class="alert alert-warning small d-flex align-items-center gap-2 mb-3">
+
                             <i class="bi bi-lock-fill"></i>
+
                             Khóa học đã được công khai — giá bán không thể chỉnh sửa nữa.
+
                         </div>
+
                     {% endif %}
+
                 </div>
+
             </div>
 
+
+            <!-- ==================== BUTTON ==================== -->
             <div class="d-flex justify-content-between mt-3">
+
                 <a href="{{ url_for('my_courses') if course else url_for('courses') }}"
-                   class="btn btn-outline-secondary">Hủy</a>
+                   class="btn btn-outline-secondary">
+                    Hủy
+                </a>
+
 
                 {% if course and not course.activate %}
-                    <button type="submit" name="action" value="save" id="btnSaveOnly"
+
+                    <button type="submit"
+                            name="action"
+                            value="save"
+                            id="btnSaveOnly"
                             class="btn btn-indigo d-flex align-items-center gap-2">
-                        <i class="bi bi-check-circle"></i> Lưu thay đổi
+
+                        <i class="bi bi-check-circle"></i>
+                        Lưu thay đổi
+
                     </button>
-                    <button type="submit" name="action" value="publish" id="btnPublish"
+
+
+                    <button type="submit"
+                            name="action"
+                            value="publish"
+                            id="btnPublish"
                             class="btn btn-emerald d-flex align-items-center gap-2 d-none">
-                        <i class="bi bi-rocket-takeoff"></i> Công khai khóa học
+
+                        <i class="bi bi-rocket-takeoff"></i>
+                        Công khai khóa học
+
                     </button>
+
                 {% elif course %}
-                    <button type="submit" name="action" value="save"
+
+                    <button type="submit"
+                            name="action"
+                            value="save"
                             class="btn btn-indigo d-flex align-items-center gap-2">
-                        <i class="bi bi-check-circle"></i> Lưu thay đổi
+
+                        <i class="bi bi-check-circle"></i>
+                        Lưu thay đổi
+
                     </button>
+
                 {% else %}
-                    <button type="submit" name="action" value="save"
+
+                    <button type="submit"
+                            name="action"
+                            value="save"
                             class="btn btn-indigo d-flex align-items-center gap-2">
-                        <i class="bi bi-send"></i> Tạo khóa học
+
+                        <i class="bi bi-send"></i>
+                        Tạo khóa học
+
                     </button>
+
                 {% endif %}
+
             </div>
+
         </form>
     </div>
 
+
     {% if course %}
+
+        <!-- ==================== EDIT MODAL ==================== -->
         <div class="modal fade" id="editModal" tabindex="-1">
+
             <div class="modal-dialog">
+
                 <div class="modal-content">
+
                     <div class="modal-header">
-                        <h5 class="modal-title fs-6" id="editModalTitle">Chỉnh sửa</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                        <h5 class="modal-title fs-6" id="editModalTitle">
+                            Chỉnh sửa
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal">
+                        </button>
+
                     </div>
+
+
                     <div class="modal-body">
+
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold" id="editModalNameLabel">Tên</label>
-                            <input type="text" id="editModalName" class="form-control" required>
+
+                            <label class="form-label small fw-semibold"
+                                   id="editModalNameLabel">
+                                Tên
+                            </label>
+
+                            <input type="text"
+                                   id="editModalName"
+                                   class="form-control"
+                                   required>
+
                         </div>
+
+
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Mô tả</label>
-                            <textarea id="editModalDescription" class="form-control" rows="3"></textarea>
+
+                            <label class="form-label small fw-semibold">
+                                Mô tả
+                            </label>
+
+                            <textarea id="editModalDescription"
+                                      class="form-control"
+                                      rows="3"></textarea>
+
                         </div>
+
                     </div>
+
+
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="button" class="btn btn-indigo" id="editModalSave">Lưu</button>
+
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">
+                            Hủy
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-indigo"
+                                id="editModalSave">
+                            Lưu
+                        </button>
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
 
+
+        <!-- ==================== VIDEO MODAL ==================== -->
         <div class="modal fade" id="uploadVideoModal" tabindex="-1">
+
             <div class="modal-dialog">
+
                 <div class="modal-content">
+
                     <div class="modal-header">
-                        <h5 class="modal-title fs-6">Chọn video cho bài học</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                        <h5 class="modal-title fs-6">
+                            Chọn video cho bài học
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal">
+                        </button>
+
                     </div>
+
+
                     <div class="modal-body">
-                        <div class="mb-2" id="currentVideoNote" style="display:none;">
-                            <span class="small text-muted-ef">Video hiện tại: </span>
-                            <a href="#" id="currentVideoLink" target="_blank" class="small">Xem video</a>
+
+                        <div class="mb-2"
+                             id="currentVideoNote"
+                             style="display:none;">
+
+                            <span class="small text-muted-ef">
+                                Video hiện tại:
+                            </span>
+
+                            <a href="#"
+                               id="currentVideoLink"
+                               target="_blank"
+                               class="small">
+                                Xem video
+                            </a>
+
                         </div>
+
+
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Chọn file video (.mp4, .mov, ...)</label>
-                            <input type="file" id="uploadVideoFileInput" class="form-control" accept="video/*">
+
+                            <label class="form-label small fw-semibold">
+                                Chọn file video (.mp4, .mov, ...)
+                            </label>
+
+                            <input type="file"
+                                   id="uploadVideoFileInput"
+                                   class="form-control"
+                                   accept="video/*">
+
                         </div>
+
                     </div>
+
+
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="button" class="btn btn-indigo" id="attachVideoBtn">Đính kèm</button>
+
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">
+                            Hủy
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-indigo"
+                                id="attachVideoBtn">
+                            Đính kèm
+                        </button>
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
 
+
+        <!-- ==================== DOCUMENT MODAL ==================== -->
         <div class="modal fade" id="uploadDocModal" tabindex="-1">
+
             <div class="modal-dialog">
+
                 <div class="modal-content">
+
                     <div class="modal-header">
-                        <h5 class="modal-title fs-6">Chọn tài liệu cho bài học</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                        <h5 class="modal-title fs-6">
+                            Chọn tài liệu cho bài học
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal">
+                        </button>
+
                     </div>
+
+
                     <div class="modal-body">
+
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Chọn file (.pdf, .docx, ...)</label>
-                            <input type="file" id="uploadDocFileInput" class="form-control">
+
+                            <label class="form-label small fw-semibold">
+                                Chọn file (.pdf, .docx, ...)
+                            </label>
+
+                            <input type="file"
+                                   id="uploadDocFileInput"
+                                   class="form-control">
+
                         </div>
+
                     </div>
+
+
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="button" class="btn btn-indigo" id="attachDocBtn">Đính kèm</button>
+
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">
+                            Hủy
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-indigo"
+                                id="attachDocBtn">
+                            Đính kèm
+                        </button>
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
     {% endif %}
+
 
     <script src="{{ url_for('static', filename='js/course_form.js') }}"></script>
 

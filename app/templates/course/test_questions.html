@@ -3,63 +3,323 @@
 {% block title %}Quản lý câu hỏi · EduForum{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column gap-3">
-  <div>
-    <a href="{{ url_for('update_course', course_id=course_id) }}" class="small text-muted-ef text-decoration-none">
-      <i class="bi bi-arrow-left"></i> Quay lại chỉnh sửa khóa học
-    </a>
-    <h1 class="font-display fs-3 mb-0 mt-1">Quản lý câu hỏi</h1>
-    <p class="text-muted-ef small mb-0">
-      {% if test.chapter_id %}Kiểm tra chương: {{ test.chapter.name }}{% else %}Thi cuối khóa{% endif %}
-    </p>
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/test_questions.css') }}"
+>
+
+<div class="test-page">
+
+  <div class="test-modal">
+
+    <!-- HEADER -->
+    <div class="test-modal-header">
+
+      <div class="test-header-left">
+
+        <div class="test-icon">
+          <i class="bi bi-clipboard-check"></i>
+        </div>
+
+        <div>
+          <div class="test-title">
+            Quản lý câu hỏi
+          </div>
+
+          <div class="test-subtitle">
+            {% if test.chapter_id %}
+              Chương: {{ test.chapter.name }}
+            {% else %}
+              Thi cuối khóa
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <a
+        href="{{ url_for('update_course', course_id=course_id) }}"
+        class="btn-close-test"
+        title="Đóng"
+      >
+        <i class="bi bi-x-lg"></i>
+      </a>
+
+    </div>
+
+
+    <!-- FORM -->
+    <form method="POST" id="questionsForm">
+
+      <!-- Dữ liệu câu hỏi -->
+      <input
+        type="hidden"
+        name="questions_data"
+        id="questionsDataInput"
+      >
+
+      <!-- Điểm đạt -->
+      <input
+        type="hidden"
+        name="pass_score"
+        id="passScoreInput"
+        value="{{ test.pass_score if test.pass_score is not none else 5 }}"
+      >
+
+
+      <!-- BODY -->
+      <div class="test-modal-body">
+
+
+        <!-- =========================================
+             CÀI ĐẶT BÀI TEST
+        ========================================== -->
+
+        <div class="test-settings">
+
+          <div class="settings-title">
+            Cài đặt bài test
+          </div>
+
+          <div class="pass-score-header">
+
+            <div class="pass-score-label">
+              <i class="bi bi-trophy"></i>
+              <span>Điểm đạt (/10)</span>
+            </div>
+
+            <div
+              class="pass-score-value"
+              id="passScoreValue"
+            >
+              {{ test.pass_score if test.pass_score is not none else 5 }}
+            </div>
+
+          </div>
+
+
+          <input
+            type="range"
+            id="passScore"
+            class="pass-score-range"
+            min="0"
+            max="10"
+            step="1"
+            value="{{ test.pass_score if test.pass_score is not none else 5 }}"
+          >
+
+
+          <div class="score-scale">
+            <span>0</span>
+            <span>5</span>
+            <span>10</span>
+          </div>
+
+        </div>
+
+
+        <!-- =========================================
+             DANH SÁCH CÂU HỎI
+        ========================================== -->
+
+        <div
+          id="questionList"
+          class="question-list"
+        >
+
+          {% for question in questions %}
+
+          <div
+            class="question-block"
+            data-question-id="{{ question.id }}"
+            data-max-answers="4"
+          >
+
+            <!-- HEADER CÂU HỎI -->
+
+            <div class="question-header">
+
+              <span class="question-number">
+                {{ loop.index }}
+              </span>
+
+              <textarea
+                class="question-content"
+                rows="1"
+                placeholder="Nhập câu hỏi số {{ loop.index }}..."
+              >{{ question.content }}</textarea>
+
+              <button
+                type="button"
+                class="btn-remove-question"
+                title="Xóa câu hỏi"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+
+            </div>
+
+
+            <!-- =====================================
+                 ĐÁP ÁN
+            ====================================== -->
+
+            <div class="question-body">
+
+              <div class="answer-list">
+
+                {% for answer in question.answers %}
+
+                <div
+                  class="answer-row"
+                  data-answer-id="{{ answer.id }}"
+                >
+
+                  <!-- ĐÁP ÁN ĐÚNG -->
+
+                  <input
+                    type="radio"
+                    class="answer-correct-radio"
+                    name="correct_question_{{ question.id }}"
+                    {% if answer.is_correct %}checked{% endif %}
+                  >
+
+
+                  <!-- A / B / C / D -->
+
+                  <span class="answer-label">
+                    {{ 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[loop.index0] }}
+                  </span>
+
+
+                  <!-- NỘI DUNG ĐÁP ÁN -->
+
+                  <input
+                    type="text"
+                    class="answer-content"
+                    value="{{ answer.content }}"
+                    placeholder="Đáp án {{ 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[loop.index0] }}..."
+                  >
+
+
+                  <!-- XÓA ĐÁP ÁN -->
+
+                  <button
+                    type="button"
+                    class="btn-remove-answer"
+                    title="Xóa đáp án"
+                  >
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+
+                </div>
+
+                {% endfor %}
+
+              </div>
+
+
+              <!-- THÊM ĐÁP ÁN -->
+
+              {% if question.answers|length < 4 %}
+
+              <button
+                type="button"
+                class="btn-add-answer"
+              >
+                <i class="bi bi-plus-lg"></i>
+                Thêm đáp án
+              </button>
+
+              {% endif %}
+
+            </div>
+
+          </div>
+
+          {% endfor %}
+
+        </div>
+
+
+        <!-- =========================================
+             THÊM CÂU HỎI
+        ========================================== -->
+
+        <button
+          type="button"
+          id="btnAddQuestion"
+          class="btn-add-question"
+        >
+          <i class="bi bi-plus-circle"></i>
+          Thêm câu hỏi
+        </button>
+
+
+        <!-- NOTE -->
+
+        <div class="question-note">
+          <i class="bi bi-info-circle"></i>
+
+          Mỗi câu hỏi bắt đầu với 2 đáp án và tối đa 4 đáp án.
+          Tick chọn đáp án đúng cho mỗi câu hỏi.
+        </div>
+
+      </div>
+
+
+      <!-- =========================================
+           FOOTER
+      ========================================== -->
+
+      <div class="test-modal-footer">
+
+        <div class="test-summary">
+
+          <strong id="questionCount">
+            {{ questions|length }}
+          </strong>
+
+          câu · Đạt ≥
+
+          <strong id="footerPassScore">
+            {{ test.pass_score if test.pass_score is not none else 5 }}
+          </strong>/10
+
+        </div>
+
+
+        <div class="test-footer-actions">
+
+          <a
+            href="{{ url_for('update_course', course_id=course_id) }}"
+            class="btn-cancel-test"
+          >
+            Hủy
+          </a>
+
+
+          <button
+            type="submit"
+            class="btn-save-test"
+          >
+            <i class="bi bi-check-lg"></i>
+            Lưu câu hỏi
+          </button>
+
+        </div>
+
+      </div>
+
+    </form>
+
   </div>
 
-  <form method="POST" id="questionsForm">
-    <input type="hidden" name="questions_data" id="questionsDataInput">
-
-    <div id="questionList" class="d-flex flex-column gap-3">
-      {% for question in questions %}
-      <div class="border rounded-3 p-3 question-block" data-question-id="{{ question.id }}">
-        <div class="d-flex align-items-start gap-2 mb-2">
-          <span class="fw-semibold small mt-2">Câu hỏi</span>
-          <textarea class="form-control question-content" rows="2">{{ question.content }}</textarea>
-          <button type="button" class="btn btn-sm p-0 border-0 text-danger btn-remove-question mt-2">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
-        <div class="answer-list ms-4 d-flex flex-column gap-2">
-          {% for answer in question.answers %}
-          <div class="d-flex align-items-center gap-2 answer-row" data-answer-id="{{ answer.id }}">
-           <input type="radio" class="answer-correct-radio" {{ 'checked' if answer.is_correct else '' }}>
-            <input type="text" class="form-control form-control-sm answer-content" value="{{ answer.content }}">
-            <button type="button" class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-answer">
-              <i class="bi bi-x"></i>
-            </button>
-          </div>
-          {% endfor %}
-        </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary mt-2 ms-4 btn-add-answer">
-          <i class="bi bi-plus"></i> Thêm đáp án
-        </button>
-      </div>
-      {% endfor %}
-    </div>
-
-    <button type="button" id="btnAddQuestion" class="btn btn-outline-indigo mt-3 d-flex align-items-center gap-2">
-      <i class="bi bi-plus-circle"></i> Thêm câu hỏi
-    </button>
-
-    <p class="small text-muted-ef mt-2">
-      <i class="bi bi-info-circle"></i> Tick chọn đáp án đúng cho mỗi câu hỏi. Câu hỏi/đáp án để trống sẽ bị bỏ qua khi lưu.
-    </p>
-
-    <div class="mt-3">
-      <button type="submit" class="btn btn-indigo d-flex align-items-center gap-2">
-        <i class="bi bi-check-circle"></i> Lưu câu hỏi
-      </button>
-    </div>
-  </form>
 </div>
 
+
+<!-- JS -->
 <script src="{{ url_for('static', filename='js/test_questions.js') }}"></script>
+
 {% endblock %}

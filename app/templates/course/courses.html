@@ -25,10 +25,23 @@
   .ef-pill-btn:hover {
     background: var(--ef-slate-50, #f8fafc);
   }
-  .btn-check:checked + .ef-pill-btn {
+    .btn-check:checked + .ef-pill-btn {
     background: var(--ef-slate-900, #0f172a);
     border-color: var(--ef-slate-900, #0f172a);
     color: #fff;
+  }
+
+  .ef-category-select {
+    border-radius: 9999px !important;
+    padding: .4rem 1rem;
+    border: 1px solid var(--ef-slate-200, #e2e8f0);
+    color: var(--ef-slate-700, #334155);
+    font-weight: 500;
+    min-width: 170px;
+  }
+  .ef-category-select:focus {
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, .15);
+    border-color: var(--ef-slate-200, #e2e8f0);
   }
 </style>
 
@@ -52,15 +65,25 @@
       <label class="btn btn-sm ef-pill-btn" for="l-basic">Cơ bản</label>
       <input type="radio" class="btn-check level-filter" name="level" id="l-mid" value="INTERMEDIATE">
       <label class="btn btn-sm ef-pill-btn" for="l-mid">Trung cấp</label>
-      <input type="radio" class="btn-check level-filter" name="level" id="l-adv" value="ADVANCED">
+          <input type="radio" class="btn-check level-filter" name="level" id="l-adv" value="ADVANCED">
       <label class="btn btn-sm ef-pill-btn" for="l-adv">Nâng cao</label>
     </div>
+    <select id="categoryFilter" class="form-select form-select-sm ef-category-select">
+      <option value="ALL">Mọi danh mục</option>
+      {% for category in categories %}
+      <option value="{{ category.id }}">{{ category.name }}</option>
+      {% endfor %}
+    </select>
   </div>
 
   <div class="row g-4" id="courseGrid">
     {% for course in courses %}
     {% if not (current_user.is_authenticated and current_user.teacher_profile and course.teacher_id == current_user.teacher_profile.id) %}
-    <div class="col-md-6 col-lg-4 course-item" data-name="{{ course.name|lower }}" data-level="{{ course.level.name }}">
+        <div class="col-md-6 col-lg-4 course-item"
+         data-name="{{ course.name|lower }}"
+         data-teacher="{{ (course.teacher.user.first_name ~ ' ' ~ course.teacher.user.last_name)|lower if course.teacher and course.teacher.user else '' }}"
+         data-level="{{ course.level.name }}"
+         data-categories="{{ course.course_category|map(attribute='category_id')|list|join(',') }}">
       <a href="{{ url_for('course_detail', course_id=course.id) }}" class="card-ef ef-course-card d-block text-decoration-none text-reset overflow-hidden h-100">
         <div class="position-relative bg-slate-100" style="height:160px; overflow:hidden;">
           {% if course.image %}
@@ -78,9 +101,16 @@
           <p class="text-muted-ef small mb-2">
             {% if course.teacher and course.teacher.user %}{{ course.teacher.user.first_name }} {{ course.teacher.user.last_name }}{% endif %}
           </p>
-          <div class="d-flex align-items-center gap-3 text-muted-ef small mb-3">
+                   <div class="d-flex align-items-center gap-3 text-muted-ef small mb-2">
             <span><i class="bi bi-layers"></i> {{ course.chapters|length }} chương</span>
           </div>
+          {% if course.course_category %}
+          <div class="d-flex flex-wrap gap-1 mb-3">
+            {% for cc in course.course_category %}
+            <span class="badge-ef badge-ef-default" style="font-size:.68rem;">{{ cc.category.name }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
           <div class="d-flex align-items-center justify-content-between pt-3 border-top">
             <span class="text-muted-ef small line-clamp-1">{{ course.description }}</span>
           </div>

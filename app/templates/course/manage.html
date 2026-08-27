@@ -1,87 +1,99 @@
 {% extends "layout/base.html" %}
 
-{% block title %}Chỉnh sửa Khóa học · EduForum{% endblock %}
+{% block title %}Quản lý Khóa học · EduForum{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column gap-4 max-w-4xl mx-auto py-3">
+<style>
+  .ef-course-thumb {
+    width: 112px;
+    height: 80px;
+    flex-shrink: 0;
+  }
+  .ef-course-row-btn {
+    border-radius: .7rem;
+    font-weight: 500;
+  }
+  .ef-course-delete-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: .7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ef-red-500, #ef4444);
+    border: 1px solid var(--ef-red-500, #ef4444);
+    background: #fff;
+  }
+  .ef-course-delete-btn:hover {
+    background: #fef2f2;
+  }
+</style>
 
-    <!-- Thanh tiêu đề phía trên: Số lượng chương/bài & Nút Thêm chương -->
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div>
-            <span class="text-muted-ef fw-medium small">
-                {{ chapters|length }} chương · {{ chapters | map(attribute='lessons') | map('length') | sum }} bài học
-            </span>
-        </div>
-        <!-- Nút Thêm chương đưa lên góc phải -->
-        <button type="button" class="btn btn-indigo btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addChapterModal">
-            <i class="bi bi-plus-lg"></i> Thêm chương
-        </button>
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<div class="d-flex flex-column gap-3">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <h1 class="font-display fs-3 mb-0">Quản lý khóa học</h1>
+      <p class="text-muted-ef small mb-0">{{ courses|length }} khóa học</p>
     </div>
+    <a href="{{ url_for('create_course') }}" class="btn btn-indigo d-flex align-items-center gap-2">
+      <i class="bi bi-plus-circle"></i> Tạo khóa học mới
+    </a>
+  </div>
 
-    <!-- Danh sách các chương -->
-    <div class="d-flex flex-column gap-3">
-        {% for chapter in chapters %}
-        <div class="card-ef border rounded-3 p-3 bg-white">
-            <!-- Header của Chương -->
-            <div class="d-flex align-items-center justify-content-between pb-3 border-bottom">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-grip-vertical text-muted-ef cursor-grab"></i>
-                    <span class="fw-bold text-dark">Chương {{ loop.index }}: {{ chapter.name }}</span>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                    <span class="text-muted-ef small">{{ chapter.lessons|length }} bài</span>
-                    <div class="d-flex align-items-center gap-1">
-                        <!-- Nút sửa/xóa chương nếu có -->
-                        <button class="btn btn-sm text-secondary p-1" title="Sửa chương"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm text-danger p-1" title="Xóa chương"><i class="bi bi-trash"></i></button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Danh sách bài học/test bên trong chương -->
-            <div class="py-2 d-flex flex-column gap-2">
-                {% for lesson in chapter.lessons %}
-                <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 rounded-2 border-0">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-grip-vertical text-muted-ef small"></i>
-                        <!-- Icon phân biệt bài học video hay bài test -->
-                        {% if lesson.type == 'test' %}
-                            <i class="bi bi-card-checklist text-indigo"></i>
-                        {% else %}
-                            <i class="bi bi-camera-video text-indigo"></i>
-                        {% endif %}
-                        <span class="small text-dark">{{ lesson.name }}</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-success-subtle text-success small px-2 py-1" style="font-size: 0.75rem;">Xem thử</span>
-                        <button class="btn btn-sm text-secondary p-0"><i class="bi bi-three-dots-vertical"></i></button>
-                    </div>
-                </div>
-                {% else %}
-                <div class="text-muted-ef small px-3 py-2 fst-italic">Chưa có bài học nào trong chương này.</div>
-                {% endfor %}
-            </div>
-
-            <!-- Các nút thêm bài học và thêm bài test nằm gọn ở cuối mỗi chương -->
-            <div class="d-flex align-items-center gap-3 pt-3 mt-1 border-top">
-                <a href="#" class="text-indigo text-decoration-none small fw-semibold d-flex align-items-center gap-1">
-                    <i class="bi bi-plus"></i> Thêm bài học
-                </a>
-                <a href="#" class="text-indigo text-decoration-none small fw-semibold d-flex align-items-center gap-1">
-                    <i class="bi bi-card-checklist"></i> Thêm bài test
-                </a>
-            </div>
+  <div class="d-flex flex-column gap-3">
+    {% for course in courses %}
+    <div class="card-ef p-4 d-flex flex-row gap-4 flex-wrap">
+      <div class="rounded-3 overflow-hidden bg-slate-100 ef-course-thumb">
+        {% if course.image %}
+          <img src="{{ course.image }}" class="w-100 h-100" style="object-fit:cover;">
+        {% endif %}
+      </div>
+      <div class="flex-grow-1" style="min-width:200px;">
+        <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+          <h3 class="font-display fs-6 mb-0 line-clamp-1">{{ course.name }}</h3>
+          <span class="badge-ef badge-ef-primary flex-shrink-0">{{ course.level.value }}</span>
         </div>
-        {% else %}
-        <div class="text-center text-muted-ef py-5 card-ef">
-            <i class="bi bi-layers fs-1"></i>
-            <p class="mt-2 mb-1">Khóa học này chưa có chương nào.</p>
-            <button type="button" class="btn btn-sm btn-indigo mt-2" data-bs-toggle="modal" data-bs-target="#addChapterModal">
-                Thêm chương đầu tiên
+        <div class="d-flex align-items-center gap-3 text-muted-ef small mb-3 flex-wrap">
+          <span><i class="bi bi-people"></i> {{ course.enrollments|length }} học viên</span>
+          <span><i class="bi bi-layers"></i> {{ course.chapters|length }} chương</span>
+          <span><i class="bi bi-clock"></i> Cập nhật {{ course.updated_date.strftime('%d/%m/%Y') }}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <a href="{{ url_for('update_course', course_id=course.id) }}"
+             class="btn btn-sm btn-outline-secondary ef-course-row-btn d-flex align-items-center gap-1">
+            <i class="bi bi-pencil"></i> Chỉnh sửa
+          </a>
+          <a href="{{ url_for('course_detail', course_id=course.id) }}"
+             class="btn btn-sm btn-outline-secondary ef-course-row-btn d-flex align-items-center gap-1">
+            <i class="bi bi-bar-chart"></i> Xem điểm
+          </a>
+          <a href="{{ url_for('course_detail', course_id=course.id) }}"
+             class="btn btn-sm btn-outline-secondary ef-course-row-btn d-flex align-items-center gap-1">
+            <i class="bi bi-people"></i> Học viên
+          </a>
+          <form method="POST" action="{{ url_for('delete_course', course_id=course.id) }}"
+                class="ms-auto" onsubmit="return confirm('Xóa khóa học này?');">
+            <button type="submit" class="ef-course-delete-btn">
+              <i class="bi bi-trash"></i>
             </button>
+          </form>
         </div>
-        {% endfor %}
+      </div>
     </div>
-
+    {% else %}
+    <div class="text-center text-muted-ef py-5">
+      <i class="bi bi-journal-x fs-1"></i>
+      <p class="mt-2">Bạn chưa có khóa học nào.</p>
+      <a href="{{ url_for('create_course') }}" class="btn btn-indigo btn-sm">Tạo khóa học đầu tiên</a>
+    </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}
