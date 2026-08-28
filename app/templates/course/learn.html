@@ -109,6 +109,8 @@
                 </p>
                 {% elif enrollment.status.name == "FAILED" %}
                 <p class="small text-danger mt-2 mb-0"><i class="bi bi-x-circle-fill"></i> Chưa đạt khóa học này</p>
+                {% else %}
+                <p class="small text-indigo-700 mt-2 mb-0"><i class="bi bi-play-circle-fill"></i> Đang học</p>
                 {% endif %}
             </div>
             {% endif %}
