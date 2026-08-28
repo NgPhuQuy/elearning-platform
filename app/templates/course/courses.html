@@ -10,6 +10,7 @@
     padding-top: .55rem;
     padding-bottom: .55rem;
   }
+
   .ef-search-input:focus {
     box-shadow: 0 0 0 3px rgba(124, 58, 237, .15);
   }
@@ -22,10 +23,12 @@
     color: var(--ef-slate-500, #64748b);
     font-weight: 500;
   }
+
   .ef-pill-btn:hover {
     background: var(--ef-slate-50, #f8fafc);
   }
-  .btn-check:checked + .ef-pill-btn {
+
+  .btn-check:checked+.ef-pill-btn {
     background: var(--ef-slate-900, #0f172a);
     border-color: var(--ef-slate-900, #0f172a);
     color: #fff;
@@ -37,31 +40,43 @@
   <div class="ef-hero-violet p-4 p-lg-5" style="border-radius:24px; overflow:hidden;">
     <p class="small fw-semibold mb-2" style="color:#ddd6fe;">🎓 Kho khóa học</p>
     <h2 class="font-display fs-3 text-white mb-1">Học từ những chuyên gia hàng đầu</h2>
-    <p class="small mb-0" style="color:#ddd6fe;">{{ courses|length }} khóa học · Học mọi lúc mọi nơi</p>
+    <p class="small mb-0" style="color:#ddd6fe;">{{ pagination.total }} khóa học · Học mọi lúc mọi nơi</p>
   </div>
 
-  <div class="card-ef p-3 d-flex flex-row align-items-center gap-3 flex-wrap">
+  <form method="get" class="card-ef p-3 d-flex flex-row align-items-center gap-3 flex-wrap">
     <div class="position-relative flex-grow-1" style="min-width:200px;">
-      <i class="bi bi-search position-absolute text-muted-ef" style="left:.9rem; top:50%; transform:translateY(-50%); font-size:.8rem;"></i>
-      <input type="text" id="courseSearch" class="form-control form-control-sm ef-search-input" placeholder="Tìm khóa học...">
+      <i class="bi bi-search position-absolute text-muted-ef"
+        style="left:.9rem; top:50%; transform:translateY(-50%); font-size:.8rem;"></i>
+      <input type="search" name="keyword" value="{{ keyword }}" class="form-control form-control-sm ef-search-input"
+        placeholder="Tìm khóa học...">
     </div>
     <div class="d-flex gap-2 flex-wrap">
-      <input type="radio" class="btn-check level-filter" name="level" id="l-all" value="ALL" checked>
+      <input type="radio" class="btn-check" name="level" id="l-all" value="ALL" {% if level=='ALL' %}checked{% endif %}>
       <label class="btn btn-sm ef-pill-btn" for="l-all">Mọi cấp độ</label>
-      <input type="radio" class="btn-check level-filter" name="level" id="l-basic" value="BASIC">
+      <input type="radio" class="btn-check" name="level" id="l-basic" value="BASIC" {% if level=='BASIC' %}checked{%
+        endif %}>
       <label class="btn btn-sm ef-pill-btn" for="l-basic">Cơ bản</label>
-      <input type="radio" class="btn-check level-filter" name="level" id="l-mid" value="INTERMEDIATE">
+      <input type="radio" class="btn-check" name="level" id="l-mid" value="INTERMEDIATE" {% if level=='INTERMEDIATE'
+        %}checked{% endif %}>
       <label class="btn btn-sm ef-pill-btn" for="l-mid">Trung cấp</label>
-      <input type="radio" class="btn-check level-filter" name="level" id="l-adv" value="ADVANCED">
+      <input type="radio" class="btn-check" name="level" id="l-adv" value="ADVANCED" {% if level=='ADVANCED' %}checked{%
+        endif %}>
       <label class="btn btn-sm ef-pill-btn" for="l-adv">Nâng cao</label>
     </div>
-  </div>
+    <select name="category" class="form-select form-select-sm" style="max-width:200px;" aria-label="Danh mục">
+      <option value="ALL" {% if category=='ALL' %}selected{% endif %}>Mọi danh mục</option>
+      {% for item in categories %}
+      <option value="{{ item.id }}" {% if category==item.id|string %}selected{% endif %}>{{ item.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-sm btn-indigo">Lọc</button>
+  </form>
 
-  <div class="row g-4" id="courseGrid">
+  <div class="row g-4">
     {% for course in courses %}
-    {% if not (current_user.is_authenticated and current_user.teacher_profile and course.teacher_id == current_user.teacher_profile.id) %}
-    <div class="col-md-6 col-lg-4 course-item" data-name="{{ course.name|lower }}" data-level="{{ course.level.name }}">
-      <a href="{{ url_for('course_detail', course_id=course.id) }}" class="card-ef ef-course-card d-block text-decoration-none text-reset overflow-hidden h-100">
+    <div class="col-md-6 col-lg-4">
+      <a href="{{ url_for('course_detail', course_id=course.id) }}"
+        class="card-ef ef-course-card d-block text-decoration-none text-reset overflow-hidden h-100">
         <div class="position-relative bg-slate-100" style="height:160px; overflow:hidden;">
           {% if course.image %}
           <img src="{{ course.image }}" class="w-100 h-100" style="object-fit:cover;">
@@ -71,12 +86,14 @@
             <span class="badge-ef badge-ef-accent"><i class="bi bi-fire"></i> Đang khuyến mãi</span>
           </div>
           {% endif %}
-          <div class="position-absolute top-0 end-0 m-3"><span class="badge-ef badge-ef-default">{{ course.level.value }}</span></div>
+          <div class="position-absolute top-0 end-0 m-3"><span class="badge-ef badge-ef-default">{{ course.level.value
+              }}</span></div>
         </div>
         <div class="p-3">
           <h3 class="font-display fs-6 line-clamp-2 mb-2" style="font-size:.92rem !important;">{{ course.name }}</h3>
           <p class="text-muted-ef small mb-2">
-            {% if course.teacher and course.teacher.user %}{{ course.teacher.user.first_name }} {{ course.teacher.user.last_name }}{% endif %}
+            {% if course.teacher and course.teacher.user %}{{ course.teacher.user.first_name }} {{
+            course.teacher.user.last_name }}{% endif %}
           </p>
           <div class="d-flex align-items-center gap-3 text-muted-ef small mb-3">
             <span><i class="bi bi-layers"></i> {{ course.chapters|length }} chương</span>
@@ -87,7 +104,6 @@
         </div>
       </a>
     </div>
-    {% endif %}
     {% else %}
     <div class="col-12 text-center text-muted-ef py-5">
       <i class="bi bi-journal-x fs-1"></i>
@@ -95,7 +111,29 @@
     </div>
     {% endfor %}
   </div>
-</div>
 
-<script src="{{ url_for('static', filename='js/courses.js') }}"></script>
+  {% if pagination.pages > 1 %}
+  <nav aria-label="Phân trang khóa học">
+    <ul class="pagination justify-content-center mb-0">
+      {% if pagination.has_prev %}
+      <li class="page-item"><a class="page-link"
+          href="{{ url_for('courses', page=pagination.prev_num, keyword=keyword, level=level, category=category) }}">Trước</a>
+      </li>
+      {% endif %}
+      {% for page_number in pagination.iter_pages() %}
+      {% if page_number %}
+      <li class="page-item {% if page_number == pagination.page %}active{% endif %}"><a class="page-link"
+          href="{{ url_for('courses', page=page_number, keyword=keyword, level=level, category=category) }}">{{
+          page_number }}</a></li>
+      {% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}
+      <li class="page-item"><a class="page-link"
+          href="{{ url_for('courses', page=pagination.next_num, keyword=keyword, level=level, category=category) }}">Sau</a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
 {% endblock %}

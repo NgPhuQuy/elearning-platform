@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 
 import cloudinary.uploader
 from flask_login import current_user
+from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, selectinload
 
 from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login
 from app.models import (
@@ -16,6 +18,7 @@ from app.models import (
     ConversationMember,
     Course,
     CourseCategory,
+    CourseLevel,
     CourseOutcome,
     DocContent,
     Enrollment,
@@ -168,6 +171,42 @@ def register_teacher(user_id, note=""):
 
 def get_categories():
     return Category.query.order_by(Category.name).all()
+
+
+def get_courses(keyword=None, level=None, category_id=None, page=1, per_page=12, exclude_teacher_id=None):
+    query = Course.query.filter(Course.activate.is_(True))
+
+    if keyword:
+        search_pattern = f"%{keyword}%"
+        query = (
+            query.join(Course.teacher)
+            .join(Teacher.user)
+            .filter(
+                or_(
+                    Course.name.ilike(search_pattern),
+                    User.first_name.ilike(search_pattern),
+                    User.last_name.ilike(search_pattern),
+                )
+            )
+        )
+
+    if level and level != "ALL":
+        try:
+            query = query.filter(Course.level == CourseLevel[level])
+        except KeyError:
+            query = query.filter(Course.id == -1)
+
+    if category_id is not None:
+        query = query.join(Course.course_category).filter(CourseCategory.category_id == category_id)
+
+    if exclude_teacher_id is not None:
+        query = query.filter(Course.teacher_id != exclude_teacher_id)
+
+    query = query.options(
+        joinedload(Course.teacher).joinedload(Teacher.user),
+        selectinload(Course.chapters),
+    )
+    return db.paginate(query.order_by(Course.id.desc()), page=page, per_page=per_page, error_out=False)
 
 
 def create_course(
@@ -679,13 +718,9 @@ def sync_questions(test_id, teacher_id, questions_data):
         return False
 
 
-def _get_best_scores_map(user_id, course_id, enrollment_created_date):
+def _get_best_scores_map(enrollment_id):
     """Trả về {test_id: điểm cao nhất} trong LẦN HỌC HIỆN TẠI."""
-    rows = Score.query.filter_by(
-        user_id=user_id,
-        course_id=course_id,
-        enrollment_created_date=enrollment_created_date,
-    ).all()
+    rows = Score.query.filter_by(enrollment_id=enrollment_id).all()
 
     best = {}
     for row in rows:
@@ -699,14 +734,9 @@ def recalc_enrollment_progress(enrollment):
     tests = course.tests
 
     total_lessons = sum(1 for ch in course.chapters for lesson in ch.lessons if _lesson_has_content(lesson))
-    done_lessons = LessonProgress.query.filter_by(
-        user_id=enrollment.user_id,
-        course_id=enrollment.course_id,
-        enrollment_created_date=enrollment.created_date,
-        is_completed=True,
-    ).count()
+    done_lessons = LessonProgress.query.filter_by(enrollment_id=enrollment.id, is_completed=True).count()
 
-    best_scores = _get_best_scores_map(enrollment.user_id, enrollment.course_id, enrollment.created_date)
+    best_scores = _get_best_scores_map(enrollment.id)
     tests_taken = len(best_scores)
 
     total_items = total_lessons + len(tests)
@@ -763,17 +793,13 @@ def mark_lesson_completed(user_id, course_id, lesson_id):
         return False, error
 
     lp = LessonProgress.query.filter_by(
-        user_id=user_id,
-        course_id=course_id,
-        enrollment_created_date=enrollment.created_date,
+        enrollment_id=enrollment.id,
         lesson_id=lesson_id,
     ).first()
 
     if not lp:
         lp = LessonProgress(
-            user_id=user_id,
-            course_id=course_id,
-            enrollment_created_date=enrollment.created_date,
+            enrollment_id=enrollment.id,
             lesson_id=lesson_id,
         )
         db.session.add(lp)
@@ -798,12 +824,7 @@ def get_lesson_progress_map(user_id, course_id):
     if not enrollment:
         return {}
 
-    rows = LessonProgress.query.filter_by(
-        user_id=user_id,
-        course_id=course_id,
-        enrollment_created_date=enrollment.created_date,
-        is_completed=True,
-    ).all()
+    rows = LessonProgress.query.filter_by(enrollment_id=enrollment.id, is_completed=True).all()
     return {row.lesson_id: True for row in rows}
 
 
@@ -822,15 +843,29 @@ def is_chapter_completed(user_id, course_id, chapter_id):
 
     completed_ids = {
         row.lesson_id
-        for row in LessonProgress.query.filter_by(
-            user_id=user_id,
-            course_id=course_id,
-            enrollment_created_date=enrollment.created_date,
-            is_completed=True,
-        ).all()
+        for row in LessonProgress.query.filter_by(enrollment_id=enrollment.id, is_completed=True).all()
     }
 
     return all(lesson.id in completed_ids for lesson in lessons_with_content)
+
+
+def get_chapter_completion_map(user_id, course_id, chapters):
+    enrollment = get_latest_enrollment(user_id, course_id)
+    if not enrollment or enrollment.status == EnrollmentStatus.FAILED:
+        return {chapter.id: False for chapter in chapters}
+
+    completed_ids = {
+        row.lesson_id
+        for row in LessonProgress.query.filter_by(enrollment_id=enrollment.id, is_completed=True).all()
+    }
+    return {
+        chapter.id: all(
+            lesson.id in completed_ids
+            for lesson in chapter.lessons
+            if _lesson_has_content(lesson)
+        )
+        for chapter in chapters
+    }
 
 
 def get_test_details(test_id):
@@ -849,10 +884,8 @@ def get_test_attempts(user_id, course_id, test_id):
 
     return (
         Score.query.filter_by(
-            user_id=user_id,
-            course_id=course_id,
+            enrollment_id=enrollment.id,
             test_id=test_id,
-            enrollment_created_date=enrollment.created_date,
         )
         .order_by(Score.attempt_number.desc())
         .all()
@@ -870,10 +903,8 @@ def can_take_test(user_id, test):
 
     if test.max_attempts and test.max_attempts > 0:
         attempts_used = Score.query.filter_by(
-            user_id=user_id,
-            course_id=test.course_id,
+            enrollment_id=enrollment.id,
             test_id=test.id,
-            enrollment_created_date=enrollment.created_date,
         ).count()
         if attempts_used >= test.max_attempts:
             return False, f"Bạn đã hết số lần làm bài cho phép ({test.max_attempts} lần)."
@@ -913,19 +944,15 @@ def submit_test_score(user_id, course_id, test_id, answers):
 
     attempt_number = (
         Score.query.filter_by(
-            user_id=user_id,
-            course_id=course_id,
+            enrollment_id=enrollment.id,
             test_id=test_id,
-            enrollment_created_date=enrollment.created_date,
         ).count()
         + 1
     )
 
     score = Score(
-        user_id=user_id,
-        course_id=course_id,
+        enrollment_id=enrollment.id,
         test_id=test_id,
-        enrollment_created_date=enrollment.created_date,
         attempt_number=attempt_number,
         score_value=score_value,
         is_passed=is_passed,
@@ -1303,7 +1330,12 @@ def search_users(keyword, current_user_id):
 
 
 def get_courses_by_teacher_id(teacher_id):
-    return Course.query.filter_by(teacher_id=teacher_id).order_by(Course.created_date.desc()).all()
+    return (
+        Course.query.filter_by(teacher_id=teacher_id)
+        .options(selectinload(Course.chapters), selectinload(Course.enrollments))
+        .order_by(Course.created_date.desc())
+        .all()
+    )
 
 
 def update_course(
@@ -1566,8 +1598,11 @@ def get_user_post_vote(post_id, user_id):
 
 
 def get_course_sale():
-    return Course.query.filter_by(is_sale=True).all()
+    return Course.query.filter_by(is_sale=True, activate=True).all()
 
 
 def get_question_today():
-    return Post.query.filter(Post.created_date == datetime.today()).all()
+    today = datetime.now().date()
+    start = datetime.combine(today, datetime.min.time())
+    end = datetime.combine(today, datetime.max.time())
+    return Post.query.filter(Post.created_date >= start, Post.created_date <= end).all()

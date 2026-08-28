@@ -3,16 +3,17 @@ import uuid
 from datetime import datetime
 
 import cloudinary.uploader
-from flask import jsonify, redirect, render_template, request, session, url_for
+from flask import abort, jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user, logout_user
 from flask_socketio import emit, join_room, leave_room
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 
 from app import admin, app, dao, db, momo, oauth, socketio  # noqa: F401  # Register admin routes.
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
-from app.models import Comment, Course, Post, PostCate, User, VoteType
+from app.models import Comment, Course, Post, PostCate, Teacher, User, VoteType
 
 
 @app.context_processor
@@ -20,8 +21,8 @@ def inject_common():
     new_question_today = dao.get_question_today()
     course_on_sale = dao.get_course_sale()
     return {
-        "new_question_today": len(new_question_today),
-        "course_on_sale": len(course_on_sale),
+        "new_questions_today": len(new_question_today),
+        "courses_on_sale": len(course_on_sale),
         "posts": dao.get_posts(),
         "dao": dao,
     }
@@ -330,8 +331,39 @@ def change_password():
 
 @app.route("/courses")
 def courses():
-    courses = Course.query.filter_by(activate=True).order_by(Course.id.desc()).all()
-    return render_template("course/courses.html", courses=courses)
+    keyword = request.args.get("keyword", "").strip()
+    level = request.args.get("level", "ALL").strip().upper()
+    category_value = request.args.get("category", "ALL").strip()
+    page = max(request.args.get("page", 1, type=int) or 1, 1)
+
+    if category_value == "ALL":
+        category_id = None
+    else:
+        try:
+            category_id = int(category_value)
+        except ValueError:
+            category_id = -1
+
+    exclude_teacher_id = None
+    if current_user.is_authenticated and current_user.teacher_profile:
+        exclude_teacher_id = current_user.teacher_profile.id
+
+    pagination = dao.get_courses(
+        keyword=keyword,
+        level=level,
+        category_id=category_id,
+        page=page,
+        exclude_teacher_id=exclude_teacher_id,
+    )
+    return render_template(
+        "course/courses.html",
+        courses=pagination.items,
+        pagination=pagination,
+        categories=dao.get_categories(),
+        keyword=keyword,
+        level=level,
+        category=category_value,
+    )
 
 
 @app.route("/courses/manage")
@@ -345,7 +377,18 @@ def my_courses():
 
 @app.route("/courses/<int:course_id>")
 def course_detail(course_id):
-    course = Course.query.get_or_404(course_id)
+    course = (
+        Course.query.filter_by(id=course_id)
+        .options(joinedload(Course.teacher).joinedload(Teacher.user))
+        .first_or_404()
+    )
+    is_owner = (
+        current_user.is_authenticated
+        and current_user.teacher_profile
+        and course.teacher_id == current_user.teacher_profile.id
+    )
+    if not course.activate and not is_owner:
+        abort(404)
 
     is_enrolled = False
     if current_user.is_authenticated:
@@ -412,6 +455,8 @@ def learn_course(course_id):
     if enrollment:
         dao.recalc_enrollment_progress(enrollment)
     progress_map = dao.get_lesson_progress_map(current_user.id, course_id)
+    chapter_completion_map = dao.get_chapter_completion_map(current_user.id, course_id, chapters)
+    all_chapters_done = all(chapter_completion_map.values())
     course_tests = dao.get_course_tests(course_id)
 
     return render_template(
@@ -422,6 +467,8 @@ def learn_course(course_id):
         doc_kind=doc_kind,
         enrollment=enrollment,
         progress_map=progress_map,
+        chapter_completion_map=chapter_completion_map,
+        all_chapters_done=all_chapters_done,
         course_tests=course_tests,
     )
 

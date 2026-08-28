@@ -3,227 +3,228 @@
 {% block title %}{{ current_lesson.name if current_lesson else course.name }} · EduForum{% endblock %}
 
 {% block content %}
-    <div class="d-flex" style="height: calc(100vh - 64px); margin: -1.5rem;">
-        <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
-           <div class="ef-video-wrap" style="flex-shrink:0;">
-  {% if current_lesson and current_lesson.video_content %}
-    {% set vurl = current_lesson.video_content.video_url %}
-    {% if 'youtube.com' in vurl or 'youtu.be' in vurl %}
-      {% if 'youtu.be/' in vurl %}
-        {% set yt_id = vurl.split('youtu.be/')[1].split('?')[0].split('&')[0] %}
-      {% elif 'watch?v=' in vurl %}
-        {% set yt_id = vurl.split('watch?v=')[1].split('&')[0] %}
-      {% elif '/embed/' in vurl %}
-        {% set yt_id = vurl.split('/embed/')[1].split('?')[0] %}
-      {% else %}
-        {% set yt_id = '' %}
-      {% endif %}
-      <iframe class="w-100 h-100 d-block"
-              src="https://www.youtube.com/embed/{{ yt_id }}"
-              style="border:none;"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen></iframe>
-    {% else %}
-      <video id="ef-lesson-video" controls class="w-100 h-100 d-block" style="object-fit:contain;"
-             data-course-id="{{ course.id }}"
-             data-lesson-id="{{ current_lesson.id }}"
-             data-completed="{{ 'true' if progress_map.get(current_lesson.id) else 'false' }}">
-        <source src="{{ vurl }}">
-      </video>
-    {% endif %}
- {% elif current_lesson and current_lesson.doc_content %}
-    {% if doc_kind == "pdf" %}
-    <iframe src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100 d-block" style="border:none; background:#fff;"></iframe>
-    {% elif doc_kind == "office" %}
-    <iframe src="https://docs.google.com/gview?url={{ current_lesson.doc_content.file_url }}&embedded=true" class="w-100 h-100 d-block" style="border:none; background:#fff;"></iframe>
-    {% elif doc_kind == "image" %}
-    <img src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100 d-block" style="object-fit:contain; background:#fff;">
-    {% else %}
-    <div class="position-absolute top-0 start-0 end-0 bottom-0 d-flex flex-column align-items-center justify-content-center bg-dark">
-      <i class="bi bi-file-earmark text-white" style="font-size:3rem;"></i>
-      <p class="text-white fw-semibold mt-3 fs-5 mb-0">{{ current_lesson.name }}</p>
-      <p class="text-white-50 small mb-3">Định dạng file này không thể xem trực tiếp.</p>
-      <a href="{{ current_lesson.doc_content.file_url }}" target="_blank" class="btn btn-indigo btn-sm">
-        <i class="bi bi-download"></i> Tải file xuống
-      </a>
-    </div>
-    {% endif %}
-  {% else %}
-  <div class="position-absolute top-0 start-0 end-0 bottom-0 d-flex flex-column align-items-center justify-content-center bg-dark">
-    <p class="text-white-50 small mb-0">Bài học chưa có nội dung.</p>
-  </div>
-  {% endif %}
-</div>
-
-            <div class="flex-grow-1 overflow-auto bg-white">
-                <div class="border-bottom px-4 pt-4">
-                    <div class="d-flex align-items-start justify-content-between gap-3">
-                        <div>
-                            <h2 class="font-display fs-5 mb-1">{{ current_lesson.name if current_lesson else "Chưa chọn bài học" }}</h2>
-                            <p class="text-muted-ef small mb-3">{{ course.name }}</p>
-                        </div>
-                        {% if current_lesson and current_lesson.video_content %}
-                            <span id="ef-lesson-status" class="badge {% if progress_map.get(current_lesson.id) %}bg-success{% else %}bg-secondary{% endif %} align-self-start flex-shrink-0">
-                                {% if progress_map.get(current_lesson.id) %}
-                                    <i class="bi bi-check-circle-fill"></i> Đã hoàn thành
-                                {% else %}
-                                    Xem hết video để hoàn thành
-                                {% endif %}
-                            </span>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="p-4">
-                    {% if current_lesson %}
-                        <p class="small text-muted-ef">{{ current_lesson.description }}</p>
-                    {% endif %}
-                </div>
+<div class="d-flex" style="height: calc(100vh - 64px); margin: -1.5rem;">
+    <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
+        <div class="ef-video-wrap" style="flex-shrink:0;">
+            {% if current_lesson and current_lesson.video_content %}
+            {% set vurl = current_lesson.video_content.video_url %}
+            {% if 'youtube.com' in vurl or 'youtu.be' in vurl %}
+            {% if 'youtu.be/' in vurl %}
+            {% set yt_id = vurl.split('youtu.be/')[1].split('?')[0].split('&')[0] %}
+            {% elif 'watch?v=' in vurl %}
+            {% set yt_id = vurl.split('watch?v=')[1].split('&')[0] %}
+            {% elif '/embed/' in vurl %}
+            {% set yt_id = vurl.split('/embed/')[1].split('?')[0] %}
+            {% else %}
+            {% set yt_id = '' %}
+            {% endif %}
+            <iframe class="w-100 h-100 d-block" src="https://www.youtube.com/embed/{{ yt_id }}" style="border:none;"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
+            {% else %}
+            <video id="ef-lesson-video" controls class="w-100 h-100 d-block" style="object-fit:contain;"
+                data-course-id="{{ course.id }}" data-lesson-id="{{ current_lesson.id }}"
+                data-completed="{{ 'true' if progress_map.get(current_lesson.id) else 'false' }}">
+                <source src="{{ vurl }}">
+            </video>
+            {% endif %}
+            {% elif current_lesson and current_lesson.doc_content %}
+            {% if doc_kind == "pdf" %}
+            <iframe src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100 d-block"
+                style="border:none; background:#fff;"></iframe>
+            {% elif doc_kind == "office" %}
+            <iframe src="https://docs.google.com/gview?url={{ current_lesson.doc_content.file_url }}&embedded=true"
+                class="w-100 h-100 d-block" style="border:none; background:#fff;"></iframe>
+            {% elif doc_kind == "image" %}
+            <img src="{{ current_lesson.doc_content.file_url }}" class="w-100 h-100 d-block"
+                style="object-fit:contain; background:#fff;">
+            {% else %}
+            <div
+                class="position-absolute top-0 start-0 end-0 bottom-0 d-flex flex-column align-items-center justify-content-center bg-dark">
+                <i class="bi bi-file-earmark text-white" style="font-size:3rem;"></i>
+                <p class="text-white fw-semibold mt-3 fs-5 mb-0">{{ current_lesson.name }}</p>
+                <p class="text-white-50 small mb-3">Định dạng file này không thể xem trực tiếp.</p>
+                <a href="{{ current_lesson.doc_content.file_url }}" target="_blank" class="btn btn-indigo btn-sm">
+                    <i class="bi bi-download"></i> Tải file xuống
+                </a>
             </div>
+            {% endif %}
+            {% else %}
+            <div
+                class="position-absolute top-0 start-0 end-0 bottom-0 d-flex flex-column align-items-center justify-content-center bg-dark">
+                <p class="text-white-50 small mb-0">Bài học chưa có nội dung.</p>
+            </div>
+            {% endif %}
         </div>
 
-        <div style="width:320px; flex-shrink:0;" class="bg-white border-start d-none d-lg-flex flex-column">
-            <div class="p-3 border-bottom">
-                <h3 class="font-display fs-6 mb-2 line-clamp-1">{{ course.name }}</h3>
-                <a href="{{ url_for('course_detail', course_id=course.id) }}"
-                   class="small text-muted-ef text-decoration-none">
-                    <i class="bi bi-arrow-left"></i> Về trang khóa học
-                </a>
-
-                {% if enrollment %}
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="small text-muted-ef">Tiến độ học tập</span>
-                        <span class="small fw-semibold" id="ef-progress-label">{{ enrollment.progress }}%</span>
+        <div class="flex-grow-1 overflow-auto bg-white">
+            <div class="border-bottom px-4 pt-4">
+                <div class="d-flex align-items-start justify-content-between gap-3">
+                    <div>
+                        <h2 class="font-display fs-5 mb-1">{{ current_lesson.name if current_lesson else "Chưa chọn bài
+                            học" }}</h2>
+                        <p class="text-muted-ef small mb-3">{{ course.name }}</p>
                     </div>
-                    <div class="progress" style="height:6px;">
-                        <div id="ef-progress-bar"
-                             class="progress-bar bg-indigo"
-                             role="progressbar"
-                             style="width: {{ enrollment.progress }}%;"
-                             aria-valuenow="{{ enrollment.progress }}"
-                             aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    {% if enrollment.status.name == "COMPLETED" %}
-                        <p class="small text-success mt-2 mb-0"><i class="bi bi-patch-check-fill"></i> Đã hoàn thành khóa học</p>
-                    {% elif enrollment.status.name == "FAILED" %}
-                        <p class="small text-danger mt-2 mb-0"><i class="bi bi-x-circle-fill"></i> Chưa đạt khóa học này</p>
+                    {% if current_lesson and current_lesson.video_content %}
+                    <span id="ef-lesson-status"
+                        class="badge {% if progress_map.get(current_lesson.id) %}bg-success{% else %}bg-secondary{% endif %} align-self-start flex-shrink-0">
+                        {% if progress_map.get(current_lesson.id) %}
+                        <i class="bi bi-check-circle-fill"></i> Đã hoàn thành
+                        {% else %}
+                        Xem hết video để hoàn thành
+                        {% endif %}
+                    </span>
                     {% endif %}
                 </div>
+            </div>
+            <div class="p-4">
+                {% if current_lesson %}
+                <p class="small text-muted-ef">{{ current_lesson.description }}</p>
                 {% endif %}
             </div>
-            <div class="flex-grow-1 overflow-auto">
-                {% for chapter in chapters %}
-                    <button class="w-100 d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom text-start btn btn-light rounded-0"
-                            type="button" data-bs-toggle="collapse" data-bs-target="#sec-{{ chapter.id }}">
-                        <span class="small fw-semibold">{{ chapter.name }}</span>
-                        <i class="bi bi-chevron-down text-muted-ef"></i>
-                    </button>
-                    <div class="collapse show" id="sec-{{ chapter.id }}">
-                        {% for lesson in chapter.lessons if lesson.is_active %}
-                            <a href="{{ url_for('learn_course', course_id=course.id, lesson_id=lesson.id) }}"
-                               class="lesson-row d-flex align-items-start gap-2 px-3 py-2 border-bottom text-decoration-none text-reset {% if current_lesson and lesson.id == current_lesson.id %}active{% endif %}">
-                                <div class="mt-1 flex-shrink-0">
-                                    {% if progress_map.get(lesson.id) %}
-                                        <i class="bi bi-check-circle-fill text-success"></i>
-                                    {% elif current_lesson and lesson.id == current_lesson.id %}
-                                        <i class="bi bi-circle text-indigo"></i>
-                                    {% else %}
-                                        <i class="bi bi-circle text-muted-ef"></i>
-                                    {% endif %}
-                                </div>
-                                <div class="flex-grow-1" style="min-width:0;">
-                                    <p class="small mb-1 {% if current_lesson and lesson.id == current_lesson.id %}text-indigo-700 fw-semibold{% endif %}">{{ lesson.name }}</p>
-                                    <div class="d-flex align-items-center gap-2">
-                                        {% if lesson.type.name == "VIDEO" %}
-                                            <i class="bi bi-camera-video text-muted-ef" style="font-size:.65rem;"></i>
-                                        {% elif lesson.type.name == "DOCUMENT" %}
-                                            <i class="bi bi-file-earmark-text text-muted-ef"
-                                               style="font-size:.65rem;"></i>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </a>
-                        {% else %}
-                            <p class="text-muted-ef small px-3 py-2 mb-0">Chưa có bài học nào.</p>
-                        {% endfor %}
+        </div>
+    </div>
 
-                        {% for test in chapter.tests %}
-                            {% set unlocked = dao.is_chapter_completed(current_user.id, course.id, chapter.id) %}
-                            {% if unlocked %}
-                            <a href="{{ url_for('take_test', course_id=course.id, test_id=test.id) }}"
-                               class="lesson-row d-flex align-items-start gap-2 px-3 py-2 border-bottom text-decoration-none text-reset" style="background:var(--ef-amber-50, #fffbeb);">
-                                <div class="mt-1 flex-shrink-0">
-                                    <i class="bi bi-patch-question-fill text-warning"></i>
-                                </div>
-                                <div class="flex-grow-1" style="min-width:0;">
-                                    <p class="small mb-1 fw-semibold">Bài kiểm tra chương</p>
-                                    <span class="text-muted-ef" style="font-size:.65rem;">
-                                        {{ test.questions|length }} câu
-                                        {% if test.duration %} · {{ test.duration }} phút{% endif %}
-                                    </span>
-                                </div>
-                            </a>
-                            {% else %}
-                            <div class="d-flex align-items-start gap-2 px-3 py-2 border-bottom" style="opacity:.5;">
-                                <div class="mt-1 flex-shrink-0">
-                                    <i class="bi bi-lock-fill text-muted-ef"></i>
-                                </div>
-                                <div class="flex-grow-1" style="min-width:0;">
-                                    <p class="small mb-1">Bài kiểm tra chương</p>
-                                    <span class="text-muted-ef" style="font-size:.65rem;">Học hết bài trong chương để mở khóa</span>
-                                </div>
-                            </div>
-                            {% endif %}
-                        {% endfor %}
+    <div style="width:320px; flex-shrink:0;" class="bg-white border-start d-none d-lg-flex flex-column">
+        <div class="p-3 border-bottom">
+            <h3 class="font-display fs-6 mb-2 line-clamp-1">{{ course.name }}</h3>
+            <a href="{{ url_for('course_detail', course_id=course.id) }}"
+                class="small text-muted-ef text-decoration-none">
+                <i class="bi bi-arrow-left"></i> Về trang khóa học
+            </a>
+
+            {% if enrollment %}
+            <div class="mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted-ef">Tiến độ học tập</span>
+                    <span class="small fw-semibold" id="ef-progress-label">{{ enrollment.progress }}%</span>
+                </div>
+                <div class="progress" style="height:6px;">
+                    <div id="ef-progress-bar" class="progress-bar bg-indigo" role="progressbar"
+                        style="width: {{ enrollment.progress }}%;" aria-valuenow="{{ enrollment.progress }}"
+                        aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                {% if enrollment.status.name == "COMPLETED" %}
+                <p class="small text-success mt-2 mb-0"><i class="bi bi-patch-check-fill"></i> Đã hoàn thành khóa học
+                </p>
+                {% elif enrollment.status.name == "FAILED" %}
+                <p class="small text-danger mt-2 mb-0"><i class="bi bi-x-circle-fill"></i> Chưa đạt khóa học này</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="flex-grow-1 overflow-auto">
+            {% for chapter in chapters %}
+            <button
+                class="w-100 d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom text-start btn btn-light rounded-0"
+                type="button" data-bs-toggle="collapse" data-bs-target="#sec-{{ chapter.id }}">
+                <span class="small fw-semibold">{{ chapter.name }}</span>
+                <i class="bi bi-chevron-down text-muted-ef"></i>
+            </button>
+            <div class="collapse show" id="sec-{{ chapter.id }}">
+                {% for lesson in chapter.lessons if lesson.is_active %}
+                <a href="{{ url_for('learn_course', course_id=course.id, lesson_id=lesson.id) }}"
+                    class="lesson-row d-flex align-items-start gap-2 px-3 py-2 border-bottom text-decoration-none text-reset {% if current_lesson and lesson.id == current_lesson.id %}active{% endif %}">
+                    <div class="mt-1 flex-shrink-0">
+                        {% if progress_map.get(lesson.id) %}
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        {% elif current_lesson and lesson.id == current_lesson.id %}
+                        <i class="bi bi-circle text-indigo"></i>
+                        {% else %}
+                        <i class="bi bi-circle text-muted-ef"></i>
+                        {% endif %}
                     </div>
+                    <div class="flex-grow-1" style="min-width:0;">
+                        <p
+                            class="small mb-1 {% if current_lesson and lesson.id == current_lesson.id %}text-indigo-700 fw-semibold{% endif %}">
+                            {{ lesson.name }}</p>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if lesson.type.name == "VIDEO" %}
+                            <i class="bi bi-camera-video text-muted-ef" style="font-size:.65rem;"></i>
+                            {% elif lesson.type.name == "DOCUMENT" %}
+                            <i class="bi bi-file-earmark-text text-muted-ef" style="font-size:.65rem;"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
                 {% else %}
-                    <p class="text-muted-ef small px-3 py-2 mb-0">Khóa học chưa có chương nào.</p>
+                <p class="text-muted-ef small px-3 py-2 mb-0">Chưa có bài học nào.</p>
                 {% endfor %}
 
-                {% set final_tests = course_tests|selectattr('chapter_id', 'none')|list %}
-                {% if final_tests %}
-                    <div class="px-3 py-2 bg-slate-50 border-bottom border-top">
-                        <span class="small fw-semibold text-indigo-700"><i class="bi bi-award-fill"></i> Bài thi cuối khóa</span>
+                {% for test in chapter.tests %}
+                {% set unlocked = chapter_completion_map.get(chapter.id, false) %}
+                {% if unlocked %}
+                <a href="{{ url_for('take_test', course_id=course.id, test_id=test.id) }}"
+                    class="lesson-row d-flex align-items-start gap-2 px-3 py-2 border-bottom text-decoration-none text-reset"
+                    style="background:var(--ef-amber-50, #fffbeb);">
+                    <div class="mt-1 flex-shrink-0">
+                        <i class="bi bi-patch-question-fill text-warning"></i>
                     </div>
-                    {% for test in final_tests %}
-                        {% set all_chapters_done = true %}
-                        {% for ch in chapters %}
-                            {% if not dao.is_chapter_completed(current_user.id, course.id, ch.id) %}
-                                {% set all_chapters_done = false %}
-                            {% endif %}
-                        {% endfor %}
-                        {% if all_chapters_done %}
-                        <a href="{{ url_for('take_test', course_id=course.id, test_id=test.id) }}"
-                           class="lesson-row d-flex align-items-start gap-2 px-3 py-2 border-bottom text-decoration-none text-reset" style="background:var(--ef-violet-50, #f5f3ff);">
-                            <div class="mt-1 flex-shrink-0">
-                                <i class="bi bi-trophy-fill text-violet"></i>
-                            </div>
-                            <div class="flex-grow-1" style="min-width:0;">
-                                <p class="small mb-1 fw-semibold">Bài thi cuối khóa</p>
-                                <span class="text-muted-ef" style="font-size:.65rem;">
-                                    {{ test.questions|length }} câu
-                                    {% if test.duration %} · {{ test.duration }} phút{% endif %}
-                                </span>
-                            </div>
-                        </a>
-                        {% else %}
-                        <div class="d-flex align-items-start gap-2 px-3 py-2 border-bottom" style="opacity:.5;">
-                            <div class="mt-1 flex-shrink-0">
-                                <i class="bi bi-lock-fill text-muted-ef"></i>
-                            </div>
-                            <div class="flex-grow-1" style="min-width:0;">
-                                <p class="small mb-1">Bài thi cuối khóa</p>
-                                <span class="text-muted-ef" style="font-size:.65rem;">Học hết tất cả các chương để mở khóa</span>
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
+                    <div class="flex-grow-1" style="min-width:0;">
+                        <p class="small mb-1 fw-semibold">Bài kiểm tra chương</p>
+                        <span class="text-muted-ef" style="font-size:.65rem;">
+                            {{ test.questions|length }} câu
+                            {% if test.duration %} · {{ test.duration }} phút{% endif %}
+                        </span>
+                    </div>
+                </a>
+                {% else %}
+                <div class="d-flex align-items-start gap-2 px-3 py-2 border-bottom" style="opacity:.5;">
+                    <div class="mt-1 flex-shrink-0">
+                        <i class="bi bi-lock-fill text-muted-ef"></i>
+                    </div>
+                    <div class="flex-grow-1" style="min-width:0;">
+                        <p class="small mb-1">Bài kiểm tra chương</p>
+                        <span class="text-muted-ef" style="font-size:.65rem;">Học hết bài trong chương để mở khóa</span>
+                    </div>
+                </div>
                 {% endif %}
+                {% endfor %}
             </div>
+            {% else %}
+            <p class="text-muted-ef small px-3 py-2 mb-0">Khóa học chưa có chương nào.</p>
+            {% endfor %}
+
+            {% set final_tests = course_tests|selectattr('chapter_id', 'none')|list %}
+            {% if final_tests %}
+            <div class="px-3 py-2 bg-slate-50 border-bottom border-top">
+                <span class="small fw-semibold text-indigo-700"><i class="bi bi-award-fill"></i> Bài thi cuối
+                    khóa</span>
+            </div>
+            {% for test in final_tests %}
+            {% if all_chapters_done %}
+            <a href="{{ url_for('take_test', course_id=course.id, test_id=test.id) }}"
+                class="lesson-row d-flex align-items-start gap-2 px-3 py-2 border-bottom text-decoration-none text-reset"
+                style="background:var(--ef-violet-50, #f5f3ff);">
+                <div class="mt-1 flex-shrink-0">
+                    <i class="bi bi-trophy-fill text-violet"></i>
+                </div>
+                <div class="flex-grow-1" style="min-width:0;">
+                    <p class="small mb-1 fw-semibold">Bài thi cuối khóa</p>
+                    <span class="text-muted-ef" style="font-size:.65rem;">
+                        {{ test.questions|length }} câu
+                        {% if test.duration %} · {{ test.duration }} phút{% endif %}
+                    </span>
+                </div>
+            </a>
+            {% else %}
+            <div class="d-flex align-items-start gap-2 px-3 py-2 border-bottom" style="opacity:.5;">
+                <div class="mt-1 flex-shrink-0">
+                    <i class="bi bi-lock-fill text-muted-ef"></i>
+                </div>
+                <div class="flex-grow-1" style="min-width:0;">
+                    <p class="small mb-1">Bài thi cuối khóa</p>
+                    <span class="text-muted-ef" style="font-size:.65rem;">Học hết tất cả các chương để mở khóa</span>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
         </div>
     </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('static', filename='js/learn.js') }}"></script>
+<script src="{{ url_for('static', filename='js/learn.js') }}"></script>
 {% endblock %}

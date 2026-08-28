@@ -168,7 +168,7 @@ class Course(BaseModel):
     chapters = relationship("Chapter", backref="course", cascade="all, delete-orphan", lazy="selectin")
     course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True)
     level = Column(Enum(CourseLevel), nullable=False, default=CourseLevel.BASIC)
-    enrollment = relationship("Enrollment", backref="course", cascade="all, delete-orphan", lazy=True)
+    enrollments = relationship("Enrollment", backref="course", cascade="all, delete-orphan", lazy=True)
     tests = relationship("Test", backref="course", cascade="all, delete-orphan", lazy=True)
 
 
