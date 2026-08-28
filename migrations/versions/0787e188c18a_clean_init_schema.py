@@ -1,8 +1,8 @@
-"""Initial migration
+"""Clean init schema
 
-Revision ID: 18ba4291b721
+Revision ID: 0787e188c18a
 Revises: 
-Create Date: 2026-08-11 22:00:01.424522
+Create Date: 2026-08-18 22:34:25.308790
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '18ba4291b721'
+revision = '0787e188c18a'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -27,14 +27,13 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('conversation',
-    sa.Column('title', sa.String(length=255), nullable=True),
-    sa.Column('image', sa.String(length=500), nullable=True),
-    sa.Column('is_group', sa.Boolean(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
     sa.Column('updated_date', sa.DateTime(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('image', sa.String(length=500), nullable=True),
+    sa.Column('is_group', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('post_cate',
@@ -53,7 +52,7 @@ def upgrade():
     sa.Column('first_name', sa.String(length=255), nullable=True),
     sa.Column('last_name', sa.String(length=255), nullable=True),
     sa.Column('avatar', sa.String(length=255), nullable=True),
-    sa.Column('email', sa.String(length=255), nullable=False),
+    sa.Column('email', sa.String(length=255), nullable=True),
     sa.Column('phone', sa.String(length=255), nullable=True),
     sa.Column('bio', sa.String(length=255), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -67,7 +66,7 @@ def upgrade():
     sa.UniqueConstraint('username')
     )
     op.create_table('admin',
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('note', sa.String(length=255), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
@@ -88,37 +87,36 @@ def upgrade():
     sa.PrimaryKeyConstraint('conversation_id', 'user_id')
     )
     op.create_table('message',
-    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('content', sa.Text(), nullable=True),
     sa.Column('attachment', sa.String(length=500), nullable=True),
     sa.Column('is_edited', sa.Boolean(), nullable=True),
-    sa.Column('conversation_id', sa.Integer(), nullable=False),
-    sa.Column('sender_id', sa.Integer(), nullable=False),
+    sa.Column('conversation_id', sa.Integer(), nullable=True),
+    sa.Column('sender_id', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
     sa.Column('updated_date', sa.DateTime(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['conversation_id'], ['conversation.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['sender_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['sender_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('post',
-    sa.Column('title', sa.String(length=255), nullable=False),
-    sa.Column('content', sa.Text(), nullable=False),
-    sa.Column('image', sa.String(length=500), nullable=True),
-    sa.Column('view_count', sa.Integer(), nullable=True),
-    sa.Column('is_solved', sa.Boolean(), nullable=True),
-    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
     sa.Column('updated_date', sa.DateTime(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('title', sa.String(length=255), nullable=True),
+    sa.Column('content', sa.Text(), nullable=True),
+    sa.Column('image', sa.String(length=500), nullable=True),
+    sa.Column('view_count', sa.Integer(), nullable=True),
+    sa.Column('is_solved', sa.Boolean(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('teacher',
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('note', sa.String(length=255), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
@@ -130,39 +128,37 @@ def upgrade():
     sa.UniqueConstraint('user_id')
     )
     op.create_table('teacher_application',
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('created_date', sa.DateTime(), nullable=True),
+    sa.Column('updated_date', sa.DateTime(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('workplace', sa.String(length=255), nullable=True),
     sa.Column('degree', sa.String(length=50), nullable=True),
-    sa.Column('major', sa.String(length=255), nullable=False),
-    sa.Column('bio', sa.String(length=500), nullable=False),
+    sa.Column('major', sa.String(length=255), nullable=True),
+    sa.Column('bio', sa.String(length=500), nullable=True),
     sa.Column('expertise', sa.String(length=500), nullable=True),
     sa.Column('experience', sa.String(length=50), nullable=True),
     sa.Column('teach_style', sa.String(length=20), nullable=True),
     sa.Column('linkedin', sa.String(length=255), nullable=True),
     sa.Column('website', sa.String(length=255), nullable=True),
-    sa.Column('id_card_file', sa.String(length=500), nullable=False),
-    sa.Column('degree_file', sa.String(length=500), nullable=False),
-    sa.Column('cv_file', sa.String(length=500), nullable=False),
+    sa.Column('id_card_file', sa.String(length=500), nullable=True),
+    sa.Column('degree_file', sa.String(length=500), nullable=True),
+    sa.Column('cv_file', sa.String(length=500), nullable=True),
     sa.Column('extra_cert_file', sa.String(length=500), nullable=True),
     sa.Column('video_file', sa.String(length=500), nullable=True),
-    sa.Column('status', sa.Enum('PENDING', 'APPROVED', 'REJECTED', name='applicationstatus'), nullable=False),
+    sa.Column('status', sa.Enum('PENDING', 'APPROVED', 'REJECTED', name='applicationstatus'), nullable=True),
     sa.Column('reject_reason', sa.String(length=500), nullable=True),
     sa.Column('reviewed_by', sa.Integer(), nullable=True),
     sa.Column('reviewed_at', sa.DateTime(), nullable=True),
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=True),
-    sa.Column('created_date', sa.DateTime(), nullable=True),
-    sa.Column('updated_date', sa.DateTime(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['reviewed_by'], ['user.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('comment',
-    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('content', sa.Text(), nullable=True),
     sa.Column('is_accepted', sa.Boolean(), nullable=True),
-    sa.Column('post_id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('post_id', sa.Integer(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('parent_comment_id', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
@@ -176,12 +172,12 @@ def upgrade():
     )
     op.create_table('course',
     sa.Column('is_sale', sa.Boolean(), nullable=True),
-    sa.Column('price', sa.Integer(), nullable=False),
-    sa.Column('activate', sa.Boolean(), nullable=False),
-    sa.Column('description', sa.String(length=1000), nullable=False),
-    sa.Column('image', sa.String(length=500), nullable=False),
-    sa.Column('teacher_id', sa.Integer(), nullable=False),
-    sa.Column('level', sa.Enum('BASIC', 'INTERMEDIATE', 'ADVANCED', name='courselevel'), nullable=False),
+    sa.Column('price', sa.Integer(), nullable=True),
+    sa.Column('activate', sa.Boolean(), nullable=True),
+    sa.Column('description', sa.String(length=1000), nullable=True),
+    sa.Column('image', sa.String(length=500), nullable=True),
+    sa.Column('teacher_id', sa.Integer(), nullable=True),
+    sa.Column('level', sa.Enum('BASIC', 'INTERMEDIATE', 'ADVANCED', name='courselevel'), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
@@ -191,16 +187,16 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('message_reaction',
-    sa.Column('emoji', sa.String(length=20), nullable=False),
-    sa.Column('message_id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('emoji', sa.String(length=20), nullable=True),
+    sa.Column('message_id', sa.Integer(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
     sa.Column('updated_date', sa.DateTime(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['message_id'], ['message.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('post_category',
@@ -211,19 +207,20 @@ def upgrade():
     sa.PrimaryKeyConstraint('post_id', 'category_id')
     )
     op.create_table('reaction_post',
-    sa.Column('post_id', sa.Integer(), nullable=False),
+    sa.Column('post_id', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('vote_type', sa.Enum('UP', 'DOWN', name='votetype'), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('vote_type', sa.Enum('UP', 'DOWN', name='votetype'), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['post_id'], ['post.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id', 'post_id', name='uix_vote_per_user_post')
     )
     op.create_table('chapter',
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('order', sa.Integer(), nullable=True),
-    sa.Column('course_id', sa.Integer(), nullable=False),
+    sa.Column('course_id', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
@@ -240,8 +237,8 @@ def upgrade():
     sa.PrimaryKeyConstraint('course_id', 'category_id')
     )
     op.create_table('course_outcome',
-    sa.Column('content', sa.String(length=255), nullable=False),
-    sa.Column('course_id', sa.Integer(), nullable=False),
+    sa.Column('content', sa.String(length=255), nullable=True),
+    sa.Column('course_id', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
@@ -251,56 +248,53 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('enrollment',
-    sa.Column('progress', sa.Integer(), nullable=True),
-    sa.Column('price', sa.Integer(), nullable=False),
-    sa.Column('completed_date', sa.DateTime(), nullable=True),
-    sa.Column('status', sa.Enum('IN_PROGRESS', 'COMPLETED', 'FAILED', name='enrollmentstatus'), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('course_id', sa.Integer(), nullable=False),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
     sa.Column('updated_date', sa.DateTime(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('progress', sa.Integer(), nullable=True),
+    sa.Column('price', sa.Integer(), nullable=True),
+    sa.Column('completed_date', sa.DateTime(), nullable=True),
+    sa.Column('status', sa.Enum('IN_PROGRESS', 'COMPLETED', 'FAILED', name='enrollmentstatus'), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('course_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['course_id'], ['course.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('payment',
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('course_id', sa.Integer(), nullable=False),
-    sa.Column('order_id', sa.String(length=50), nullable=False),
-    sa.Column('request_id', sa.String(length=50), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('created_date', sa.DateTime(), nullable=True),
+    sa.Column('updated_date', sa.DateTime(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('course_id', sa.Integer(), nullable=True),
+    sa.Column('order_id', sa.String(length=50), nullable=True),
+    sa.Column('request_id', sa.String(length=50), nullable=True),
     sa.Column('momo_trans_id', sa.String(length=50), nullable=True),
-    sa.Column('amount', sa.Integer(), nullable=False),
-    sa.Column('status', sa.Enum('PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', name='paymentstatus'), nullable=False),
+    sa.Column('amount', sa.Integer(), nullable=True),
+    sa.Column('status', sa.Enum('PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', name='paymentstatus'), nullable=True),
     sa.Column('pay_type', sa.String(length=50), nullable=True),
     sa.Column('paid_at', sa.DateTime(), nullable=True),
     sa.Column('invoice_sent', sa.Boolean(), nullable=True),
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=True),
-    sa.Column('created_date', sa.DateTime(), nullable=True),
-    sa.Column('updated_date', sa.DateTime(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['course_id'], ['course.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('order_id')
     )
     op.create_table('reaction_comment',
-    sa.Column('comment_id', sa.Integer(), nullable=False),
+    sa.Column('comment_id', sa.Integer(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('vote_type', sa.Enum('UP', 'DOWN', name='votetype'), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('vote_type', sa.Enum('UP', 'DOWN', name='votetype'), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['comment_id'], ['comment.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id', 'comment_id', name='uix_vote_per_user_comment')
     )
     op.create_table('lesson',
-    sa.Column('type', sa.Enum('VIDEO', 'NONE', 'DOCUMENT', name='lessontype'), nullable=False),
-    sa.Column('chapter_id', sa.Integer(), nullable=False),
-    sa.Column('description', sa.String(length=255), nullable=False),
+    sa.Column('type', sa.Enum('VIDEO', 'NONE', 'DOCUMENT', name='lessontype'), nullable=True),
+    sa.Column('chapter_id', sa.Integer(), nullable=True),
+    sa.Column('description', sa.String(length=255), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
@@ -310,7 +304,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('test',
-    sa.Column('course_id', sa.Integer(), nullable=False),
+    sa.Column('course_id', sa.Integer(), nullable=True),
     sa.Column('chapter_id', sa.Integer(), nullable=True),
     sa.Column('duration', sa.Integer(), nullable=True),
     sa.Column('max_attempts', sa.Integer(), nullable=True),
@@ -332,24 +326,21 @@ def upgrade():
     sa.PrimaryKeyConstraint('lesson_id')
     )
     op.create_table('lesson_progress',
-    sa.Column('enrollment_id', sa.Integer(), nullable=False),
-    sa.Column('lesson_id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('created_date', sa.DateTime(), nullable=True),
+    sa.Column('updated_date', sa.DateTime(), nullable=True),
+    sa.Column('enrollment_id', sa.Integer(), nullable=True),
+    sa.Column('lesson_id', sa.Integer(), nullable=True),
     sa.Column('is_completed', sa.Boolean(), nullable=True),
     sa.Column('completed_at', sa.DateTime(), nullable=True),
     sa.Column('last_watched_at', sa.DateTime(), nullable=True),
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=True),
-    sa.Column('created_date', sa.DateTime(), nullable=True),
-    sa.Column('updated_date', sa.DateTime(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['enrollment_id'], ['enrollment.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['lesson_id'], ['lesson.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('enrollment_id', 'lesson_id', name='uix_progress_per_enrollment_lesson')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('question',
-    sa.Column('test_id', sa.Integer(), nullable=False),
-    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('test_id', sa.Integer(), nullable=True),
+    sa.Column('content', sa.Text(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('created_date', sa.DateTime(), nullable=True),
@@ -360,10 +351,10 @@ def upgrade():
     )
     op.create_table('score',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('enrollment_id', sa.Integer(), nullable=False),
-    sa.Column('test_id', sa.Integer(), nullable=False),
+    sa.Column('enrollment_id', sa.Integer(), nullable=True),
+    sa.Column('test_id', sa.Integer(), nullable=True),
     sa.Column('attempt_number', sa.Integer(), nullable=True),
-    sa.Column('score_value', sa.DECIMAL(precision=10, scale=2), nullable=False),
+    sa.Column('score_value', sa.DECIMAL(precision=10, scale=2), nullable=True),
     sa.Column('is_passed', sa.Boolean(), nullable=True),
     sa.Column('started_at', sa.DateTime(), nullable=True),
     sa.Column('completed_at', sa.DateTime(), nullable=True),
@@ -374,14 +365,14 @@ def upgrade():
     )
     op.create_table('video_content',
     sa.Column('lesson_id', sa.Integer(), nullable=False),
-    sa.Column('video_url', sa.String(length=500), nullable=False),
+    sa.Column('video_url', sa.String(length=500), nullable=True),
     sa.Column('duration', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['lesson_id'], ['lesson.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('lesson_id')
     )
     op.create_table('answer',
-    sa.Column('question_id', sa.Integer(), nullable=False),
-    sa.Column('content', sa.String(length=500), nullable=False),
+    sa.Column('question_id', sa.Integer(), nullable=True),
+    sa.Column('content', sa.String(length=500), nullable=True),
     sa.Column('is_correct', sa.Boolean(), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
