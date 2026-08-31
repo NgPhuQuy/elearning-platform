@@ -11,7 +11,7 @@ from app import db
 class BaseModel(db.Model):
     __abstract__ = True
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255))
+    name = Column(String(255), nullable=True)
     created_date = Column(DateTime, default=datetime.now)
     updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     is_active = Column(Boolean, default=True)
@@ -31,7 +31,7 @@ class User(BaseModel, UserMixin):
     enrollments = relationship("Enrollment", backref="user", lazy=True)
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.first_name or ''} {self.last_name or ''}".strip() or (self.username or "")
 
 
 class Admin(BaseModel):
@@ -95,7 +95,16 @@ class Chapter(BaseModel):
 
 
 class Category(BaseModel):
-    course_category = relationship("CourseCategory", backref="category", lazy=True)
+    course_category = relationship(
+        "CourseCategory", backref="category", cascade="all, delete-orphan", lazy=True, overlaps="categories,courses"
+    )
+    courses = relationship(
+        "Course",
+        secondary="course_category",
+        back_populates="categories",
+        lazy=True,
+        overlaps="course_category,category,course,courses",
+    )
 
 
 class CourseCategory(db.Model):
@@ -117,7 +126,16 @@ class Course(BaseModel):
     image = Column(String(500), default="")
     teacher_id = Column(Integer, ForeignKey("teacher.id"))
     chapters = relationship("Chapter", backref="course", cascade="all, delete-orphan", lazy="selectin")
-    course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True)
+    course_category = relationship(
+        "CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True, overlaps="categories,courses"
+    )
+    categories = relationship(
+        "Category",
+        secondary="course_category",
+        back_populates="courses",
+        lazy="selectin",
+        overlaps="course_category,category,course,courses",
+    )
     level = Column(Enum(CourseLevel), default=CourseLevel.BASIC)
     enrollments = relationship("Enrollment", backref="course", cascade="all, delete-orphan", lazy=True)
     tests = relationship("Test", backref="course", cascade="all, delete-orphan", lazy=True)
@@ -190,7 +208,7 @@ class LessonProgress(db.Model):
 
 class Test(BaseModel):
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
-    chapter_id = Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"))
+    chapter_id = Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"), nullable=True)
     duration = Column(Integer, default=0)
     max_attempts = Column(Integer, default=1)
     questions = relationship("Question", backref="test", cascade="all, delete-orphan", lazy="selectin")

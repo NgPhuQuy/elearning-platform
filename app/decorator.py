@@ -43,8 +43,7 @@ def login_required(func):
 def teacher_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if not current_user.teacher_profile:
-            # thong bao ban ko co quyen teacher todo
+        if not current_user.is_authenticated or not getattr(current_user, "teacher_profile", None):
             return redirect("/")
         return func(*args, **kwargs)
 

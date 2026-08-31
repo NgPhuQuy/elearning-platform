@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import cloudinary.uploader
 from flask_login import current_user
 
-from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login
+from app import TEACHER_APPLICATION_COOLDOWN_DAYS, db, login, momo
 from app.models import (
     Answer,
     ApplicationStatus,
@@ -25,6 +25,8 @@ from app.models import (
     LessonType,
     Message,
     MessageReaction,
+    Payment,
+    PaymentStatus,
     Post,
     PostCate,
     Question,
@@ -574,74 +576,39 @@ def is_enrolled(user_id, course_id):
     return latest is not None and latest.status != EnrollmentStatus.FAILED
 
 
-def enroll_course(user_id, course_id):
+def enroll_course(user_id, course_id, force=False, price=0):
     course = Course.query.get(course_id)
 
     if not course:
         return None, "Khóa học không tồn tại."
 
-    if not course.activate:
+    if not course.activate and not force:
         return None, "Khóa học chưa được công khai."
 
     if course.teacher_id and current_user.is_authenticated and current_user.teacher_profile:
         if course.teacher_id == current_user.teacher_profile.id:
             return None, "Bạn không thể tự đăng ký khóa học do chính mình tạo."
 
-    # ==========================================================
-    # LẤY ENROLLMENT MỚI NHẤT
-    # ==========================================================
+    # Lấy enrollment mới nhất
+    latest_enrollment = get_latest_enrollment(user_id, course_id)
 
-    enrollment = get_latest_enrollment(user_id, course_id)
+    # Đang học (IN_PROGRESS)
+    if latest_enrollment and latest_enrollment.status == EnrollmentStatus.IN_PROGRESS and not force:
+        return None, "Bạn đang trong quá trình học khóa học này."
 
-    # ==========================================================
-    # ĐANG HỌC / ĐÃ HOÀN THÀNH
-    # ==========================================================
+    # Nếu đã hoàn thành và không phải mua/học lại ép buộc
+    if latest_enrollment and latest_enrollment.status == EnrollmentStatus.COMPLETED and not force:
+        return None, "Bạn đã hoàn thành khóa học này rồi."
 
-    if enrollment and enrollment.status != EnrollmentStatus.FAILED:
-        return None, "Bạn đang học hoặc đã hoàn thành khóa học này rồi."
-
-    # ==========================================================
-    # KHÓA HỌC CÓ PHÍ
-    # ==========================================================
-
-    if course.price and course.price > 0:
+    # Khóa học có phí (nếu không phải thanh toán kích hoạt qua force)
+    if not force and course.price and course.price > 0:
         return None, "Khóa học có phí, vui lòng thanh toán trước khi đăng ký."
 
-    # ==========================================================
-    # NẾU ĐÃ FAILED -> HỌC LẠI
-    #
-    # Dùng lại enrollment cũ.
-    # Reset tiến độ bài học.
-    # Reset điểm/lần làm test của lần học trước.
-    # ==========================================================
-
-    if enrollment and enrollment.status == EnrollmentStatus.FAILED:
-        enrollment.status = EnrollmentStatus.IN_PROGRESS
-        enrollment.progress = 0
-        enrollment.completed_date = None
-
-        # Reset tiến độ bài học
-        LessonProgress.query.filter_by(enrollment_id=enrollment.id).delete()
-
-        # Reset lịch sử làm test của lần học trước
-        Score.query.filter_by(enrollment_id=enrollment.id).delete()
-
-        try:
-            db.session.commit()
-            return enrollment, None
-
-        except Exception:
-            db.session.rollback()
-            return None, "Hệ thống lỗi, vui lòng thử lại sau!"
-
-    # ==========================================================
-    # CHƯA TỪNG ĐĂNG KÝ
-    # ==========================================================
-
+    # Tạo đợt học mới sạch sẽ (Bảo tồn lịch sử đợt học cũ)
     enrollment = Enrollment(
         user_id=user_id,
         course_id=course_id,
-        price=0,
+        price=price if force else (course.price or 0),
         status=EnrollmentStatus.IN_PROGRESS,
         progress=0,
     )
@@ -649,7 +616,6 @@ def enroll_course(user_id, course_id):
     try:
         db.session.add(enrollment)
         db.session.commit()
-
         return enrollment, None
 
     except Exception:
@@ -1524,11 +1490,12 @@ def update_course(
                 db.session.add(CourseCategory(course_id=course.id, category_id=cate_id))
         try:
             db.session.commit()
+            return course
         except Exception:
             db.session.rollback()
             return None
 
-    return
+    return None
 
 
 def accept_answer(comment_id):
@@ -1551,8 +1518,6 @@ def accept_answer(comment_id):
 
 def create_chapter(course_id, teacher_id, name, description):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
-
-    db.session.commit()
     if not course:
         return None
 
@@ -1690,68 +1655,40 @@ def create_lesson(teacher_id, chapter_id, name, description, lesson_type):
         return None
 
 
-def vote_post(post_id, user_id, vote_type):
-    reaction = ReactionPost.query.filter_by(post_id=post_id, user_id=user_id).first()
+def _vote_entity(model_cls, fk_field, target_id, user_id, vote_type):
+    filter_kwargs = {fk_field: target_id, "user_id": user_id}
+    reaction = model_cls.query.filter_by(**filter_kwargs).first()
 
     if reaction:
         if reaction.vote_type == vote_type:
             db.session.delete(reaction)
-
         else:
             reaction.vote_type = vote_type
-
     else:
-        reaction = ReactionPost(post_id=post_id, user_id=user_id, vote_type=vote_type)
-
-        db.session.add(reaction)
+        filter_kwargs["vote_type"] = vote_type
+        db.session.add(model_cls(**filter_kwargs))
 
     db.session.commit()
+
+
+def vote_post(post_id, user_id, vote_type):
+    return _vote_entity(ReactionPost, "post_id", post_id, user_id, vote_type)
 
 
 def vote_comment(comment_id, user_id, vote_type):
-    reaction = ReactionComment.query.filter_by(comment_id=comment_id, user_id=user_id).first()
+    return _vote_entity(ReactionComment, "comment_id", comment_id, user_id, vote_type)
 
-    if reaction:
-        if reaction.vote_type == vote_type:
-            db.session.delete(reaction)
 
-        else:
-            reaction.vote_type = vote_type
-
-    else:
-        reaction = ReactionComment(comment_id=comment_id, user_id=user_id, vote_type=vote_type)
-
-        db.session.add(reaction)
-
-    db.session.commit()
+def _calculate_score(reactions):
+    return sum(r.vote_type.value for r in reactions)
 
 
 def get_post_score(post):
-    score = 0
-
-    for r in post.reactions:
-        score += r.vote_type.value
-
-    return score
-
-
-# def get_lessons(chapter_id):
-#     return Lesson.query.filter_by(
-#         chapter_id=chapter_id
-#     ).all()
-
-
-# def get_lesson_details(lesson_id):
-#     return Lesson.query.get(lesson_id)
+    return _calculate_score(post.reactions)
 
 
 def get_comment_score(comment):
-    score = 0
-
-    for r in comment.reactions:
-        score += r.vote_type.value
-
-    return score
+    return _calculate_score(comment.reactions)
 
 
 def get_post_categories():
@@ -1760,6 +1697,8 @@ def get_post_categories():
 
 def get_related_posts(post_id, limit=5):
     post = Post.query.get(post_id)
+    if not post:
+        return []
 
     cate_ids = [c.id for c in post.categories]
 
@@ -1782,4 +1721,112 @@ def get_course_sale():
 
 
 def get_question_today():
-    return Post.query.filter(Post.created_date == datetime.today()).all()
+    return Post.query.filter(db.func.date(Post.created_date) == datetime.now().date()).all()
+
+
+# =========================================================================
+# PAYMENT DAO FUNCTIONS
+# =========================================================================
+
+
+def create_payment(user_id, course_id):
+    course = Course.query.get(course_id)
+    if not course:
+        return None, "Khóa học không tồn tại."
+    if not course.activate:
+        return None, "Khóa học chưa được công khai."
+    if is_enrolled(user_id, course_id):
+        return None, "Bạn đã đăng ký khóa học này rồi."
+    if not course.price or course.price <= 0:
+        return None, "Khóa học này miễn phí, hãy bấm Đăng ký học."
+
+    order_id = momo.new_order_id(course_id)
+    request_id = momo.new_request_id()
+    order_info = f"Thanh toán khóa học {course.name}"
+
+    payment = Payment(
+        user_id=user_id,
+        course_id=course_id,
+        order_id=order_id,
+        request_id=request_id,
+        amount=course.price,
+        status=PaymentStatus.PENDING,
+    )
+    try:
+        db.session.add(payment)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return None, "Không thể khởi tạo giao dịch thanh toán."
+
+    pay_url, error = momo.create_payment_request(
+        order_id=order_id,
+        request_id=request_id,
+        amount=course.price,
+        order_info=order_info,
+    )
+    if error:
+        payment.status = PaymentStatus.FAILED
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return None, error
+
+    return pay_url, None
+
+
+def confirm_payment_success(order_id, momo_trans_id=None, pay_type=None):
+    payment = Payment.query.filter_by(order_id=order_id).first()
+    if not payment:
+        return None
+
+    if payment.status == PaymentStatus.SUCCESS:
+        return payment
+
+    payment.status = PaymentStatus.SUCCESS
+    payment.momo_trans_id = momo_trans_id
+    payment.pay_type = pay_type
+    payment.paid_at = datetime.now()
+
+    # Kích hoạt Enrollment mới cho học viên
+    enroll_course(payment.user_id, payment.course_id, force=True, price=payment.amount)
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return payment
+
+    # Gửi hóa đơn qua email nếu chưa gửi
+    if not payment.invoice_sent and payment.user and payment.course:
+        try:
+            from app.mailer import send_invoice_email
+
+            sent, _ = send_invoice_email(payment, payment.user, payment.course)
+            if sent:
+                payment.invoice_sent = True
+                db.session.commit()
+        except Exception:
+            pass
+
+    return payment
+
+
+def confirm_payment_failed(order_id):
+    payment = Payment.query.filter_by(order_id=order_id).first()
+    if payment and payment.status == PaymentStatus.PENDING:
+        payment.status = PaymentStatus.FAILED
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+    return payment
+
+
+def get_payment_by_order_id(order_id):
+    return Payment.query.filter_by(order_id=order_id).first()
+
+
+def get_my_payments(user_id):
+    return Payment.query.filter_by(user_id=user_id).order_by(Payment.created_date.desc()).all()

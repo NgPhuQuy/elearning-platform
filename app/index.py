@@ -12,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app import admin, app, dao, db, momo, oauth, socketio  # noqa: F401  # Register admin routes.
 from app.dao import register_user
 from app.decorator import anonymous_required, login_required, teacher_required
-from app.models import Comment, Course, Post, PostCate, User, VoteType
+from app.models import Comment, Course, PostCate, User, VoteType
 
 
 @app.context_processor
@@ -105,24 +105,33 @@ def register():
 
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
-    # TODO
-    pass
+    return render_template("index.html")
 
 
 @app.route("/login-admin", methods=["GET", "POST"])
 def login_admin_process():
-    username = request.form.get("username")
-    password = request.form.get("password")
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-    user = dao.auth_user(username, password)
+        if not username or not password:
+            return jsonify({"success": False, "error": "Vui lòng nhập đầy đủ tài khoản và mật khẩu!"}), 400
 
-    if not user:
+        user = dao.auth_user(username, password)
+
+        if not user:
+            return jsonify({"success": False, "error": "Tài khoản hoặc mật khẩu không đúng!"}), 401
+
+        if not getattr(user, "admin", None):
+            return jsonify({"success": False, "error": "Bạn không có quyền quản trị viên!"}), 403
+
         login_user(user)
+        return jsonify({"success": True, "redirect": "/admin"})
 
-    if not user.admin:
-        return jsonify({"success": True, "redirect": "/"})
+    if current_user.is_authenticated and getattr(current_user, "admin", None):
+        return redirect("/admin")
 
-    return redirect("/admin")
+    return render_template("index.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -200,12 +209,12 @@ def google_authorize():
 
 @app.route("/terms")
 def terms():
-    pass
+    return render_template("index.html")
 
 
 @app.route("/privacy")
 def privacy():
-    pass
+    return render_template("index.html")
 
 
 @app.route("/register-teacher", methods=["GET", "POST"])
@@ -273,8 +282,6 @@ def register_teacher():
 @login_required
 def profile():
     enrollments = dao.get_my_enrollments(current_user.id)
-    for e in enrollments:
-        dao.recalc_enrollment_progress(e)
     return render_template("profile/profile.html", enrollments=enrollments)
 
 
@@ -290,7 +297,7 @@ def change_info():
         avatar = request.files.get("avatar")
         file_path = None
 
-        if avatar:
+        if avatar and avatar.filename:
             try:
                 res = cloudinary.uploader.upload(avatar, folder="elearning-platform/avatars")
                 file_path = res["secure_url"]
@@ -298,7 +305,9 @@ def change_info():
                 error = "Tải file thất bại!"
                 return render_template("profile/change-info.html", error=error)
 
-        dao.change_info(email, phone, file_path, first_name, last_name)
+        ok, err = dao.change_info(email, phone, file_path, first_name, last_name)
+        if not ok:
+            return render_template("profile/change-info.html", error=err)
 
         return redirect("/profile")
 
@@ -322,8 +331,11 @@ def change_password():
             error = "Mật khẩu không khớp!"
             return render_template("profile/change-password.html", error=error)
 
-        dao.change_password(new_password)
-        return redirect("/")
+        ok, err = dao.change_password(new_password)
+        if not ok:
+            return render_template("profile/change-password.html", error=err)
+
+        return redirect("/profile")
 
     return render_template("profile/change-password.html", error=error)
 
@@ -890,10 +902,10 @@ def forum():
 @app.route("/forum/<int:post_id>")
 @login_required
 def forum_detail(post_id):
-    post = Post.query.get_or_404(post_id)
+    post = dao.get_post_by_id(post_id)
+    if not post:
+        return redirect(url_for("forum"))
 
-    post.view_count += 1
-    db.session.commit()
     related_posts = dao.get_related_posts(post.id)
     user_vote = dao.get_user_post_vote(post.id, current_user.id)
     return render_template("forum/detail.html", post=post, related_posts=related_posts, user_vote=user_vote)
