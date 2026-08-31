@@ -166,11 +166,7 @@ def create_chapter(course_id, teacher_id, name, description):
 
 
 def delete_chapter(chapter_id, teacher_id):
-    chapter = (
-        Chapter.query.join(Course)
-        .filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id)
-        .first()
-    )
+    chapter = Chapter.query.join(Course).filter(Chapter.id == chapter_id, Course.teacher_id == teacher_id).first()
     if chapter:
         db.session.delete(chapter)
         db.session.commit()
@@ -184,10 +180,7 @@ def get_lesson_details(lesson_id):
 
 def delete_lesson(lesson_id, teacher_id):
     lesson = (
-        Lesson.query.join(Chapter)
-        .join(Course)
-        .filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id)
-        .first()
+        Lesson.query.join(Chapter).join(Course).filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id).first()
     )
     if lesson:
         db.session.delete(lesson)
@@ -301,4 +294,3 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
 
     db.session.commit()
     return True
-

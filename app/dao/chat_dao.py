@@ -14,29 +14,19 @@ def get_conversations(user_id):
 
 
 def get_other_member(conversation_id, current_user_id):
-    member = (
-        ConversationMember.query.filter(
-            ConversationMember.conversation_id == conversation_id,
-            ConversationMember.user_id != current_user_id,
-        ).first()
-    )
+    member = ConversationMember.query.filter(
+        ConversationMember.conversation_id == conversation_id,
+        ConversationMember.user_id != current_user_id,
+    ).first()
     return User.query.get(member.user_id) if member else None
 
 
 def get_latest_message(conversation_id):
-    return (
-        Message.query.filter_by(conversation_id=conversation_id)
-        .order_by(Message.created_date.desc())
-        .first()
-    )
+    return Message.query.filter_by(conversation_id=conversation_id).order_by(Message.created_date.desc()).first()
 
 
 def get_messages(conversation_id):
-    return (
-        Message.query.filter_by(conversation_id=conversation_id)
-        .order_by(Message.created_date.asc())
-        .all()
-    )
+    return Message.query.filter_by(conversation_id=conversation_id).order_by(Message.created_date.asc()).all()
 
 
 def is_member(conversation_id, user_id):
@@ -157,4 +147,3 @@ def count_unread(user_id):
             q = q.filter(Message.created_date > m.last_read)
         total += q.count()
     return total
-

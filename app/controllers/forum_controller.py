@@ -87,4 +87,3 @@ def reply_comment(comment_id):
     if comment:
         return redirect(url_for("forum_detail", post_id=comment.post_id))
     return redirect(url_for("forum"))
-

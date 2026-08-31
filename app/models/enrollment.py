@@ -37,4 +37,3 @@ class LessonProgress(db.Model):
     completed_at = Column(DateTime)
     last_watched_at = Column(DateTime)
     lesson = relationship("Lesson")
-

@@ -98,4 +98,3 @@ def search_users(keyword, current_user_id):
         .limit(10)
         .all()
     )
-

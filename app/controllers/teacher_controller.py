@@ -60,4 +60,3 @@ def change_password():
         return redirect(url_for("profile"))
 
     return render_template("profile/change-password.html", error=error)
-

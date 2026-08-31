@@ -45,4 +45,3 @@ class MessageReaction(BaseModel):
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
     message = relationship("Message", back_populates="reactions")
     user = relationship("User", backref="message_reactions")
-

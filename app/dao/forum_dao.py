@@ -119,4 +119,3 @@ def get_user_post_vote(post_id, user_id):
 
 def get_question_today():
     return Post.query.filter(db.func.date(Post.created_date) == datetime.now().date()).all()
-

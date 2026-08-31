@@ -7,4 +7,3 @@ __all__ = [
     "teacher_required",
     "socket_auth_required",
 ]
-

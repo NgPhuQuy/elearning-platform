@@ -55,4 +55,3 @@ def complete_lesson(lesson_id):
         return jsonify({"success": False, "error": error}), 400
 
     return jsonify({"success": True})
-

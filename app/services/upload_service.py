@@ -12,4 +12,3 @@ def upload_file(file_storage, folder="elearning-platform", public_id=None):
         return res.get("secure_url"), None
     except Exception as ex:
         return None, str(ex)
-

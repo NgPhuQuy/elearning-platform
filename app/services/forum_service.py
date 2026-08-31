@@ -83,4 +83,3 @@ def reply_comment(comment_id, user_id, content):
         content=content,
         parent_comment_id=comment_id,
     )
-

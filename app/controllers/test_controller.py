@@ -133,4 +133,3 @@ def manage_questions(course_id, test_id):
 
     questions = dao.get_questions(test_id)
     return render_template("course/test_questions.html", course_id=course_id, test=test, questions=questions)
-

@@ -127,4 +127,3 @@ def change_password(user, curr_password, new_password, new_confirm):
         return False, "Mật khẩu phải từ 8 ký tự trở lên!"
 
     return dao.change_password(new_password)
-

@@ -14,11 +14,7 @@ def get_test_details(test_id):
 
 
 def get_test_for_teacher(test_id, teacher_id):
-    return (
-        Test.query.join(Course)
-        .filter(Test.id == test_id, Course.teacher_id == teacher_id)
-        .first()
-    )
+    return Test.query.join(Course).filter(Test.id == test_id, Course.teacher_id == teacher_id).first()
 
 
 def get_questions(test_id):
@@ -29,11 +25,7 @@ def get_test_attempts(user_id, course_id, test_id):
     enrollment = get_latest_enrollment(user_id, course_id)
     if not enrollment:
         return []
-    return (
-        Score.query.filter_by(enrollment_id=enrollment.id, test_id=test_id)
-        .order_by(Score.attempt_number)
-        .all()
-    )
+    return Score.query.filter_by(enrollment_id=enrollment.id, test_id=test_id).order_by(Score.attempt_number).all()
 
 
 def can_take_test(user_id, test):
@@ -97,9 +89,7 @@ def submit_test_score(user_id, course_id, test_id, answers):
     db.session.add(score)
 
     if test.max_attempts and attempt_number >= test.max_attempts and not is_passed:
-        has_passed_any = (
-            Score.query.filter_by(enrollment_id=enrollment.id, test_id=test.id, is_passed=True).count() > 0
-        )
+        has_passed_any = Score.query.filter_by(enrollment_id=enrollment.id, test_id=test.id, is_passed=True).count() > 0
         if not has_passed_any:
             enrollment.status = EnrollmentStatus.FAILED
             enrollment.completed_date = datetime.now()
@@ -156,11 +146,7 @@ def sync_tests(course_id, teacher_id, tests_data):
 
 
 def sync_questions(test_id, teacher_id, questions_data, pass_score):
-    test = (
-        Test.query.join(Course)
-        .filter(Test.id == test_id, Course.teacher_id == teacher_id)
-        .first()
-    )
+    test = Test.query.join(Course).filter(Test.id == test_id, Course.teacher_id == teacher_id).first()
     if not test:
         return False
 
@@ -193,4 +179,3 @@ def sync_questions(test_id, teacher_id, questions_data, pass_score):
 
     db.session.commit()
     return True
-

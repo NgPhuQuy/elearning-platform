@@ -6,9 +6,7 @@ from app.models import ApplicationStatus, TeacherApplication
 
 def can_apply_teacher(user_id):
     latest = (
-        TeacherApplication.query.filter_by(user_id=user_id)
-        .order_by(TeacherApplication.created_date.desc())
-        .first()
+        TeacherApplication.query.filter_by(user_id=user_id).order_by(TeacherApplication.created_date.desc()).first()
     )
     if not latest:
         return True, ""
@@ -31,9 +29,21 @@ def can_apply_teacher(user_id):
 
 
 def create_teacher_application(
-    user_id, workplace, degree, major, bio, expertise, experience, teach_style,
-    linkedin, website, id_card_file=None, degree_file=None, cv_file=None,
-    extra_cert_file=None, video_file=None,
+    user_id,
+    workplace,
+    degree,
+    major,
+    bio,
+    expertise,
+    experience,
+    teach_style,
+    linkedin,
+    website,
+    id_card_file=None,
+    degree_file=None,
+    cv_file=None,
+    extra_cert_file=None,
+    video_file=None,
 ):
     ok, message = can_apply_teacher(user_id)
     if not ok:
@@ -67,9 +77,4 @@ def create_teacher_application(
 
 
 def get_latest_teacher_application(user_id):
-    return (
-        TeacherApplication.query.filter_by(user_id=user_id)
-        .order_by(TeacherApplication.created_date.desc())
-        .first()
-    )
-
+    return TeacherApplication.query.filter_by(user_id=user_id).order_by(TeacherApplication.created_date.desc()).first()

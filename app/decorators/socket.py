@@ -11,4 +11,3 @@ def socket_auth_required(func):
         return func(*args, **kwargs)
 
     return wrapper
-

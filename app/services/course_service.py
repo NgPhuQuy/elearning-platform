@@ -130,4 +130,3 @@ def delete_course(course_id, teacher_id):
 
 def activate_course(course_id, teacher_id):
     return dao.activate_course(course_id, teacher_id)
-

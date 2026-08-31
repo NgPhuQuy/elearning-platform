@@ -38,4 +38,3 @@ def momo_return():
 def payment_history():
     payments = payment_service.get_my_payments(current_user.id)
     return render_template("payment/history.html", payments=payments)
-

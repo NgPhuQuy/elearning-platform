@@ -8,8 +8,16 @@ from app.models.base import BaseModel
 
 
 class Category(BaseModel):
-    course_category = relationship("CourseCategory", backref="category", cascade="all, delete-orphan", lazy=True, overlaps="categories,courses")
-    courses = relationship("Course", secondary="course_category", back_populates="categories", lazy=True, overlaps="course_category,category,course,courses")
+    course_category = relationship(
+        "CourseCategory", backref="category", cascade="all, delete-orphan", lazy=True, overlaps="categories,courses"
+    )
+    courses = relationship(
+        "Course",
+        secondary="course_category",
+        back_populates="categories",
+        lazy=True,
+        overlaps="course_category,category,course,courses",
+    )
 
 
 class CourseCategory(db.Model):
@@ -31,8 +39,16 @@ class Course(BaseModel):
     image = Column(String(500), default="")
     teacher_id = Column(Integer, ForeignKey("teacher.id"))
     chapters = relationship("Chapter", backref="course", cascade="all, delete-orphan", lazy="selectin")
-    course_category = relationship("CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True, overlaps="categories,courses")
-    categories = relationship("Category", secondary="course_category", back_populates="courses", lazy="selectin", overlaps="course_category,category,course,courses")
+    course_category = relationship(
+        "CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True, overlaps="categories,courses"
+    )
+    categories = relationship(
+        "Category",
+        secondary="course_category",
+        back_populates="courses",
+        lazy="selectin",
+        overlaps="course_category,category,course,courses",
+    )
     level = Column(Enum(CourseLevel), default=CourseLevel.BASIC)
     enrollments = relationship("Enrollment", backref="course", cascade="all, delete-orphan", lazy=True)
     tests = relationship("Test", backref="course", cascade="all, delete-orphan", lazy=True)
@@ -77,4 +93,3 @@ class Chapter(BaseModel):
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
     lessons = relationship("Lesson", backref="chapter", cascade="all, delete-orphan", lazy="selectin")
     tests = relationship("Test", backref="chapter", cascade="all, delete-orphan", lazy="selectin")
-

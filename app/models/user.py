@@ -69,4 +69,3 @@ class TeacherApplication(db.Model):
     reviewed_at = Column(DateTime)
     user = relationship("User", foreign_keys="TeacherApplication.user_id", backref="teacher_applications")
     reviewer = relationship("User", foreign_keys="TeacherApplication.reviewed_by")
-

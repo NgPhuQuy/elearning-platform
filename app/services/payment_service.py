@@ -41,4 +41,3 @@ def process_return(params):
 
 def get_my_payments(user_id):
     return dao.get_my_payments(user_id)
-

@@ -123,4 +123,3 @@ def delete_lesson(lesson_id):
     if course_id:
         return redirect(url_for("update_course", course_id=course_id))
     return redirect(url_for("my_courses"))
-

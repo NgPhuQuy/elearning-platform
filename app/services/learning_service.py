@@ -59,4 +59,3 @@ def get_learn_context(course_id, user_id, lesson_id=None):
 
 def mark_lesson_completed(user_id, course_id, lesson_id):
     return dao.mark_lesson_completed(user_id, course_id, lesson_id)
-

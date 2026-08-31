@@ -17,4 +17,3 @@ class BaseModel(db.Model):
 class NamedModel(BaseModel):
     __abstract__ = True
     name = Column(String(255), nullable=True)
-

@@ -48,4 +48,3 @@ def submit_teacher_application(user_id, form_data, files):
 
 def get_latest_application(user_id):
     return dao.get_latest_teacher_application(user_id)
-

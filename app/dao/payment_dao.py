@@ -104,4 +104,3 @@ def get_payment_by_order_id(order_id):
 
 def get_my_payments(user_id):
     return Payment.query.filter_by(user_id=user_id).order_by(Payment.created_date.desc()).all()
-

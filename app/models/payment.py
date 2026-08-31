@@ -30,4 +30,3 @@ class Payment(db.Model):
     invoice_sent = Column(Boolean, default=False)
     user = relationship("User", backref="payments")
     course = relationship("Course", backref="payments")
-

@@ -67,4 +67,3 @@ class ReactionPost(Reactable):
 class ReactionComment(Reactable):
     comment_id = Column(Integer, ForeignKey("comment.id", ondelete="CASCADE"))
     __table_args__ = (db.UniqueConstraint("user_id", "comment_id", name="uix_vote_per_user_comment"),)
-

@@ -71,4 +71,3 @@ def get_test_for_teacher(test_id, teacher_id):
 
 def get_course_by_teacher(course_id, teacher_id):
     return Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
-

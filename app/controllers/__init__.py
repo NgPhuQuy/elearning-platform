@@ -9,4 +9,3 @@ from app.controllers import (
     teacher_controller,  # noqa: F401
     test_controller,  # noqa: F401
 )
-

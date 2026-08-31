@@ -219,4 +219,3 @@ def handle_read(data):
         {"conversation_id": conversation_id, "user_id": current_user.id},
         room=f"conversation_{conversation_id}",
     )
-

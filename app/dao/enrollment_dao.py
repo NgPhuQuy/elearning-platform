@@ -55,11 +55,7 @@ def enroll_course(user_id, course_id, force=False, price=0):
 
 
 def get_my_enrollments(user_id):
-    return (
-        Enrollment.query.filter_by(user_id=user_id)
-        .order_by(Enrollment.created_date.desc())
-        .all()
-    )
+    return Enrollment.query.filter_by(user_id=user_id).order_by(Enrollment.created_date.desc()).all()
 
 
 def _lesson_has_content(lesson):
@@ -111,12 +107,7 @@ def recalc_enrollment_progress(enrollment):
     if not course:
         return
 
-    all_lessons = [
-        les
-        for chap in course.chapters
-        for les in chap.lessons
-        if _lesson_has_content(les)
-    ]
+    all_lessons = [les for chap in course.chapters for les in chap.lessons if _lesson_has_content(les)]
     all_tests = list(course.tests)
     total_items = len(all_lessons) + len(all_tests)
 
@@ -136,11 +127,7 @@ def recalc_enrollment_progress(enrollment):
         else 0
     )
 
-    passed_tests = (
-        Score.query.filter_by(enrollment_id=enrollment.id, is_passed=True)
-        .distinct(Score.test_id)
-        .count()
-    )
+    passed_tests = Score.query.filter_by(enrollment_id=enrollment.id, is_passed=True).distinct(Score.test_id).count()
 
     done_items = completed_lessons + passed_tests
     enrollment.progress = min(100, int((done_items / total_items) * 100))
@@ -150,4 +137,3 @@ def recalc_enrollment_progress(enrollment):
         enrollment.completed_date = datetime.now()
 
     db.session.commit()
-

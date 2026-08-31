@@ -59,4 +59,3 @@ def search_messages(conversation_id, user_id, keyword):
 
 def count_unread(user_id):
     return dao.count_unread(user_id)
-
