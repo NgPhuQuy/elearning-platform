@@ -41,6 +41,7 @@ from app.models import (
 
 password = "11111111"
 
+
 def get_or_create_user(
     username,
     password,
