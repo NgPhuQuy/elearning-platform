@@ -39,6 +39,8 @@ from app.models import (
     VoteType,
 )
 
+password = "11111111"
+
 
 def get_or_create_user(
     username,
@@ -77,7 +79,7 @@ def seed_users():
 
     admin_user = get_or_create_user(
         username="admin",
-        password="123456",
+        password=password,
         email="admin@example.com",
         first_name="Nguyễn",
         last_name="Quản Trị",
@@ -87,7 +89,7 @@ def seed_users():
 
     teacher1 = get_or_create_user(
         username="teacher01",
-        password="123456",
+        password=password,
         email="teacher01@example.com",
         first_name="Nguyễn",
         last_name="Minh Anh",
@@ -97,7 +99,7 @@ def seed_users():
 
     teacher2 = get_or_create_user(
         username="teacher02",
-        password="123456",
+        password=password,
         email="teacher02@example.com",
         first_name="Trần",
         last_name="Hoàng Nam",
@@ -107,7 +109,7 @@ def seed_users():
 
     teacher3 = get_or_create_user(
         username="teacher03",
-        password="123456",
+        password=password,
         email="teacher03@example.com",
         first_name="Lê",
         last_name="Thu Hà",
@@ -117,7 +119,7 @@ def seed_users():
 
     student1 = get_or_create_user(
         username="student01",
-        password="123456",
+        password=password,
         email="student01@example.com",
         first_name="Phạm",
         last_name="Minh Đức",
@@ -127,7 +129,7 @@ def seed_users():
 
     student2 = get_or_create_user(
         username="student02",
-        password="123456",
+        password=password,
         email="student02@example.com",
         first_name="Nguyễn",
         last_name="Ngọc Linh",
@@ -137,7 +139,7 @@ def seed_users():
 
     student3 = get_or_create_user(
         username="student03",
-        password="123456",
+        password=password,
         email="student03@example.com",
         first_name="Trần",
         last_name="Gia Huy",
@@ -147,7 +149,7 @@ def seed_users():
 
     student4 = get_or_create_user(
         username="student04",
-        password="123456",
+        password=password,
         email="student04@example.com",
         first_name="Võ",
         last_name="Khánh Vy",
@@ -157,7 +159,7 @@ def seed_users():
 
     student5 = get_or_create_user(
         username="student05",
-        password="123456",
+        password=password,
         email="student05@example.com",
         first_name="Đỗ",
         last_name="Anh Tuấn",
@@ -1425,19 +1427,19 @@ def seed_database():
     print("-" * 60)
     print("Admin:")
     print("  username: admin")
-    print("  password: 123456")
+    print("  password: 11111111")
 
     print("\nTeachers:")
-    print("  teacher01 / 123456")
-    print("  teacher02 / 123456")
-    print("  teacher03 / 123456")
+    print("  teacher01 / 11111111")
+    print("  teacher02 / 11111111")
+    print("  teacher03 / 11111111")
 
     print("\nStudents:")
-    print("  student01 / 123456")
-    print("  student02 / 123456")
-    print("  student03 / 123456")
-    print("  student04 / 123456")
-    print("  student05 / 123456")
+    print("  student01 / 11111111")
+    print("  student02 / 11111111")
+    print("  student03 / 11111111")
+    print("  student04 / 11111111")
+    print("  student05 / 11111111")
 
     print("=" * 60)
 
