@@ -52,6 +52,55 @@ def create_payment(user_id, course_id):
     return pay_url, None
 
 
+def create_vnpay_payment(user_id, course_id, ip_addr="127.0.0.1", bank_code=None):
+    from app import vnpay
+
+    course = Course.query.get(course_id)
+    if not course:
+        return None, "Khóa học không tồn tại."
+    if not course.activate:
+        return None, "Khóa học chưa được công khai."
+    if is_enrolled(user_id, course_id):
+        return None, "Bạn đã đăng ký khóa học này rồi."
+    if not course.price or course.price <= 0:
+        return None, "Khóa học này miễn phí, hãy bấm Đăng ký học."
+
+    order_id = vnpay.new_order_id(course_id)
+    order_info = f"Thanh toan khoa hoc {course.id}"
+
+    payment = Payment(
+        user_id=user_id,
+        course_id=course_id,
+        order_id=order_id,
+        amount=course.price,
+        pay_type="vnpay",
+        status=PaymentStatus.PENDING,
+    )
+    try:
+        db.session.add(payment)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return None, "Không thể khởi tạo giao dịch thanh toán."
+
+    pay_url, error = vnpay.create_payment_url(
+        order_id=order_id,
+        amount=course.price,
+        order_info=order_info,
+        ip_addr=ip_addr,
+        bank_code=bank_code,
+    )
+    if error:
+        payment.status = PaymentStatus.FAILED
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return None, error
+
+    return pay_url, None
+
+
 def confirm_payment_success(order_id, momo_trans_id=None, pay_type=None):
     payment = Payment.query.filter_by(order_id=order_id).first()
     if not payment:
