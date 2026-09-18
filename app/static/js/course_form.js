@@ -422,12 +422,17 @@ document.addEventListener('DOMContentLoaded', function () {
             chapterList.querySelectorAll('.chapter-block').forEach(function (chapterBlock) {
                 const lessons = [];
                 chapterBlock.querySelectorAll('.lesson-row').forEach(function (row) {
+                    const lessonId = row.dataset.lessonId || row.dataset.tempId;
+                    const type = row.querySelector('.lesson-type-select').value;
                     lessons.push({
                         id: row.dataset.lessonId || null,
                         temp_id: row.dataset.tempId || null, // dùng để nối file upload với lesson mới vừa tạo
                         name: row.querySelector('.lesson-name').textContent.trim(),
                         description: row.querySelector('.lesson-description').textContent.trim(),
-                        type: row.querySelector('.lesson-type-select').value
+                        type: type,
+                        file_key: lessonId
+                            ? `${type === 'VIDEO' ? 'video' : 'doc'}_file_lesson_${lessonId}`
+                            : null
                     });
                 });
                 chaptersData.push({
