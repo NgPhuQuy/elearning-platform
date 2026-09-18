@@ -291,4 +291,3 @@ def test_checkout_post_vnpay_redirects(app_ctx, monkeypatch):
     db.session.delete(course)
     db.session.delete(user)
     db.session.commit()
-
