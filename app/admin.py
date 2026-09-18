@@ -12,6 +12,7 @@ from wtforms.widgets import TextArea
 
 from app import app, db
 from app.models import (
+    ROLE,
     ApplicationStatus,
     Category,
     Comment,
@@ -19,7 +20,6 @@ from app.models import (
     Lesson,
     Post,
     PostCate,
-    Teacher,
     TeacherApplication,
     User,
 )
@@ -36,19 +36,25 @@ class CKTextAreaField(TextAreaField):
 
 
 class MyAuthenticatedView(ModelView):
-    # def is_accessible(self) -> bool:
-    #     return current_user.is_authenticated and current_user.has_role("ADMIN")
+    def is_accessible(self) -> bool:
+        return current_user.is_authenticated and getattr(current_user, "admin", None) is not None
 
     def inaccessible_callback(self, name, **kwargs):
-        return redirect("/login")
+        return redirect("/")
 
 
 class MyAdminIndexView(AdminIndexView):
+    def is_accessible(self) -> bool:
+        return current_user.is_authenticated and getattr(current_user, "admin", None) is not None
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect("/")
+
     @expose("/")
     def index(self):
         total_users = db.session.query(User).count()
         total_courses = db.session.query(Course).count()
-        total_teachers = db.session.query(Teacher).count()
+        total_teachers = db.session.query(User).filter(User.role == ROLE.TEACHER).count()
         total_posts = db.session.query(Post).count()
 
         pending_applications = (
@@ -102,7 +108,7 @@ class MyLogoutView(BaseView):
         return redirect("/admin")
 
     def is_accessible(self):
-        return current_user.is_authenticated
+        return current_user.is_authenticated and getattr(current_user, "admin", None) is not None
 
 
 class UserAdmin(MyAuthenticatedView):
@@ -121,8 +127,14 @@ class UserAdmin(MyAuthenticatedView):
 
 
 class TeacherAdmin(MyAuthenticatedView):
-    column_list = ("id", "user", "note")
-    column_searchable_list = ("note",)
+    column_list = ("id", "username", "first_name", "last_name", "email", "phone")
+    column_searchable_list = ("username", "email", "phone")
+
+    def get_query(self):
+        return super().get_query().filter(User.role == ROLE.TEACHER)
+
+    def get_count_query(self):
+        return super().get_count_query().filter(User.role == ROLE.TEACHER)
 
 
 class CategoryAdmin(MyAuthenticatedView):
@@ -142,8 +154,7 @@ class CourseAdmin(MyAuthenticatedView):
 
 
 class LessonAdmin(MyAuthenticatedView):
-    column_list = ("id", "name", "type", "chapter", "description")
-    column_filters = ("type",)
+    column_list = ("id", "name", "chapter", "description")
 
 
 class PostCateAdmin(MyAuthenticatedView):
@@ -190,18 +201,18 @@ def _status_formatter(view, context, model, name):
 
 
 def _approve_application(application):
-    if not application.user.teacher_profile:
-        db.session.add(Teacher(user_id=application.user_id, note=application.bio))
+    if application.user:
+        application.user.role = ROLE.TEACHER
     application.status = ApplicationStatus.APPROVED
     application.reject_reason = None
-    application.reviewed_by = current_user.id
+    application.reviewed_by = current_user.id if current_user.is_authenticated else None
     application.reviewed_at = datetime.now()
 
 
 def _reject_application(application, reason=None):
     application.status = ApplicationStatus.REJECTED
     application.reject_reason = reason or "Hồ sơ chưa đạt yêu cầu xét duyệt."
-    application.reviewed_by = current_user.id
+    application.reviewed_by = current_user.id if current_user.is_authenticated else None
     application.reviewed_at = datetime.now()
 
 
@@ -271,12 +282,9 @@ class TeacherApplicationAdmin(MyAuthenticatedView):
 
     def on_model_change(self, form, model, is_created):
         if model.status == ApplicationStatus.APPROVED:
-            if not model.user.teacher_profile:
-                db.session.add(Teacher(user_id=model.user_id, note=model.bio))
-            model.reject_reason = None
-        if model.status in (ApplicationStatus.APPROVED, ApplicationStatus.REJECTED):
-            model.reviewed_by = current_user.id
-            model.reviewed_at = datetime.now()
+            _approve_application(model)
+        elif model.status == ApplicationStatus.REJECTED:
+            _reject_application(model, model.reject_reason)
 
     @action("approve", "Duyệt", "Bạn có chắc muốn DUYỆT các đơn đã chọn?")
     def action_approve(self, ids):
@@ -309,7 +317,7 @@ admin = Admin(
 )
 
 admin.add_view(UserAdmin(User, db.session, name="Users"))
-admin.add_view(TeacherAdmin(Teacher, db.session, name="Teachers"))
+admin.add_view(TeacherAdmin(User, db.session, name="Teachers", endpoint="teachers"))
 admin.add_view(TeacherApplicationAdmin(TeacherApplication, db.session, name="Đơn đăng ký GV"))
 admin.add_view(CategoryAdmin(Category, db.session, name="Categories"))
 admin.add_view(CourseAdmin(Course, db.session, name="Courses"))

@@ -14,8 +14,13 @@
                         <span class="small fw-semibold"
                               style="color:var(--ef-amber-300);">Cộng đồng học tập #1 Việt Nam</span>
                     </p>
-                    <h2 class="font-display fs-3 text-white mb-2">Chào buổi
-                        sáng, {{ current_user.first_name }} {{ current_user.last_name }}!</h2>
+                    <h2 class="font-display fs-3 text-white mb-2">
+                        {% if current_user.is_authenticated %}
+                            Chào buổi sáng, {{ current_user.first_name or '' }} {{ current_user.last_name or '' }}!
+                        {% else %}
+                            Chào mừng bạn đến với EduForge!
+                        {% endif %}
+                    </h2>
                     <p class="small mb-4" style="color:#c7d2fe;">Hôm nay có {{ new_questions_today }} câu hỏi mới
                         và {{ courses_on_sale }} khóa học vừa mở sale.</p>
                     <a href="{{ url_for('courses') }}" class="btn btn-sm text-white fw-semibold"
@@ -80,118 +85,97 @@
 
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="tab-hot" role="tabpanel">
-{#                        {% for post in posts.hot %}#}
-{#                            <article class="p-4 border-top">#}
-{#                                <div class="d-flex gap-3">#}
-{#                                    <span class="ef-avatar ef-avatar-{{ post.author.color }}"#}
-{#                                          style="width:38px;height:38px;font-size:14.44px;">{{ post.author.initials }}</span>#}
-{#                                    <div style="min-width:0;" class="flex-grow-1">#}
-{#                                        <p class="d-flex align-items-center gap-2 mb-2 flex-wrap">#}
-{#                                            <span class="small fw-semibold text-dark">{{ post.author.name }}</span>#}
-{#                                            <span class="text-muted-ef">·</span>#}
-{#                                            <span class="small text-muted-ef">{{ post.posted_at }}</span>#}
-{#                                            <span class="badge-ef badge-ef-{{ post.badge_style }}">{{ post.badge_label }}</span>#}
-{#                                        </p>#}
-{#                                        <h3 class="font-display fs-6 mb-2 line-clamp-2"><a#}
-{#                                                href="{{ url_for('post_detail', id=post.id) }}"#}
-{#                                                class="text-dark text-decoration-none">{{ post.title }}</a></h3>#}
-{#                                        <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.excerpt }}</p>#}
-{#                                        {% if post.image_url %}#}
-{#                                            <div class="rounded-3 overflow-hidden mb-3 bg-slate-100"#}
-{#                                                 style="height:144px;">#}
-{#                                                <img src="{{ post.image_url }}" alt="" class="w-100 h-100"#}
-{#                                                     style="object-fit:cover;">#}
-{#                                            </div>#}
-{#                                        {% endif %}#}
-{#                                        <div class="d-flex align-items-center gap-2 flex-wrap">#}
-{#                                            <ul class="d-flex gap-2 list-unstyled mb-0">#}
-{#                                                {% for tag in post.tags %}#}
-{#                                                    <li><span class="badge-ef badge-ef-default">{{ tag }}</span>#}
-{#                                                    </li>{% endfor %}#}
-{#                                            </ul>#}
-{#                                            <p class="ms-auto d-flex align-items-center gap-3 text-muted-ef mb-0">#}
-{#                                                <span class="small d-flex align-items-center gap-1"><i#}
-{#                                                        class="bi bi-heart"#}
-{#                                                        aria-hidden="true"></i> {{ post.likes }}</span>#}
-{#                                                <span class="small d-flex align-items-center gap-1"><i#}
-{#                                                        class="bi bi-chat"#}
-{#                                                        aria-hidden="true"></i> {{ post.comments }}</span>#}
-{#                                                <button type="button" class="btn btn-sm p-0 border-0 small"#}
-{#                                                        aria-label="Chia sẻ"><i class="bi bi-share"#}
-{#                                                                                aria-hidden="true"></i></button>#}
-{#                                                <button type="button" class="btn btn-sm p-0 border-0 small"#}
-{#                                                        aria-label="Lưu bài viết"><i class="bi bi-bookmark"#}
-{#                                                                                     aria-hidden="true"></i></button>#}
-{#                                            </p>#}
-{#                                        </div>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                            </article>#}
-{#                        {% endfor %}#}
-                    </div>
-
-                    <div class="tab-pane fade" id="tab-new" role="tabpanel">
-{#                        {% for post in posts %}#}
-{#                            <article class="p-4 border-top">#}
-{#                                <div class="d-flex gap-3">#}
-{#                                    <span class="ef-avatar ef-avatar-{{ post.author.color }}"#}
-{#                                          style="width:38px;height:38px;font-size:14.44px;">{{ post.author.initials }}</span>#}
-{#                                    <div style="min-width:0;" class="flex-grow-1">#}
-{#                                        <p class="d-flex align-items-center gap-2 mb-2 flex-wrap">#}
-{#                                            <span class="small fw-semibold text-dark">{{ post.author.name }}</span>#}
-{#                                            <span class="text-muted-ef">·</span>#}
-{#                                            <span class="small text-muted-ef">{{ post.posted_at }}</span>#}
-{#                                            <span class="badge-ef badge-ef-{{ post.badge_style }}">{{ post.badge_label }}</span>#}
-{#                                        </p>#}
-{#                                        <h3 class="font-display fs-6 mb-2 line-clamp-2"><a#}
-{#                                                href="{{ url_for('post_detail', id=post.id) }}"#}
-{#                                                class="text-dark text-decoration-none">{{ post.title }}</a></h3>#}
-{#                                        <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.excerpt }}</p>#}
-{#                                        <div class="d-flex align-items-center gap-2 flex-wrap">#}
-{#                                            <ul class="d-flex gap-2 list-unstyled mb-0">#}
-{#                                                {% for tag in post.tags %}#}
-{#                                                    <li><span class="badge-ef badge-ef-default">{{ tag }}</span>#}
-{#                                                    </li>{% endfor %}#}
-{#                                            </ul>#}
-{#                                            <p class="ms-auto d-flex align-items-center gap-3 text-muted-ef mb-0">#}
-{#                                                <span class="small d-flex align-items-center gap-1"><i#}
-{#                                                        class="bi bi-heart"#}
-{#                                                        aria-hidden="true"></i> {{ post.likes }}</span>#}
-{#                                                <span class="small d-flex align-items-center gap-1"><i#}
-{#                                                        class="bi bi-chat"#}
-{#                                                        aria-hidden="true"></i> {{ post.comments }}</span>#}
-{#                                            </p>#}
-{#                                        </div>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                            </article>#}
-{#                        {% endfor %}#}
-                    </div>
-
-                    <div class="tab-pane fade" id="tab-follow" role="tabpanel">
-                        {% for post in posts.following %}
+                        {% for post in posts %}
                             <article class="p-4 border-top">
                                 <div class="d-flex gap-3">
-{#                                    <span class="ef-avatar ef-avatar-{{ post.author.color }}"#}
-{#                                          style="width:38px;height:38px;font-size:14.44px;">{{ post.author.initials }}</span>#}
+                                    <span class="ef-avatar ef-avatar-indigo"
+                                          style="width:38px;height:38px;font-size:14px;">
+                                        {{ (post.user.first_name or 'U')[:1].upper() if post.user else 'U' }}
+                                    </span>
                                     <div style="min-width:0;" class="flex-grow-1">
                                         <p class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                                            <span class="small fw-semibold text-dark">{{ post.author.name }}</span>
+                                            <span class="small fw-semibold text-dark">{{ post.user.first_name if post.user else 'Ẩn danh' }} {{ post.user.last_name if post.user else '' }}</span>
                                             <span class="text-muted-ef">·</span>
-                                            <span class="small text-muted-ef">{{ post.posted_at }}</span>
-                                            <span class="badge-ef badge-ef-{{ post.badge_style }}">{{ post.badge_label }}</span>
+                                            <span class="small text-muted-ef">{{ post.created_date.strftime('%d/%m/%Y') if post.created_date else '' }}</span>
+                                            {% if post.is_solved %}
+                                                <span class="badge-ef badge-ef-success">Đã giải quyết</span>
+                                            {% endif %}
                                         </p>
-                                        <h3 class="font-display fs-6 mb-2 line-clamp-2"><a
-                                                href="{{ url_for('post_detail', id=post.id) }}"
-                                                class="text-dark text-decoration-none">{{ post.title }}</a></h3>
-                                        <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.excerpt }}</p>
+                                        <h3 class="font-display fs-6 mb-2 line-clamp-2">
+                                            <a href="{{ url_for('forum_detail', post_id=post.id) }}"
+                                               class="text-dark text-decoration-none">{{ post.title }}</a>
+                                        </h3>
+                                        <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.content[:200] if post.content else '' }}</p>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <ul class="d-flex gap-2 list-unstyled mb-0">
+                                                {% for cate in post.categories %}
+                                                    <li><span class="badge-ef badge-ef-default">{{ cate.name }}</span></li>
+                                                {% endfor %}
+                                            </ul>
+                                            <p class="ms-auto d-flex align-items-center gap-3 text-muted-ef mb-0">
+                                                <span class="small d-flex align-items-center gap-1">
+                                                    <i class="bi bi-eye" aria-hidden="true"></i> {{ post.view_count }}
+                                                </span>
+                                                <span class="small d-flex align-items-center gap-1">
+                                                    <i class="bi bi-chat" aria-hidden="true"></i> {{ post.comments|length }}
+                                                </span>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </article>
                         {% else %}
-                            <p class="p-4 border-top text-muted-ef small mb-0">Bạn chưa theo dõi ai. Hãy khám phá diễn
-                                đàn để tìm người dùng thú vị.</p>
+                            <p class="p-4 border-top text-muted-ef small mb-0">Chưa có bài viết nào trên diễn đàn.</p>
                         {% endfor %}
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-new" role="tabpanel">
+                        {% for post in posts %}
+                            <article class="p-4 border-top">
+                                <div class="d-flex gap-3">
+                                    <span class="ef-avatar ef-avatar-emerald"
+                                          style="width:38px;height:38px;font-size:14px;">
+                                        {{ (post.user.first_name or 'U')[:1].upper() if post.user else 'U' }}
+                                    </span>
+                                    <div style="min-width:0;" class="flex-grow-1">
+                                        <p class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                            <span class="small fw-semibold text-dark">{{ post.user.first_name if post.user else 'Ẩn danh' }} {{ post.user.last_name if post.user else '' }}</span>
+                                            <span class="text-muted-ef">·</span>
+                                            <span class="small text-muted-ef">{{ post.created_date.strftime('%d/%m/%Y') if post.created_date else '' }}</span>
+                                            {% if post.is_solved %}
+                                                <span class="badge-ef badge-ef-success">Đã giải quyết</span>
+                                            {% endif %}
+                                        </p>
+                                        <h3 class="font-display fs-6 mb-2 line-clamp-2">
+                                            <a href="{{ url_for('forum_detail', post_id=post.id) }}"
+                                               class="text-dark text-decoration-none">{{ post.title }}</a>
+                                        </h3>
+                                        <p class="small text-muted-ef line-clamp-2 mb-3">{{ post.content[:200] if post.content else '' }}</p>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <ul class="d-flex gap-2 list-unstyled mb-0">
+                                                {% for cate in post.categories %}
+                                                    <li><span class="badge-ef badge-ef-default">{{ cate.name }}</span></li>
+                                                {% endfor %}
+                                            </ul>
+                                            <p class="ms-auto d-flex align-items-center gap-3 text-muted-ef mb-0">
+                                                <span class="small d-flex align-items-center gap-1">
+                                                    <i class="bi bi-eye" aria-hidden="true"></i> {{ post.view_count }}
+                                                </span>
+                                                <span class="small d-flex align-items-center gap-1">
+                                                    <i class="bi bi-chat" aria-hidden="true"></i> {{ post.comments|length }}
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        {% else %}
+                            <p class="p-4 border-top text-muted-ef small mb-0">Chưa có bài viết mới.</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-follow" role="tabpanel">
+                        <p class="p-4 border-top text-muted-ef small mb-0">Bạn chưa theo dõi ai. Hãy khám phá diễn đàn để theo dõi người dùng và thảo luận.</p>
                     </div>
                 </div>
             </section>

@@ -21,8 +21,8 @@
       </div>
       <div class="p-3">
         <h3 class="font-display fs-6 line-clamp-2 mb-2" style="font-size:.92rem !important;">{{ course.name }}</h3>
-        {% if course.teacher and course.teacher.user %}
-        <p class="text-muted-ef small mb-2">{{ course.teacher.user.first_name }} {{ course.teacher.user.last_name }}</p>
+        {% if course.teacher %}
+        <p class="text-muted-ef small mb-2">{{ course.teacher.first_name }} {{ course.teacher.last_name }}</p>
         {% endif %}
 
         <div class="d-flex justify-content-between mb-1">
@@ -33,7 +33,7 @@
 
         <div class="d-flex align-items-center justify-content-between pt-2 border-top">
           <span class="small text-muted-ef">
-            <i class="bi bi-calendar3"></i> {{ enrollment.created_date.strftime("%d/%m/%Y") }}
+            <i class="bi bi-calendar3"></i> {{ enrollment.created_date.strftime("%d/%m/%Y") if enrollment.created_date else '' }}
           </span>
           <span class="btn btn-indigo btn-sm"><i class="bi bi-play-circle"></i> Vào học</span>
         </div>

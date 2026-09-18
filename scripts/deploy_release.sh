@@ -34,9 +34,10 @@ echo "[deploy] Ensuring database schema exists..."
 compose run --rm app \
     python -m scripts.create_schema
 
-echo "[deploy] Seeding initial data..."
-compose run --rm app \
-    python -m scripts.seed_data
+#echo "[deploy] Seeding initial data..."
+#compose run --rm app \
+#    python -m scripts.seed_data
+# NOTE: xoa seed data chay tu dong, kho quan ly, giu seed chay thu cong
 
 echo "[deploy] Starting application and waiting for health..."
 compose up --detach --wait app

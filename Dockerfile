@@ -41,8 +41,8 @@ EXPOSE 8000
 
 CMD ["sh", "-c", "exec gunicorn \
     --bind 0.0.0.0:${PORT:-8000} \
+    --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker \
     --workers ${GUNICORN_WORKERS:-1} \
-    --threads ${GUNICORN_THREADS:-8} \
     --timeout ${GUNICORN_TIMEOUT:-120} \
     --access-logfile - \
     --error-logfile - \

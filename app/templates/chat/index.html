@@ -49,7 +49,7 @@ Tin nhắn
 
 {% block scripts %}
     <script>
-    window.CURRENT_USER_ID = {{ current_user_id }};
+    window.CURRENT_USER_ID = {{ current_user_id | default(current_user.id if current_user.is_authenticated else 'null') }};
 </script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 

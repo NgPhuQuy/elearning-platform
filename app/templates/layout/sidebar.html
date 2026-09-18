@@ -9,9 +9,13 @@
     <a href="/courses" class="ef-nav-link  mb-1">
         <i class="bi bi-journal-bookmark-fill"></i><span class="flex-grow-1">Khóa học</span>
     </a>
-    <a href="/messages" class="ef-nav-link  mb-1">
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('my_learning') }}" class="ef-nav-link mb-1">
+        <i class="bi bi-mortarboard-fill"></i><span class="flex-grow-1">Đang học</span>
+    </a>
+    {% endif %}
+    <a href="/chat" class="ef-nav-link  mb-1">
         <i class="bi bi-chat-dots-fill"></i><span class="flex-grow-1">Tin nhắn</span>
-        <span class="ef-nav-badge">6</span>
     </a>
 
     <div class="pt-3">
@@ -61,14 +65,20 @@
     </div>
 {% else %}
     <div class="p-3 border-top">
-        <a href="/profile" class="ef-nav-link  py-2">
+        <a href="{{ url_for('profile') }}" class="ef-nav-link py-2">
+            {% if current_user.avatar %}
+                <img src="{{ current_user.avatar }}" alt="{{ current_user.first_name or '' }}" class="rounded-circle"
+                     style="width:32px;height:32px;object-fit:cover;">
+            {% else %}
                 <span class="ef-avatar ef-avatar-indigo"
-                      style="width:32px;height:32px;font-size:.8rem;">{{ current_user.first_name[0].upper() }}{{ current_user.last_name[0].upper() }}</span>
+                      style="width:32px;height:32px;font-size:.8rem;">{{ current_user.initials }}</span>
+            {% endif %}
             <span class="flex-grow-1 text-start">
-            <span class="d-block small fw-semibold text-dark">{{ current_user }}</span>
-            <span class="d-block text-muted-ef" style="font-size:.72rem;">
-              2.840 điểm </span>
-          </span>
+                <span class="d-block small fw-semibold text-dark">{{ current_user }}</span>
+                <span class="d-block text-muted-ef" style="font-size:.72rem;">
+                    @{{ current_user.username }}
+                </span>
+            </span>
             <i class="bi bi-gear text-muted-ef"></i>
         </a>
     </div>
