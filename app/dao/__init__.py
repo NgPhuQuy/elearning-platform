@@ -64,6 +64,7 @@ from app.dao.payment_dao import (
     confirm_payment_failed,
     confirm_payment_success,
     create_payment,
+    create_vnpay_payment,
     get_my_payments,
     get_payment_by_order_id,
 )
@@ -174,6 +175,7 @@ __all__ = [
     "search_messages",
     "count_unread",
     "create_payment",
+    "create_vnpay_payment",
     "confirm_payment_success",
     "confirm_payment_failed",
     "get_payment_by_order_id",

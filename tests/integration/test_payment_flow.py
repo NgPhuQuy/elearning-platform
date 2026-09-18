@@ -216,3 +216,78 @@ def test_vnpay_ipn_endpoint_rejects_invalid_checksum(app_ctx):
         res = client.get("/payment/vnpay/ipn", query_string=fake_ipn)
         assert res.status_code == 400
         assert res.get_json()["RspCode"] == "97"
+
+
+def test_checkout_page_renders_with_gateway_options(app_ctx):
+    unique_suffix = uuid.uuid4().hex[:6]
+    user = User(
+        username=f"co_user_{unique_suffix}",
+        email=f"co_{unique_suffix}@example.com",
+        password=dao.hash_password("12345678"),
+        first_name="Checkout",
+        last_name="User",
+    )
+    course = Course(
+        name=f"Checkout Course {unique_suffix}",
+        description="Khóa học test checkout",
+        activate=True,
+        price=150000,
+    )
+    db.session.add_all([user, course])
+    db.session.commit()
+
+    with flask_app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["_user_id"] = str(user.id)
+            sess["_fresh"] = True
+
+        res = client.get(f"/courses/{course.id}/checkout")
+        assert res.status_code == 200
+        html = res.get_data(as_text=True)
+        assert course.name in html
+        assert "gateway-vnpay" in html
+        assert "gateway-momo" in html
+        assert "VNPAY" in html
+        assert "MoMo" in html
+
+    db.session.delete(course)
+    db.session.delete(user)
+    db.session.commit()
+
+
+def test_checkout_post_vnpay_redirects(app_ctx, monkeypatch):
+    from app import vnpay
+
+    monkeypatch.setattr(vnpay, "VNPAY_TMN_CODE", "DEMO_TMN")
+    monkeypatch.setattr(vnpay, "VNPAY_HASH_SECRET", "DEMO_SECRET")
+    monkeypatch.setattr(vnpay, "VNPAY_PAYMENT_URL", "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html")
+    monkeypatch.setattr(vnpay, "VNPAY_RETURN_URL", "http://localhost/payment/vnpay/return")
+
+    unique_suffix = uuid.uuid4().hex[:6]
+    user = User(
+        username=f"co_post_{unique_suffix}",
+        email=f"co_post_{unique_suffix}@example.com",
+        password=dao.hash_password("12345678"),
+    )
+    course = Course(
+        name=f"Post Course {unique_suffix}",
+        activate=True,
+        price=250000,
+    )
+    db.session.add_all([user, course])
+    db.session.commit()
+
+    with flask_app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["_user_id"] = str(user.id)
+            sess["_fresh"] = True
+
+        res = client.post(f"/courses/{course.id}/checkout", data={"gateway": "vnpay"})
+        assert res.status_code == 302
+        assert "vnpayment.vn" in res.location
+
+    # Dọn dẹp
+    Payment.query.filter_by(course_id=course.id, user_id=user.id).delete()
+    db.session.delete(course)
+    db.session.delete(user)
+    db.session.commit()

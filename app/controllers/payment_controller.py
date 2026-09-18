@@ -1,20 +1,50 @@
 from flask import jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
 
-from app import app
+from app import app, dao
 from app.decorators import login_required
+from app.models import Course
 from app.services import payment_service
 
 
 @app.route("/courses/<int:course_id>/checkout", methods=["GET", "POST"])
 @login_required
 def checkout_course(course_id):
-    pay_url, error = payment_service.checkout_course(user_id=current_user.id, course_id=course_id)
-    if error:
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return jsonify({"success": False, "error": error}), 400
-        return redirect(url_for("course_detail", course_id=course_id, error=error))
-    return redirect(pay_url)
+    course = Course.query.get(course_id)
+    if not course or not course.is_active:
+        return redirect(url_for("courses", error="Khóa học không tồn tại hoặc chưa được kích hoạt."))
+
+    if dao.is_enrolled(current_user.id, course_id):
+        return redirect(url_for("learn_course", course_id=course_id))
+
+    if not course.price or course.price <= 0:
+        return redirect(url_for("course_detail", course_id=course_id))
+
+    if request.method == "POST":
+        gateway = (request.form.get("gateway") or "vnpay").lower().strip()
+        if gateway == "vnpay":
+            ip_addr = request.remote_addr or "127.0.0.1"
+            bank_code = request.form.get("bank_code") or None
+            pay_url, error = payment_service.checkout_vnpay(
+                user_id=current_user.id,
+                course_id=course_id,
+                ip_addr=ip_addr,
+                bank_code=bank_code,
+            )
+        else:  # momo
+            pay_url, error = payment_service.checkout_course(
+                user_id=current_user.id,
+                course_id=course_id,
+            )
+
+        if error:
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"success": False, "error": error}), 400
+            return render_template("payment/checkout.html", course=course, error=error)
+
+        return redirect(pay_url)
+
+    return render_template("payment/checkout.html", course=course)
 
 
 @app.route("/payment/momo/ipn", methods=["POST"])
