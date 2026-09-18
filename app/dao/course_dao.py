@@ -232,16 +232,23 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
             les_id = les_data.get("id")
             les_type_str = les_data.get("type", "NONE")
             file_key = les_data.get("file_key")
+            if not file_key and les_type_str in {"VIDEO", "DOCUMENT"}:
+                lesson_key = les_id or les_data.get("temp_id")
+                if lesson_key:
+                    prefix = "video" if les_type_str == "VIDEO" else "doc"
+                    file_key = f"{prefix}_file_lesson_{lesson_key}"
             uploaded_file = files.get(file_key) if files and file_key else None
 
             if les_id:
                 lesson = Lesson.query.filter_by(id=les_id, chapter_id=chapter.id).first()
                 if lesson:
                     lesson.name = les_data.get("name", lesson.name)
+                    lesson.description = les_data.get("description", lesson.description)
             else:
                 lesson = Lesson(
                     name=les_data.get("name", ""),
                     chapter_id=chapter.id,
+                    description=les_data.get("description", ""),
                 )
                 db.session.add(lesson)
                 db.session.flush()

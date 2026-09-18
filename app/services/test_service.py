@@ -56,7 +56,13 @@ def sync_questions(test_id, teacher_id, form_data):
     except (ValueError, TypeError):
         return False
 
-    pass_score = float(form_data.get("pass_score", 5))
+    try:
+        pass_score = float(form_data.get("pass_score", 5))
+    except (TypeError, ValueError):
+        return False
+    if not isinstance(questions_data, list):
+        return False
+
     return dao.sync_questions(
         test_id=test_id,
         teacher_id=teacher_id,
