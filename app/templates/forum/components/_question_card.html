@@ -132,15 +132,15 @@
 
                         <i class="bi bi-calendar3"></i>
 
-                        {{ post.created_date.strftime("%d/%m/%Y") }}
+                        {{ post.created_date.strftime("%d/%m/%Y") if post.created_date else '' }}
 
                         &nbsp;&nbsp;
 
                         <i class="bi bi-person-circle"></i>
 
-                        {{ post.user.first_name }}
+                        {{ post.user.first_name if post.user else 'Ẩn danh' }}
 
-                        {{ post.user.last_name }}
+                        {{ post.user.last_name if post.user else '' }}
 
                     </section>
 

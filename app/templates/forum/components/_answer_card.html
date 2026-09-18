@@ -58,15 +58,15 @@
 
                     <small class="text-muted">
 
-                        {{ comment.user.first_name }}
+                        {{ comment.user.first_name if comment.user else 'Ẩn danh' }}
 
-                        {{ comment.user.last_name }}
+                        {{ comment.user.last_name if comment.user else '' }}
 
                     </small>
 
                     <small class="text-muted">
 
-                        {{ comment.created_date.strftime("%d/%m/%Y") }}
+                        {{ comment.created_date.strftime("%d/%m/%Y") if comment.created_date else '' }}
 
                     </small>
 
@@ -105,9 +105,9 @@
 
                                 <small class="text-muted">
 
-                                    {{ reply.user.first_name }}
+                                    {{ reply.user.first_name if reply.user else 'Ẩn danh' }}
 
-                                    {{ reply.user.last_name }}
+                                    {{ reply.user.last_name if reply.user else '' }}
 
                                 </small>
 

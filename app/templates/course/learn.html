@@ -180,7 +180,8 @@
                     <p class="text-muted-ef small px-3 py-2 mb-0">Khóa học chưa có chương nào.</p>
                 {% endfor %}
 
-                {% set final_tests = course_tests|selectattr('chapter_id', 'none')|list %}
+                {% set all_tests = (course_tests if course_tests is defined and course_tests is not none else (tests if tests is defined and tests is not none else (course.tests if course and course.tests is defined else []))) %}
+                {% set final_tests = all_tests|selectattr('chapter_id', 'none')|list %}
                 {% if final_tests %}
                     <div class="px-3 py-2 bg-slate-50 border-bottom border-top">
                         <span class="small fw-semibold text-indigo-700"><i class="bi bi-award-fill"></i> Bài thi cuối khóa</span>

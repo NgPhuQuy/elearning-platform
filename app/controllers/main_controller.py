@@ -11,7 +11,9 @@ def inject_common():
     course_on_sale = dao.get_course_sale()
     return {
         "new_question_today": len(new_question_today),
+        "new_questions_today": len(new_question_today),
         "course_on_sale": len(course_on_sale),
+        "courses_on_sale": len(course_on_sale),
         "posts": dao.get_posts(),
         "dao": dao,
     }

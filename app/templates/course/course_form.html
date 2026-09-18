@@ -164,8 +164,9 @@
                     </label>
 
                     <div id="outcomeList">
-                        {% if outcomes %}
-                            {% for outcome in outcomes %}
+                        {% set outcomes_list = outcomes if outcomes is not none else (course.outcomes if course else []) %}
+                        {% if outcomes_list %}
+                            {% for outcome in outcomes_list %}
                                 <div class="input-group mb-2 outcome-item">
                                     <input type="text"
                                            name="outcomes"
@@ -212,8 +213,8 @@
                     <div class="tab-pane fade" id="cc-content">
 
                         <div id="chapterList">
-
-                            {% for chapter in chapters %}
+                            {% set chapters_list = chapters if chapters is not none else (course.chapters if course else []) %}
+                            {% for chapter in chapters_list %}
 
                                 <div class="border rounded-3 mb-3 chapter-block"
                                      data-chapter-id="{{ chapter.id }}">
@@ -402,7 +403,7 @@
                                                         <i class="bi bi-clipboard-check text-indigo"></i>
 
                                                         <span class="small fw-semibold flex-grow-1">
-                                                            Bài kiểm tra
+                                                            {{ test.name or 'Bài kiểm tra' }}
                                                         </span>
 
                                                         <button type="button"
@@ -472,7 +473,7 @@
                                                         {% if test.id %}
 
                                                             <a href="{{ url_for(
-                                                                'manage_test_questions',
+                                                                'manage_questions',
                                                                 course_id=course.id,
                                                                 test_id=test.id
                                                             ) }}"
