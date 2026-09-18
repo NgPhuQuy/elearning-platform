@@ -1,6 +1,6 @@
 from enum import Enum as MyEnum
 
-from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import backref, relationship
 
 from app import db
@@ -8,6 +8,7 @@ from app.models.base import BaseModel
 
 
 class Category(BaseModel):
+    name = Column(String(100), nullable=False)
     course_category = relationship(
         "CourseCategory", backref="category", cascade="all, delete-orphan", lazy=True, overlaps="categories,courses"
     )
@@ -32,12 +33,12 @@ class CourseLevel(MyEnum):
 
 
 class Course(BaseModel):
+    name = Column(String(100), nullable=False)
     is_sale = Column(Boolean, default=True)
     price = Column(Integer, default=0)
-    activate = Column(Boolean, default=False)
-    description = Column(String(1000))
-    image = Column(String(500), default="")
-    teacher_id = Column(Integer, ForeignKey("teacher.id"))
+    description = Column(Text)
+    image = Column(String(255), default="")
+    teacher_id = Column(Integer, ForeignKey("user.id"))
     chapters = relationship("Chapter", backref="course", cascade="all, delete-orphan", lazy="selectin")
     course_category = relationship(
         "CourseCategory", backref="course", cascade="all, delete-orphan", lazy=True, overlaps="categories,courses"
@@ -54,31 +55,12 @@ class Course(BaseModel):
     tests = relationship("Test", backref="course", cascade="all, delete-orphan", lazy=True)
 
 
-class LessonType(MyEnum):
-    VIDEO = "Video"
-    NONE = "Chưa chọn"
-    DOCUMENT = "Doc"
-
-
-class VideoContent(db.Model):
-    lesson_id = Column(Integer, ForeignKey("lesson.id", ondelete="CASCADE"), primary_key=True)
-    video_url = Column(String(500))
-    duration = Column(Integer, default=0)
-
-
-class DocContent(db.Model):
-    lesson_id = Column(Integer, ForeignKey("lesson.id", ondelete="CASCADE"), primary_key=True)
-    content_text = Column(Text)
-    file_url = Column(String(500))
-    file_ext = Column(String(20))
-
-
 class Lesson(BaseModel):
-    type = Column(Enum(LessonType), default=LessonType.NONE)
+    name = Column(String(100), nullable=False)
     chapter_id = Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"))
     description = Column(String(255))
-    video_content = relationship("VideoContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
-    doc_content = relationship("DocContent", backref="lesson", uselist=False, cascade="all, delete-orphan")
+    file_url = Column(String(500))
+    content = Column(Text)
 
 
 class CourseOutcome(BaseModel):
@@ -88,8 +70,18 @@ class CourseOutcome(BaseModel):
 
 
 class Chapter(BaseModel):
+    name = Column(String(100), nullable=False)
     description = Column(Text)
     order = Column(Integer, default=1)
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
     lessons = relationship("Lesson", backref="chapter", cascade="all, delete-orphan", lazy="selectin")
     tests = relationship("Test", backref="chapter", cascade="all, delete-orphan", lazy="selectin")
+
+
+class LessonProgress(BaseModel):
+    enrollment_id = Column(Integer, ForeignKey("enrollment.id", ondelete="CASCADE"))
+    lesson_id = Column(Integer, ForeignKey("lesson.id", ondelete="CASCADE"))
+    is_completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime)
+    last_watched_at = Column(DateTime)
+    lesson = relationship("Lesson")

@@ -8,6 +8,7 @@ from app.models.base import BaseModel
 
 
 class Test(BaseModel):
+    name = Column(String(100), nullable=False)
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
     chapter_id = Column(Integer, ForeignKey("chapter.id", ondelete="CASCADE"), nullable=True)
     duration = Column(Integer, default=0)
