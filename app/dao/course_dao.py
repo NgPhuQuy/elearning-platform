@@ -189,8 +189,9 @@ def delete_lesson(lesson_id, teacher_id):
 def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
     course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
     if not course:
-        return False
+        return {}
 
+    chapter_ids_by_temp_id = {}
     incoming_chap_ids = {c["id"] for c in chapters_data if c.get("id")}
     for old_chap in course.chapters:
         if old_chap.id not in incoming_chap_ids:
@@ -214,6 +215,8 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
             )
             db.session.add(chapter)
             db.session.flush()
+            if chap_data.get("temp_id"):
+                chapter_ids_by_temp_id[chap_data["temp_id"]] = chapter.id
 
         if not chapter:
             continue
@@ -271,4 +274,4 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
                     lesson.content = les_data["content_text"]
 
     db.session.commit()
-    return True
+    return chapter_ids_by_temp_id
