@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from app import app, db
 from app.dao import hash_password
 from app.models import (
-    Admin,
+    ROLE,
     Answer,
     ApplicationStatus,
     Category,
@@ -15,12 +15,10 @@ from app.models import (
     CourseCategory,
     CourseLevel,
     CourseOutcome,
-    DocContent,
     Enrollment,
     EnrollmentStatus,
     Lesson,
     LessonProgress,
-    LessonType,
     Message,
     MessageReaction,
     Payment,
@@ -31,11 +29,9 @@ from app.models import (
     ReactionComment,
     ReactionPost,
     Score,
-    Teacher,
     TeacherApplication,
     Test,
     User,
-    VideoContent,
     VoteType,
 )
 
@@ -50,10 +46,13 @@ def get_or_create_user(
     last_name,
     phone=None,
     bio="",
+    role=ROLE.USER,
 ):
     user = User.query.filter_by(username=username).first()
 
     if user:
+        if role is not None and user.role != role:
+            user.role = role
         return user
 
     user = User(
@@ -65,6 +64,7 @@ def get_or_create_user(
         phone=phone,
         avatar="",
         bio=bio,
+        role=role,
         is_active=True,
     )
 
@@ -85,6 +85,7 @@ def seed_users():
         last_name="Quản Trị",
         phone="0900000001",
         bio="Quản trị viên hệ thống",
+        role=ROLE.ADMIN,
     )
 
     teacher1 = get_or_create_user(
@@ -95,6 +96,7 @@ def seed_users():
         last_name="Minh Anh",
         phone="0900000002",
         bio="Giảng viên tiếng Anh",
+        role=ROLE.TEACHER,
     )
 
     teacher2 = get_or_create_user(
@@ -105,6 +107,7 @@ def seed_users():
         last_name="Hoàng Nam",
         phone="0900000003",
         bio="Giảng viên IELTS",
+        role=ROLE.TEACHER,
     )
 
     teacher3 = get_or_create_user(
@@ -115,6 +118,7 @@ def seed_users():
         last_name="Thu Hà",
         phone="0900000004",
         bio="Giảng viên tiếng Nhật",
+        role=ROLE.TEACHER,
     )
 
     student1 = get_or_create_user(
@@ -125,6 +129,7 @@ def seed_users():
         last_name="Minh Đức",
         phone="0900000005",
         bio="Sinh viên đang học tiếng Anh",
+        role=ROLE.USER,
     )
 
     student2 = get_or_create_user(
@@ -135,6 +140,7 @@ def seed_users():
         last_name="Ngọc Linh",
         phone="0900000006",
         bio="Sinh viên",
+        role=ROLE.USER,
     )
 
     student3 = get_or_create_user(
@@ -145,6 +151,7 @@ def seed_users():
         last_name="Gia Huy",
         phone="0900000007",
         bio="Sinh viên",
+        role=ROLE.USER,
     )
 
     student4 = get_or_create_user(
@@ -155,6 +162,7 @@ def seed_users():
         last_name="Khánh Vy",
         phone="0900000008",
         bio="Sinh viên",
+        role=ROLE.USER,
     )
 
     student5 = get_or_create_user(
@@ -165,6 +173,7 @@ def seed_users():
         last_name="Anh Tuấn",
         phone="0900000009",
         bio="Sinh viên",
+        role=ROLE.USER,
     )
 
     db.session.commit()
@@ -188,43 +197,19 @@ def seed_users():
 
 
 def seed_admin_teacher(users):
-    print("Seeding admin and teachers...")
+    print("Setting admin and teacher roles...")
 
     admin_user = users["admin"]
+    if admin_user.role != ROLE.ADMIN:
+        admin_user.role = ROLE.ADMIN
 
-    admin = Admin.query.filter_by(user_id=admin_user.id).first()
-
-    if not admin:
-        admin = Admin(
-            user_id=admin_user.id,
-            note="Quản trị viên chính",
-        )
-        db.session.add(admin)
-
-    teachers = []
-
-    notes = [
-        "Giảng viên tiếng Anh giao tiếp",
-        "Giảng viên IELTS",
-        "Giảng viên tiếng Nhật",
-    ]
-
-    for user, note in zip(users["teachers"], notes):
-        teacher = Teacher.query.filter_by(user_id=user.id).first()
-
-        if not teacher:
-            teacher = Teacher(
-                user_id=user.id,
-                note=note,
-            )
-            db.session.add(teacher)
-            db.session.flush()
-
-        teachers.append(teacher)
+    for user in users["teachers"]:
+        if user.role != ROLE.TEACHER:
+            user.role = ROLE.TEACHER
 
     db.session.commit()
 
-    return teachers
+    return users["teachers"]
 
 
 # ============================================================
@@ -357,7 +342,7 @@ def seed_courses(teachers, categories):
                 teacher_id=data["teacher"].id,
                 image="",
                 is_sale=True,
-                activate=True,
+                is_active=True,
             )
 
             db.session.add(course)
@@ -370,6 +355,9 @@ def seed_courses(teachers, categories):
                         category_id=category.id,
                     )
                 )
+        else:
+            if course.teacher_id != data["teacher"].id:
+                course.teacher_id = data["teacher"].id
 
         courses.append(course)
 
@@ -390,6 +378,13 @@ def seed_chapters_lessons(courses):
         existing = Chapter.query.filter_by(course_id=course.id).count()
 
         if existing > 0:
+            for chapter in course.chapters:
+                for idx, lesson in enumerate(chapter.lessons):
+                    if not lesson.file_url and not lesson.content:
+                        if idx % 2 == 0:
+                            lesson.file_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                        else:
+                            lesson.content = f"Tài liệu học tập mẫu cho bài học {lesson.name}."
             continue
 
         chapter1 = Chapter(
@@ -427,57 +422,37 @@ def seed_chapters_lessons(courses):
             Lesson(
                 name="Giới thiệu khóa học",
                 description="Giới thiệu nội dung khóa học.",
-                type=LessonType.VIDEO,
+                file_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 chapter_id=chapter1.id,
             ),
             Lesson(
                 name="Từ vựng cơ bản",
                 description="Các từ vựng thường gặp.",
-                type=LessonType.VIDEO,
+                file_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 chapter_id=chapter1.id,
             ),
             Lesson(
                 name="Ngữ pháp nền tảng",
                 description="Các cấu trúc ngữ pháp cơ bản.",
-                type=LessonType.DOCUMENT,
+                content="Tài liệu học tập mẫu về ngữ pháp nền tảng.",
                 chapter_id=chapter2.id,
             ),
             Lesson(
                 name="Bài tập thực hành",
                 description="Bài tập áp dụng kiến thức.",
-                type=LessonType.VIDEO,
+                file_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 chapter_id=chapter2.id,
             ),
             Lesson(
                 name="Luyện tập tổng hợp",
                 description="Ôn tập kiến thức toàn chương.",
-                type=LessonType.DOCUMENT,
+                content="Tài liệu học tập ôn tập tổng hợp.",
                 chapter_id=chapter3.id,
             ),
         ]
 
         db.session.add_all(lessons)
         db.session.flush()
-
-        for lesson in lessons:
-            if lesson.type == LessonType.VIDEO:
-                db.session.add(
-                    VideoContent(
-                        lesson_id=lesson.id,
-                        video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-                        duration=600,
-                    )
-                )
-
-            elif lesson.type == LessonType.DOCUMENT:
-                db.session.add(
-                    DocContent(
-                        lesson_id=lesson.id,
-                        content_text="Tài liệu học tập mẫu.",
-                        file_url="",
-                        file_ext="pdf",
-                    )
-                )
 
     db.session.commit()
 
@@ -554,13 +529,11 @@ def seed_tests(courses):
         # ----------------------------------------------------
 
         q1 = Question(
-            name="Câu hỏi 1",
             test_id=test1.id,
             content="Which word means 'xin chào'?",
         )
 
         q2 = Question(
-            name="Câu hỏi 2",
             test_id=test1.id,
             content="Which sentence is correct?",
         )
@@ -618,13 +591,11 @@ def seed_tests(courses):
         # ----------------------------------------------------
 
         q3 = Question(
-            name="Câu hỏi 1",
             test_id=test2.id,
             content="Which option is correct?",
         )
 
         q4 = Question(
-            name="Câu hỏi 2",
             test_id=test2.id,
             content="Choose the correct answer.",
         )
@@ -1331,6 +1302,17 @@ def seed_payments(users, courses):
             "momo_trans_id": None,
             "pay_type": "MOMO",
             "paid_at": None,
+        },
+        {
+            "user": students[4],
+            "course": courses[4],
+            "amount": courses[4].price,
+            "status": PaymentStatus.SUCCESS,
+            "order_id": "ORDER-SEED-0005",
+            "request_id": "REQ-SEED-0005",
+            "momo_trans_id": None,
+            "pay_type": "VNPAY",
+            "paid_at": datetime.now() - timedelta(days=2),
         },
     ]
 
