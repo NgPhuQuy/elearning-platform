@@ -27,7 +27,7 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 
 socketio = SocketIO(
     app,
-    cors_allowed_origins="*",
+    cors_allowed_origins="*", async_mode="gevent",
 )
 db = SQLAlchemy(app)
 
