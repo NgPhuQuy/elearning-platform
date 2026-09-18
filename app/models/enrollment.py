@@ -1,10 +1,8 @@
-from datetime import datetime
 from enum import Enum as MyEnum
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
-from app import db
 from app.models import BaseModel
 
 

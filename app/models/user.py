@@ -1,12 +1,9 @@
-from datetime import datetime
 from enum import Enum as MyEnum
 
-from cloudinary.provisioning import Role
 from flask_login import UserMixin
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from app import db
 from app.models.base import BaseModel
 
 
