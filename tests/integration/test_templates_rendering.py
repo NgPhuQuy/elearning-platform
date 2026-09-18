@@ -1,4 +1,5 @@
 import uuid
+
 import pytest
 
 from app import dao, db
@@ -14,8 +15,6 @@ from app.models import (
     LessonType,
     Payment,
     PaymentStatus,
-    Post,
-    Score,
     User,
 )
 from app.models.test import Test as CourseTest
@@ -183,7 +182,9 @@ def test_teacher_course_form_and_tests_rendering(app_ctx):
     db.session.add(chapter)
     db.session.commit()
 
-    test = CourseTest(name=f"Kiểm tra {suffix}", course_id=course.id, chapter_id=chapter.id, duration=15, max_attempts=3)
+    test = CourseTest(
+        name=f"Kiểm tra {suffix}", course_id=course.id, chapter_id=chapter.id, duration=15, max_attempts=3
+    )
     db.session.add(test)
     db.session.commit()
 

@@ -56,9 +56,7 @@ def get_conversation_messages(conversation_id, user_id):
         reactions = dao.get_message_reactions(m.id)
         sender = m.sender
         sender_name = (
-            f"{sender.first_name or ''} {sender.last_name or ''}".strip() or sender.username
-            if sender
-            else "Người dùng"
+            f"{sender.first_name or ''} {sender.last_name or ''}".strip() or sender.username if sender else "Người dùng"
         )
         data.append(
             {

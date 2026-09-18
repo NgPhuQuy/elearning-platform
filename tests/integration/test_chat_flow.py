@@ -45,9 +45,7 @@ def chat_users():
 
     # Cleanup
     with flask_app.app_context():
-        memberships = ConversationMember.query.filter(
-            ConversationMember.user_id.in_([user1_id, user2_id])
-        ).all()
+        memberships = ConversationMember.query.filter(ConversationMember.user_id.in_([user1_id, user2_id])).all()
         conv_ids = {m.conversation_id for m in memberships}
         for cid in conv_ids:
             conv = db.session.get(Conversation, cid)
@@ -200,4 +198,3 @@ def test_socketio_message_emission(chat_users):
         assert del_events[0]["args"][0]["id"] == msg_id
 
         sio_client.disconnect()
-
