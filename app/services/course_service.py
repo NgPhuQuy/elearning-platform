@@ -6,7 +6,7 @@ from app.services.upload_service import upload_file
 
 
 def get_all_active_courses():
-    courses = Course.query.filter_by(activate=True).order_by(Course.id.desc()).all()
+    courses = Course.query.filter_by(is_active=True).order_by(Course.id.desc()).all()
     categories = dao.get_categories()
     return courses, categories
 
