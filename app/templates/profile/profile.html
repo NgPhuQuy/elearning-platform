@@ -13,23 +13,26 @@
                         <div
                                 class="rounded-4 border border-4 border-white bg-white shadow d-flex align-items-center justify-content-center overflow-hidden"
                                 style="width:84px;height:84px;">
-                            <span class="ef-avatar ef-avatar-emerald" style="width:80px;height:80px;font-size:30.4px;">
-                                {{ current_user.first_name[0].upper() }}{{ current_user.last_name[0].upper() }}
-                            </span>
-
+                            {% if current_user.avatar %}
+                                <img src="{{ current_user.avatar }}" alt="{{ current_user.first_name or '' }}" class="w-100 h-100 object-fit-cover">
+                            {% else %}
+                                <span class="ef-avatar ef-avatar-emerald" style="width:80px;height:80px;font-size:30.4px;">
+                                    {{ current_user.initials }}
+                                </span>
+                            {% endif %}
                         </div>
                         <div class="d-flex gap-2 mt-2">
-                            <a href="/profile/change-info"
+                            <a href="{{ url_for('change_info') }}"
                                class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"><i
                                     class="bi bi-pencil"></i> Chỉnh sửa</a>
-                            <a class="btn btn-indigo btn-sm d-flex align-items-center gap-1"><i class="bi bi-share"></i>
-                                Chia
-                                sẻ hồ sơ</a>
+                            <a href="{{ url_for('change_password') }}"
+                               class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"><i
+                                    class="bi bi-key"></i> Đổi mật khẩu</a>
                         </div>
                     </div>
                     <h2 class="font-display fs-3 mb-0">{{ current_user }}</h2>
-                    <p class="text-muted-ef small mb-1">@nguyenvanan · Frontend Developer tại TechCorp VN</p>
-                    <p class="small mb-3">{{ current_user.bio }}</p>
+                    <p class="text-muted-ef small mb-1">@{{ current_user.username }}{% if current_user.role.value %} · {{ current_user.role.value }}{% endif %}</p>
+                    <p class="small mb-3">{{ current_user.bio or 'Chưa cập nhật phần giới thiệu.' }}</p>
                     <div class="row text-center border-top pt-3">
                         <div class="col">
                             <p class="font-display fs-5 mb-0">2.840</p>
@@ -96,8 +99,7 @@
                                        style="font-size:.9rem !important;">{{ course.name }}</p>
                                 </div>
                                 <p class="text-muted-ef small mb-2">
-                                    {% if course.teacher and course.teacher.user %}{{ course.teacher.user.first_name }}
-                                        {{ course.teacher.user.last_name }}{% endif %}
+                                    {% if course.teacher %}{{ course.teacher.first_name }} {{ course.teacher.last_name }}{% endif %}
                                 </p>
                                 <div class="d-flex align-items-center gap-2">
     <div class="progress-ef flex-grow-1">

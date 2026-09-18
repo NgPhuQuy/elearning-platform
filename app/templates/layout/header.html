@@ -94,14 +94,24 @@
                         <hr class="dropdown-divider mx-2">
                     </li>
 
-                    <!-- Chuyển link trang cá nhân cũ vào đây -->
+                    <!-- Menu người dùng -->
                     <li>
                         <a class="dropdown-item py-2" href="{{ url_for('profile') }}">
                             <i class="bi bi-person me-2 text-muted"></i> Trang cá nhân
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item py-2" href="#">
+                        <a class="dropdown-item py-2" href="{{ url_for('my_learning') }}">
+                            <i class="bi bi-journal-bookmark me-2 text-muted"></i> Khóa học của tôi
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-2" href="{{ url_for('payment_history') }}">
+                            <i class="bi bi-receipt me-2 text-muted"></i> Lịch sử thanh toán
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-2" href="{{ url_for('change_info') }}">
                             <i class="bi bi-gear me-2 text-muted"></i> Cài đặt tài khoản
                         </a>
                     </li>

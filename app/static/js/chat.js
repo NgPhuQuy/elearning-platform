@@ -1,7 +1,8 @@
 
 document.addEventListener("DOMContentLoaded", function () {
-
-
+    if (typeof io === "undefined" || !document.getElementById("conversationList")) {
+        return;
+    }
 
     const socket = io();
 
@@ -57,6 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("infoRole");
 
     initNewChat();
+    initMessageSearch();
 
 
     function initNewChat() {
@@ -592,9 +594,123 @@ function showNewChatError(
     );
 
 }
-
-
 }
+
+
+    function initMessageSearch() {
+        const searchMessageBtn = document.getElementById("searchMessageBtn");
+        const searchModalEl = document.getElementById("searchModal");
+        const searchKeywordInput = document.getElementById("search-keyword");
+        const searchButton = document.getElementById("search-button");
+        const searchResultBox = document.getElementById("search-result");
+
+        if (!searchMessageBtn || !searchModalEl) {
+            return;
+        }
+
+        const searchModal = new bootstrap.Modal(searchModalEl);
+
+        searchMessageBtn.addEventListener("click", function () {
+            if (!activeConversationId) {
+                alert("Vui lòng chọn một cuộc trò chuyện để tìm kiếm tin nhắn.");
+                return;
+            }
+            if (searchKeywordInput) {
+                searchKeywordInput.value = "";
+            }
+            if (searchResultBox) {
+                searchResultBox.innerHTML = "";
+            }
+            searchModal.show();
+            setTimeout(function () {
+                if (searchKeywordInput) {
+                    searchKeywordInput.focus();
+                }
+            }, 300);
+        });
+
+        async function performMessageSearch() {
+            if (!activeConversationId || !searchKeywordInput || !searchResultBox) {
+                return;
+            }
+            const keyword = searchKeywordInput.value.trim();
+            if (!keyword) {
+                searchResultBox.innerHTML = "";
+                return;
+            }
+            try {
+                const response = await fetch(
+                    `/api/chat/${activeConversationId}/search?keyword=${encodeURIComponent(keyword)}`
+                );
+                if (!response.ok) {
+                    throw new Error("Không thể tìm kiếm tin nhắn.");
+                }
+                const results = await response.json();
+                renderMessageSearchResults(results);
+            } catch (error) {
+                console.error("Search message error:", error);
+                searchResultBox.innerHTML = `
+                    <div class="text-danger small p-2">
+                        Không thể tìm kiếm tin nhắn.
+                    </div>
+                `;
+            }
+        }
+
+        function renderMessageSearchResults(results) {
+            if (!searchResultBox) {
+                return;
+            }
+            searchResultBox.innerHTML = "";
+
+            if (!results.length) {
+                searchResultBox.innerHTML = `
+                    <div class="text-muted small p-2">
+                        Không tìm thấy tin nhắn phù hợp.
+                    </div>
+                `;
+                return;
+            }
+
+            results.forEach(function (msg) {
+                const item = document.createElement("button");
+                item.type = "button";
+                item.className = "list-group-item list-group-item-action text-start";
+                item.innerHTML = `<div class="text-truncate">${escapeHtml(msg.content)}</div>`;
+                item.addEventListener("click", function () {
+                    searchModal.hide();
+                    const targetEl = document.querySelector(`[data-message-id="${msg.id}"]`);
+                    if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+                        targetEl.classList.add("bg-warning-subtle");
+                        setTimeout(function () {
+                            targetEl.classList.remove("bg-warning-subtle");
+                        }, 2000);
+                    }
+                });
+                searchResultBox.appendChild(item);
+            });
+        }
+
+        if (searchButton) {
+            searchButton.addEventListener("click", performMessageSearch);
+        }
+
+        if (searchKeywordInput) {
+            let debounceTimeout = null;
+            searchKeywordInput.addEventListener("input", function () {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(performMessageSearch, 300);
+            });
+            searchKeywordInput.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    clearTimeout(debounceTimeout);
+                    performMessageSearch();
+                }
+            });
+        }
+    }
 
 
 
@@ -695,54 +811,48 @@ function showNewChatError(
                             : "Người dùng";
 
 
-                const avatar =
-                    getInitials(name);
+                const hasRealAvatar = Boolean(
+                    conversation.avatar &&
+                    !conversation.avatar.includes("default-avatar")
+                );
 
+                const avatarHtml = hasRealAvatar
+                    ? `<img src="${escapeHtml(conversation.avatar)}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">`
+                    : escapeHtml(getInitials(name));
 
                 const item =
                     document.createElement("div");
 
-
                 item.className =
                     "conversation-item";
-
 
                 if (
                     Number(activeConversationId) ===
                     Number(conversation.id)
                 ) {
-
                     item.classList.add(
                         "active"
                     );
-
                 }
-
 
                 item.dataset.id =
                     conversation.id;
 
-
                 item.innerHTML = `
-
                     <div class="conversation-avatar">
-                        ${escapeHtml(avatar)}
+                        ${avatarHtml}
                     </div>
 
                     <div class="conversation-content">
-
                         <div class="conversation-name-row">
-
                             <span class="conversation-name">
                                 ${escapeHtml(name)}
                             </span>
-
                             <span class="conversation-time">
                                 ${formatTime(
-                                    conversation.updated_date
+                                    conversation.updated_date || conversation.updated_at
                                 )}
                             </span>
-
                         </div>
 
                         <p class="conversation-last-message">
@@ -847,7 +957,6 @@ function showNewChatError(
         const otherUser =
             conversation.other_user;
 
-
         const name =
             conversation.is_group
                 ? (
@@ -855,108 +964,83 @@ function showNewChatError(
                     "Nhóm học tập"
                 )
                 : otherUser
-                    ? otherUser.name
-                    : "Người dùng";
+                    ? (otherUser.name || otherUser.username)
+                    : (conversation.title || "Người dùng");
 
-
-        const avatar =
-            getInitials(name);
-
+        const hasRealAvatar = Boolean(
+            conversation.avatar &&
+            !conversation.avatar.includes("default-avatar")
+        );
+        const initials = getInitials(name);
 
         if (chatHeaderEmpty) {
-
             chatHeaderEmpty.classList.add(
                 "d-none"
             );
-
         }
 
-
         if (chatHeaderContent) {
-
             chatHeaderContent.classList.remove(
                 "d-none"
             );
-
         }
-
 
         if (chatHeaderName) {
-
             chatHeaderName.textContent =
                 name;
-
         }
-
 
         if (chatHeaderAvatar) {
-
-            chatHeaderAvatar.textContent =
-                avatar;
-
+            if (hasRealAvatar) {
+                chatHeaderAvatar.innerHTML = `<img src="${escapeHtml(conversation.avatar)}" class="rounded-circle w-100 h-100" style="object-fit: cover;">`;
+            } else {
+                chatHeaderAvatar.textContent = initials;
+            }
         }
 
-
         if (chatHeaderStatus) {
-
             chatHeaderStatus.textContent =
                 conversation.is_group
                     ? "Nhóm học tập"
                     : "Đang trò chuyện";
-
         }
 
-
         if (chatInputContainer) {
-
             chatInputContainer.classList.remove(
                 "d-none"
             );
-
         }
 
-
         if (infoEmpty) {
-
             infoEmpty.classList.add(
                 "d-none"
             );
-
         }
 
-
         if (infoContent) {
-
             infoContent.classList.remove(
                 "d-none"
             );
-
         }
-
 
         if (infoName) {
-
             infoName.textContent =
                 name;
-
         }
-
 
         if (infoAvatar) {
-
-            infoAvatar.textContent =
-                avatar;
-
+            if (hasRealAvatar) {
+                infoAvatar.innerHTML = `<img src="${escapeHtml(conversation.avatar)}" class="rounded-circle w-100 h-100" style="object-fit: cover;">`;
+            } else {
+                infoAvatar.textContent = initials;
+            }
         }
 
-
         if (infoRole) {
-
             infoRole.textContent =
                 conversation.is_group
                     ? "Nhóm học tập"
                     : "Thành viên";
-
         }
 
     }
@@ -1123,18 +1207,21 @@ function showNewChatError(
         row.dataset.messageId =
             message.id;
 
+        const senderName = message.sender_name || (mine ? "Bạn" : "Người dùng");
+        const senderAvatar = message.sender_avatar;
+        const hasSenderAvatar = Boolean(
+            senderAvatar &&
+            !senderAvatar.includes("default-avatar")
+        );
+
+        const avatarHtml = mine
+            ? ""
+            : hasSenderAvatar
+                ? `<img src="${escapeHtml(senderAvatar)}" class="message-avatar rounded-circle" style="object-fit:cover;" title="${escapeHtml(senderName)}">`
+                : `<div class="message-avatar" title="${escapeHtml(senderName)}">${escapeHtml(getInitials(senderName))}</div>`;
 
         row.innerHTML = `
-
-            ${
-                mine
-                    ? ""
-                    : `
-                        <div class="message-avatar">
-                            ?
-                        </div>
-                    `
-            }
+            ${avatarHtml}
 
             <div class="message-content">
 
@@ -1245,24 +1332,32 @@ function showNewChatError(
     socket.on(
         "new_message",
         function (message) {
-
-            if (
-                Number(message.conversation_id) !==
-                Number(activeConversationId)
-            ) {
-
-                return;
-
-            }
-
-
-            appendMessage(
-                message
-            );
-
-
             loadConversations();
 
+            if (
+                Number(message.conversation_id) ===
+                Number(activeConversationId)
+            ) {
+                appendMessage(
+                    message
+                );
+
+                socket.emit("read_conversation", {
+                    conversation_id: activeConversationId
+                });
+            }
+        }
+    );
+
+    socket.on(
+        "conversation_created",
+        function (data) {
+            loadConversations();
+            if (data && data.conversation_id) {
+                socket.emit("join", {
+                    conversation_id: data.conversation_id
+                });
+            }
         }
     );
 

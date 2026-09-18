@@ -81,8 +81,8 @@ def create_payment_url(
     """
     tmn_code = _get_tmn_code()
     hash_secret = _get_hash_secret()
-    payment_url = os.environ.get("VNPAY_PAYMENT_URL") or VNPAY_PAYMENT_URL
-    return_url = os.environ.get("VNPAY_RETURN_URL") or VNPAY_RETURN_URL
+    payment_url = VNPAY_PAYMENT_URL or ""
+    return_url = VNPAY_RETURN_URL or ""
 
     if not tmn_code or not hash_secret:
         return None, "Chưa cấu hình VNPAY_TMN_CODE hoặc VNPAY_HASH_SECRET trong biến môi trường."

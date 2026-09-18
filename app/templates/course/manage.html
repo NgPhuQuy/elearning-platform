@@ -63,7 +63,7 @@
         <div class="d-flex align-items-center gap-3 text-muted-ef small mb-3 flex-wrap">
           <span><i class="bi bi-people"></i> {{ course.enrollments|length }} học viên</span>
           <span><i class="bi bi-layers"></i> {{ course.chapters|length }} chương</span>
-          <span><i class="bi bi-clock"></i> Cập nhật {{ course.updated_date.strftime('%d/%m/%Y') }}</span>
+          <span><i class="bi bi-clock"></i> Cập nhật {{ (course.updated_date or course.created_date).strftime('%d/%m/%Y') if (course.updated_date or course.created_date) else '' }}</span>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
           <a href="{{ url_for('update_course', course_id=course.id) }}"
