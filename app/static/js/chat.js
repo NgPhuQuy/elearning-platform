@@ -4,7 +4,9 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
 
-    const socket = io();
+    const socket = io(window.location.origin, {
+        transports: ["websocket", "polling"],
+    });
 
 
 
