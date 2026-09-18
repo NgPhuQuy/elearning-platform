@@ -66,14 +66,6 @@ def update_course(course_id, teacher_id, form_data, files):
     if not course:
         return None, "Khóa học không tồn tại hoặc bạn không có quyền!"
 
-    tests_data_raw = form_data.get("tests_data")
-    if tests_data_raw:
-        try:
-            tests_data = json.loads(tests_data_raw)
-        except (ValueError, TypeError):
-            tests_data = []
-        dao.sync_tests(course_id=course_id, teacher_id=teacher_id, tests_data=tests_data)
-
     image_file = files.get("image")
     image_url, _ = upload_file(image_file, folder="elearning-platform/courses")
 
@@ -105,18 +97,32 @@ def update_course(course_id, teacher_id, form_data, files):
     dao.replace_outcomes(course_id, outcomes)
 
     chapters_data_raw = form_data.get("chapters_data")
+    chapter_ids_by_temp_id = {}
     if chapters_data_raw:
         try:
             chapters_data = json.loads(chapters_data_raw)
         except (ValueError, TypeError):
             chapters_data = []
         if chapters_data:
-            dao.sync_chapters_and_lessons(
+            chapter_ids_by_temp_id = dao.sync_chapters_and_lessons(
                 course_id=course_id,
                 teacher_id=teacher_id,
                 chapters_data=chapters_data,
                 files=files,
             )
+
+    tests_data_raw = form_data.get("tests_data")
+    if tests_data_raw:
+        try:
+            tests_data = json.loads(tests_data_raw)
+        except (ValueError, TypeError):
+            tests_data = []
+        dao.sync_tests(
+            course_id=course_id,
+            teacher_id=teacher_id,
+            tests_data=tests_data,
+            chapter_ids_by_temp_id=chapter_ids_by_temp_id,
+        )
 
     if was_draft and action == "publish":
         dao.activate_course(course_id, teacher_id=teacher_id)

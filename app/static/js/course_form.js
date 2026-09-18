@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     let chapterCounter = chapterList.querySelectorAll('.chapter-block').length;
+    let chapterTempCounter = 0;
     let lessonTempCounter = 0; // đếm id tạm cho bài học MỚI (chưa có id thật trong DB)
 
     function lessonRowTemplate() {
@@ -157,8 +158,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
    function chapterBlockTemplate(name) {
     const wrap = document.createElement('div');
+    chapterTempCounter += 1;
 
     wrap.className = 'border rounded-3 mb-3 chapter-block';
+    wrap.dataset.tempId = 'new_chapter_' + chapterTempCounter;
 
     wrap.innerHTML = `
         <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-slate-50 border-bottom">
@@ -429,6 +432,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 chaptersData.push({
                     id: chapterBlock.dataset.chapterId || null,
+                    temp_id: chapterBlock.dataset.tempId || null,
                     name: chapterBlock.querySelector('.chapter-name').textContent.trim(),
                     description: chapterBlock.querySelector('.chapter-description').textContent.trim(),
                     lessons: lessons
@@ -467,9 +471,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 <i class="bi bi-clipboard-check text-indigo"></i>
 
-                <span class="small fw-semibold flex-grow-1">
-                    Bài kiểm tra
-                </span>
+                <input type="text"
+                       class="form-control form-control-sm flex-grow-1 test-name"
+                       value="Bài kiểm tra mới"
+                       required>
 
                 <button type="button"
                         class="btn btn-sm p-0 border-0 text-muted-ef btn-remove-chapter-test">
@@ -610,8 +615,16 @@ document.addEventListener('DOMContentLoaded', function () {
                                 id:
                                     testRow.dataset.testId || null,
 
+                                name:
+                                    testRow.querySelector('.test-name')?.value.trim()
+                                    || testRow.querySelector('.test-name-display')?.textContent.trim()
+                                    || 'Bài kiểm tra mới',
+
                                 chapter_id:
-                                    chapterId,
+                                    chapterId || null,
+
+                                chapter_temp_id:
+                                    chapterBlock.dataset.tempId || null,
 
                                 duration:
                                     parseInt(

@@ -103,11 +103,12 @@ def submit_test_score(user_id, course_id, test_id, answers):
         return None, "Hệ thống lỗi, vui lòng thử lại sau!"
 
 
-def sync_tests(course_id, teacher_id, tests_data):
+def sync_tests(course_id, teacher_id, tests_data, chapter_ids_by_temp_id=None):
     course = Course.query.filter_by(id=course_id, teacher_id=teacher_id).first()
     if not course:
         return False
 
+    chapter_ids_by_temp_id = chapter_ids_by_temp_id or {}
     incoming_ids = {t["id"] for t in tests_data if t.get("id")}
     for old_test in course.tests:
         if old_test.id not in incoming_ids:
@@ -117,9 +118,10 @@ def sync_tests(course_id, teacher_id, tests_data):
     for item in tests_data:
         test_id = item.get("id")
         name = item.get("name", "").strip()
-        duration = int(item.get("duration", 0))
-        max_attempts = int(item.get("max_attempts", 1))
+        duration = max(0, int(item.get("duration", 0)))
+        max_attempts = max(1, int(item.get("max_attempts", 1)))
         pass_score = float(item.get("pass_score", 5))
+        chapter_id = item.get("chapter_id") or chapter_ids_by_temp_id.get(item.get("chapter_temp_id"))
 
         if not name:
             continue
@@ -131,9 +133,11 @@ def sync_tests(course_id, teacher_id, tests_data):
                 test.duration = duration
                 test.max_attempts = max_attempts
                 test.pass_score = pass_score
+                test.chapter_id = chapter_id
         else:
             test = Test(
                 course_id=course_id,
+                chapter_id=chapter_id,
                 name=name,
                 duration=duration,
                 max_attempts=max_attempts,
