@@ -9,15 +9,12 @@ from app.models.base import BaseModel
 
 
 class PostCate(BaseModel):
+    name = Column(String(100), nullable=False)
     description = Column(String(255))
     posts = relationship("Post", secondary="post_category", back_populates="categories", lazy="selectin")
 
 
-class Post(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    created_date = Column(DateTime, default=datetime.now)
-    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    is_active = Column(Boolean, default=True)
+class Post(BaseModel):
     title = Column(String(255))
     content = Column(Text)
     image = Column(String(500), default="")

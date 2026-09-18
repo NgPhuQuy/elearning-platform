@@ -1,10 +1,9 @@
-from datetime import datetime
 from enum import Enum as MyEnum
 
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from app import db
+from app.models import BaseModel
 
 
 class PaymentStatus(MyEnum):
@@ -14,10 +13,7 @@ class PaymentStatus(MyEnum):
     CANCELLED = "Đã hủy"
 
 
-class Payment(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    created_date = Column(DateTime, default=datetime.now)
-    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+class Payment(BaseModel):
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
     course_id = Column(Integer, ForeignKey("course.id", ondelete="CASCADE"))
     order_id = Column(String(50), unique=True)
