@@ -1,4 +1,4 @@
-from app.models.base import BaseModel, NamedModel
+from app.models.base import BaseModel
 from app.models.chat import Conversation, ConversationMember, Message, MessageReaction
 from app.models.course import (
     Category,
@@ -7,12 +7,9 @@ from app.models.course import (
     CourseCategory,
     CourseLevel,
     CourseOutcome,
-    DocContent,
     Lesson,
-    LessonType,
-    VideoContent,
 )
-from app.models.enrollment import Enrollment, EnrollmentStatus, LessonProgress
+from app.models.enrollment import Enrollment, EnrollmentStatus
 from app.models.forum import (
     Comment,
     Post,
@@ -25,29 +22,22 @@ from app.models.forum import (
 )
 from app.models.payment import Payment, PaymentStatus
 from app.models.test import Answer, Question, Score, Test
-from app.models.user import Admin, ApplicationStatus, Teacher, TeacherApplication, User
+from app.models.user import ApplicationStatus, TeacherApplication, User
 
 __all__ = [
     "BaseModel",
-    "NamedModel",
     "User",
-    "Admin",
-    "Teacher",
     "ApplicationStatus",
     "TeacherApplication",
     "Category",
     "CourseCategory",
     "CourseLevel",
     "Course",
-    "LessonType",
-    "VideoContent",
-    "DocContent",
     "Lesson",
     "CourseOutcome",
     "Chapter",
     "EnrollmentStatus",
     "Enrollment",
-    "LessonProgress",
     "Test",
     "Question",
     "Answer",
