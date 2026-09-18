@@ -12,6 +12,7 @@ from wtforms.widgets import TextArea
 
 from app import app, db
 from app.models import (
+    ROLE,
     ApplicationStatus,
     Category,
     Comment,
@@ -19,7 +20,6 @@ from app.models import (
     Lesson,
     Post,
     PostCate,
-    Teacher,
     TeacherApplication,
     User,
 )
@@ -54,7 +54,7 @@ class MyAdminIndexView(AdminIndexView):
     def index(self):
         total_users = db.session.query(User).count()
         total_courses = db.session.query(Course).count()
-        total_teachers = db.session.query(Teacher).count()
+        total_teachers = db.session.query(User).filter(User.role == ROLE.TEACHER).count()
         total_posts = db.session.query(Post).count()
 
         pending_applications = (
@@ -127,8 +127,14 @@ class UserAdmin(MyAuthenticatedView):
 
 
 class TeacherAdmin(MyAuthenticatedView):
-    column_list = ("id", "user", "note")
-    column_searchable_list = ("note",)
+    column_list = ("id", "username", "first_name", "last_name", "email", "phone")
+    column_searchable_list = ("username", "email", "phone")
+
+    def get_query(self):
+        return super().get_query().filter(User.role == ROLE.TEACHER)
+
+    def get_count_query(self):
+        return super().get_count_query().filter(User.role == ROLE.TEACHER)
 
 
 class CategoryAdmin(MyAuthenticatedView):
@@ -148,8 +154,7 @@ class CourseAdmin(MyAuthenticatedView):
 
 
 class LessonAdmin(MyAuthenticatedView):
-    column_list = ("id", "name", "type", "chapter", "description")
-    column_filters = ("type",)
+    column_list = ("id", "name", "chapter", "description")
 
 
 class PostCateAdmin(MyAuthenticatedView):
@@ -196,21 +201,8 @@ def _status_formatter(view, context, model, name):
 
 
 def _approve_application(application):
-    if not application.user.teacher_profile:
-        db.session.add(
-            Teacher(
-                user_id=application.user_id,
-                note=application.bio or "",
-                workplace=application.workplace or "",
-                degree=application.degree or "",
-                major=application.major or "",
-                expertise=application.expertise or "",
-                experience=application.experience or "",
-                teach_style=application.teach_style or "",
-                linkedin=application.linkedin or "",
-                website=application.website or "",
-            )
-        )
+    if application.user:
+        application.user.role = ROLE.TEACHER
     application.status = ApplicationStatus.APPROVED
     application.reject_reason = None
     application.reviewed_by = current_user.id if current_user.is_authenticated else None
@@ -325,7 +317,7 @@ admin = Admin(
 )
 
 admin.add_view(UserAdmin(User, db.session, name="Users"))
-admin.add_view(TeacherAdmin(Teacher, db.session, name="Teachers"))
+admin.add_view(TeacherAdmin(User, db.session, name="Teachers", endpoint="teachers"))
 admin.add_view(TeacherApplicationAdmin(TeacherApplication, db.session, name="Đơn đăng ký GV"))
 admin.add_view(CategoryAdmin(Category, db.session, name="Categories"))
 admin.add_view(CourseAdmin(Course, db.session, name="Courses"))

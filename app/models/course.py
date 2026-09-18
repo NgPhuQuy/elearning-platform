@@ -54,6 +54,35 @@ class Course(BaseModel):
     enrollments = relationship("Enrollment", backref="course", cascade="all, delete-orphan", lazy=True)
     tests = relationship("Test", backref="course", cascade="all, delete-orphan", lazy=True)
 
+    @property
+    def activate(self):
+        return self.is_active
+
+    @activate.setter
+    def activate(self, val):
+        self.is_active = bool(val)
+
+
+class LessonType(MyEnum):
+    VIDEO = "Video"
+    NONE = "Chưa chọn"
+    DOCUMENT = "Doc"
+
+
+class VideoContent:
+    def __init__(self, lesson_id=None, video_url="", duration=0):
+        self.lesson_id = lesson_id
+        self.video_url = video_url
+        self.duration = duration
+
+
+class DocContent:
+    def __init__(self, lesson_id=None, content_text="", file_url="", file_ext=""):
+        self.lesson_id = lesson_id
+        self.content_text = content_text
+        self.file_url = file_url
+        self.file_ext = file_ext
+
 
 class Lesson(BaseModel):
     name = Column(String(100), nullable=False)
@@ -61,6 +90,59 @@ class Lesson(BaseModel):
     description = Column(String(255))
     file_url = Column(String(500))
     content = Column(Text)
+
+    def __init__(self, **kwargs):
+        video_content = kwargs.pop("video_content", None)
+        doc_content = kwargs.pop("doc_content", None)
+        les_type = kwargs.pop("type", None)
+        super().__init__(**kwargs)
+        if les_type is not None:
+            self._type = les_type
+        if video_content is not None:
+            self.file_url = getattr(video_content, "video_url", str(video_content))
+            self._type = LessonType.VIDEO
+        elif doc_content is not None:
+            self.file_url = getattr(doc_content, "file_url", "")
+            self.content = getattr(doc_content, "content_text", str(doc_content))
+            self._type = LessonType.DOCUMENT
+
+    @property
+    def type(self):
+        return getattr(
+            self,
+            "_type",
+            LessonType.VIDEO if self.file_url else (LessonType.DOCUMENT if self.content else LessonType.NONE),
+        )
+
+    @type.setter
+    def type(self, val):
+        self._type = val
+
+    @property
+    def video_content(self):
+        if self.file_url:
+            return VideoContent(lesson_id=self.id, video_url=self.file_url)
+        return None
+
+    @video_content.setter
+    def video_content(self, val):
+        if val is not None:
+            self.file_url = getattr(val, "video_url", str(val))
+            self._type = LessonType.VIDEO
+
+    @property
+    def doc_content(self):
+        if self.content or self.file_url:
+            return DocContent(lesson_id=self.id, content_text=self.content or "", file_url=self.file_url or "")
+        return None
+
+    @doc_content.setter
+    def doc_content(self, val):
+        if val is not None:
+            self.content = getattr(val, "content_text", str(val))
+            if hasattr(val, "file_url") and val.file_url:
+                self.file_url = val.file_url
+            self._type = LessonType.DOCUMENT
 
 
 class CourseOutcome(BaseModel):

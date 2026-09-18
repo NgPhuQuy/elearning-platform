@@ -59,9 +59,12 @@ def get_my_enrollments(user_id):
 
 
 def _lesson_has_content(lesson):
-    return (lesson.type == LessonType.VIDEO and lesson.video_content) or (
-        lesson.type == LessonType.DOCUMENT and lesson.doc_content
-    )
+    les_type = getattr(lesson, "type", None)
+    if les_type == LessonType.VIDEO:
+        return bool(lesson.video_content)
+    if les_type == LessonType.DOCUMENT:
+        return bool(lesson.doc_content)
+    return bool(getattr(lesson, "file_url", None) or getattr(lesson, "content", None))
 
 
 def mark_lesson_completed(user_id, course_id, lesson_id):

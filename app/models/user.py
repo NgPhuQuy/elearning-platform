@@ -9,6 +9,7 @@ from app.models.base import BaseModel
 
 class ROLE(MyEnum):
     ADMIN = "Admin"
+    TEACHER = "Teacher"
     USER = "User"
 
 
@@ -24,7 +25,23 @@ class User(BaseModel, UserMixin):
     role = Column(Enum(ROLE), default=ROLE.USER)
     bio = Column(String(255), default="")
     enrollments = relationship("Enrollment", backref="user", lazy=True)
-    courses = relationship("Course", backref="user", lazy=True)
+    courses = relationship("Course", backref="teacher", lazy=True)
+
+    @property
+    def is_admin(self):
+        return self.role == ROLE.ADMIN
+
+    @property
+    def is_teacher(self):
+        return self.role == ROLE.TEACHER
+
+    @property
+    def admin(self):
+        return self if self.role == ROLE.ADMIN else None
+
+    @property
+    def teacher_profile(self):
+        return self if self.role == ROLE.TEACHER else None
 
     def __str__(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip() or (self.username or "")

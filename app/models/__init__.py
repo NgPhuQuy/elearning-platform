@@ -7,7 +7,11 @@ from app.models.course import (
     CourseCategory,
     CourseLevel,
     CourseOutcome,
+    DocContent,
     Lesson,
+    LessonProgress,
+    LessonType,
+    VideoContent,
 )
 from app.models.enrollment import Enrollment, EnrollmentStatus
 from app.models.forum import (
@@ -22,10 +26,11 @@ from app.models.forum import (
 )
 from app.models.payment import Payment, PaymentStatus
 from app.models.test import Answer, Question, Score, Test
-from app.models.user import ApplicationStatus, TeacherApplication, User
+from app.models.user import ROLE, ApplicationStatus, TeacherApplication, User
 
 __all__ = [
     "BaseModel",
+    "ROLE",
     "User",
     "ApplicationStatus",
     "TeacherApplication",
@@ -34,6 +39,10 @@ __all__ = [
     "CourseLevel",
     "Course",
     "Lesson",
+    "LessonProgress",
+    "LessonType",
+    "VideoContent",
+    "DocContent",
     "CourseOutcome",
     "Chapter",
     "EnrollmentStatus",

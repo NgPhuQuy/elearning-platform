@@ -10,10 +10,7 @@ from app.models import (
     CourseCategory,
     CourseLevel,
     CourseOutcome,
-    DocContent,
     Lesson,
-    LessonType,
-    VideoContent,
 )
 
 
@@ -22,7 +19,7 @@ def get_categories():
 
 
 def get_courses(keyword=None, category_id=None):
-    query = Course.query.filter_by(activate=True)
+    query = Course.query.filter_by(is_active=True)
     if keyword:
         query = query.filter(Course.name.contains(keyword))
     if category_id:
@@ -231,11 +228,6 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
         for les_data in lessons_data:
             les_id = les_data.get("id")
             les_type_str = les_data.get("type", "NONE")
-            try:
-                les_type = LessonType[les_type_str]
-            except KeyError:
-                les_type = LessonType.NONE
-
             file_key = les_data.get("file_key")
             uploaded_file = files.get(file_key) if files and file_key else None
 
@@ -243,11 +235,9 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
                 lesson = Lesson.query.filter_by(id=les_id, chapter_id=chapter.id).first()
                 if lesson:
                     lesson.name = les_data.get("name", lesson.name)
-                    lesson.type = les_type
             else:
                 lesson = Lesson(
                     name=les_data.get("name", ""),
-                    type=les_type,
                     chapter_id=chapter.id,
                 )
                 db.session.add(lesson)
@@ -256,11 +246,7 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
             if not lesson:
                 continue
 
-            if les_type == LessonType.VIDEO:
-                if lesson.doc_content:
-                    db.session.delete(lesson.doc_content)
-                if not lesson.video_content:
-                    lesson.video_content = VideoContent(lesson_id=lesson.id)
+            if les_type_str == "VIDEO":
                 if uploaded_file and uploaded_file.filename:
                     res = cloudinary.uploader.upload(
                         uploaded_file,
@@ -268,29 +254,21 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
                         folder="elearning-platform/lessons/videos",
                         public_id=f"video_{uuid.uuid4().hex[:8]}",
                     )
-                    lesson.video_content.video_url = res["secure_url"]
-                    lesson.video_content.duration = int(res.get("duration", 0))
+                    lesson.file_url = res["secure_url"]
                 elif les_data.get("video_url"):
-                    lesson.video_content.video_url = les_data["video_url"]
-                    lesson.video_content.duration = int(les_data.get("duration", 0))
+                    lesson.file_url = les_data["video_url"]
 
-            elif les_type == LessonType.DOCUMENT:
-                if lesson.video_content:
-                    db.session.delete(lesson.video_content)
-                if not lesson.doc_content:
-                    lesson.doc_content = DocContent(lesson_id=lesson.id)
+            elif les_type_str == "DOCUMENT":
                 if uploaded_file and uploaded_file.filename:
-                    ext = uploaded_file.filename.rsplit(".", 1)[-1].lower() if "." in uploaded_file.filename else ""
                     res = cloudinary.uploader.upload(
                         uploaded_file,
                         resource_type="raw",
                         folder="elearning-platform/lessons/docs",
                         public_id=f"doc_{uuid.uuid4().hex[:8]}",
                     )
-                    lesson.doc_content.file_url = res["secure_url"]
-                    lesson.doc_content.file_ext = ext
+                    lesson.file_url = res["secure_url"]
                 elif les_data.get("content_text") is not None:
-                    lesson.doc_content.content_text = les_data["content_text"]
+                    lesson.content = les_data["content_text"]
 
     db.session.commit()
     return True
