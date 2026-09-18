@@ -9,7 +9,7 @@ def create_payment(user_id, course_id):
     course = Course.query.get(course_id)
     if not course:
         return None, "Khóa học không tồn tại."
-    if not course.activate:
+    if not course.is_active:
         return None, "Khóa học chưa được công khai."
     if is_enrolled(user_id, course_id):
         return None, "Bạn đã đăng ký khóa học này rồi."

@@ -1,12 +1,16 @@
-from datetime import datetime
 from enum import Enum as MyEnum
 
 from flask_login import UserMixin
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from app import db
 from app.models.base import BaseModel
+
+
+class ROLE(MyEnum):
+    ADMIN = "Admin"
+    TEACHER = "Teacher"
+    USER = "User"
 
 
 class User(BaseModel, UserMixin):
@@ -18,24 +22,29 @@ class User(BaseModel, UserMixin):
     avatar = Column(String(255), default="")
     email = Column(String(255), unique=True)
     phone = Column(String(255))
-    teacher_profile = relationship("Teacher", backref="user", uselist=False, lazy=True)
+    role = Column(Enum(ROLE), default=ROLE.USER)
     bio = Column(String(255), default="")
     enrollments = relationship("Enrollment", backref="user", lazy=True)
+    courses = relationship("Course", backref="teacher", lazy=True)
+
+    @property
+    def is_admin(self):
+        return self.role == ROLE.ADMIN
+
+    @property
+    def is_teacher(self):
+        return self.role == ROLE.TEACHER
+
+    @property
+    def admin(self):
+        return self if self.role == ROLE.ADMIN else None
+
+    @property
+    def teacher_profile(self):
+        return self if self.role == ROLE.TEACHER else None
 
     def __str__(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip() or (self.username or "")
-
-
-class Admin(BaseModel):
-    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), unique=True)
-    admin = relationship("User", backref="admin", uselist=False, lazy=True)
-    note = Column(String(255), default="")
-
-
-class Teacher(BaseModel):
-    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), unique=True)
-    note = Column(String(255), default="")
-    courses = relationship("Course", backref="teacher", lazy=True)
 
 
 class ApplicationStatus(MyEnum):
@@ -44,10 +53,7 @@ class ApplicationStatus(MyEnum):
     REJECTED = "Từ chối"
 
 
-class TeacherApplication(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    created_date = Column(DateTime, default=datetime.now)
-    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+class TeacherApplication(BaseModel):
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
     workplace = Column(String(255))
     degree = Column(String(50))

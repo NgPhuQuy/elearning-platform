@@ -257,12 +257,18 @@
 
                     {# Chưa đăng ký khóa học trả phí #}
 
-                    <a href="{{ url_for('checkout_course', course_id=course.id) }}"
-                       class="btn btn-indigo">
-
-                        Mua khóa học
-
-                    </a>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{{ url_for('checkout_vnpay', course_id=course.id) }}"
+                           class="btn btn-indigo d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-credit-card"></i>
+                            Thanh toán qua VNPay
+                        </a>
+                        <a href="{{ url_for('checkout_course', course_id=course.id) }}"
+                           class="btn btn-outline-danger d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-wallet2"></i>
+                            Thanh toán qua MoMo
+                        </a>
+                    </div>
 
                 {% else %}
 
