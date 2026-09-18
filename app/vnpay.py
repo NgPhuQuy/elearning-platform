@@ -34,16 +34,16 @@ VNPAY_RESPONSE_CODES: dict[str, str] = {
 }
 
 
-def _get_hash_secret():
+def _get_hash_secret() -> str | None:
     return VNPAY_HASH_SECRET
 
 
-def _get_tmn_code():
+def _get_tmn_code() -> str | None:
     return VNPAY_TMN_CODE
 
 
-def _sign(query_string, secret_key):
-    key = (secret_key or _get_hash_secret()).encode("utf-8")
+def _sign(query_string: str, secret_key: str | None = None) -> str:
+    key = (secret_key or _get_hash_secret() or "").encode("utf-8")
     return hmac.new(
         key,
         query_string.encode("utf-8"),
@@ -58,14 +58,14 @@ def new_order_id(course_id: int) -> str:
 
 
 def create_payment_url(
-    order_id,
-    amount,
-    order_info,
-    ip_addr,
-    bank_code,
-    locale,
-    order_type,
-    expire_minutes,
+    order_id: str,
+    amount: int | float,
+    order_info: str,
+    ip_addr: str = "127.0.0.1",
+    bank_code: str | None = None,
+    locale: str = "vn",
+    order_type: str = "other",
+    expire_minutes: int = 15,
 ) -> tuple[str | None, str | None]:
     tmn_code = _get_tmn_code()
     hash_secret = _get_hash_secret()
@@ -110,7 +110,7 @@ def create_payment_url(
     return full_payment_url, None
 
 
-def verify_response_signature(data, secret_key):
+def verify_response_signature(data: dict[str, str], secret_key: str | None = None) -> bool:
     received_hash = data.get("vnp_SecureHash", "")
     if not received_hash:
         return False
@@ -127,7 +127,7 @@ def verify_response_signature(data, secret_key):
     return hmac.compare_digest(expected_hash.lower(), received_hash.lower())
 
 
-def is_payment_success(data, secret_key):
+def is_payment_success(data: dict[str, str], secret_key: str | None = None) -> tuple[bool, str]:
     if not verify_response_signature(data, secret_key):
         return False, "Chữ ký bảo mật VNPay không hợp lệ (nguy cơ can thiệp dữ liệu)."
 
