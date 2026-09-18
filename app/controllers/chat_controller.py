@@ -10,7 +10,7 @@ from app.services import chat_service
 @app.get("/chat")
 @login_required
 def chat_view():
-    return render_template("chat/index.html")
+    return render_template("chat/index.html", current_user_id=current_user.id)
 
 
 @app.get("/api/chat/conversations")
@@ -30,11 +30,23 @@ def api_messages(conversation_id):
 
 
 @app.get("/api/chat/users/search")
+@app.get("/api/users/search")
 @login_required
 def api_search_users():
     keyword = request.args.get("keyword", "").strip()
     users = dao.search_users(keyword, current_user.id)
-    return jsonify([{"id": u.id, "name": f"{u.first_name} {u.last_name}", "avatar": u.avatar} for u in users])
+    return jsonify(
+        [
+            {
+                "id": u.id,
+                "username": u.username,
+                "name": f"{u.first_name or ''} {u.last_name or ''}".strip() or u.username,
+                "full_name": f"{u.first_name or ''} {u.last_name or ''}".strip() or u.username,
+                "avatar": u.avatar,
+            }
+            for u in users
+        ]
+    )
 
 
 @app.post("/api/chat/private/<int:user_id>")
@@ -43,6 +55,8 @@ def api_create_private(user_id):
     conv, error = chat_service.create_private_conversation(current_user.id, user_id)
     if error:
         return jsonify({"error": error}), 400
+    socketio.emit("conversation_created", {"conversation_id": conv.id}, room=f"user_{user_id}")
+    socketio.emit("conversation_created", {"conversation_id": conv.id}, room=f"user_{current_user.id}")
     return jsonify({"conversation_id": conv.id})
 
 
@@ -60,6 +74,16 @@ def api_search_message(conversation_id):
 @login_required
 def api_unread():
     return jsonify({"count": chat_service.count_unread(current_user.id)})
+
+
+@socketio.on("connect")
+def handle_connect():
+    if not current_user.is_authenticated:
+        return
+    join_room(f"user_{current_user.id}")
+    conversations = dao.get_conversations(current_user.id)
+    for conv in conversations:
+        join_room(f"conversation_{conv.id}")
 
 
 @socketio.on("join")
@@ -102,6 +126,7 @@ def handle_send_message(data):
     if not message:
         return
 
+    sender_name = f"{current_user.first_name or ''} {current_user.last_name or ''}".strip() or current_user.username
     emit(
         "new_message",
         {
@@ -110,6 +135,8 @@ def handle_send_message(data):
             "content": message.content,
             "attachment": message.attachment,
             "sender_id": message.sender_id,
+            "sender_name": sender_name,
+            "sender_avatar": current_user.avatar,
             "created_date": message.created_date.isoformat(),
         },
         room=f"conversation_{conversation_id}",

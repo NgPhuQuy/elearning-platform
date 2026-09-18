@@ -65,7 +65,15 @@ def update_course(course_id):
         return redirect(url_for("my_courses"))
 
     categories = dao.get_categories()
-    return render_template("course/course_form.html", course=course, categories=categories)
+    chapters = dao.get_chapters(course_id)
+    outcomes = dao.get_outcomes(course_id)
+    return render_template(
+        "course/course_form.html",
+        course=course,
+        categories=categories,
+        chapters=chapters,
+        outcomes=outcomes,
+    )
 
 
 @app.route("/courses/<int:course_id>/delete", methods=["POST"])

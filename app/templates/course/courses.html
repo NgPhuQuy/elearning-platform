@@ -81,7 +81,7 @@
     {% if not (current_user.is_authenticated and current_user.teacher_profile and course.teacher_id == current_user.teacher_profile.id) %}
         <div class="col-md-6 col-lg-4 course-item"
          data-name="{{ course.name|lower }}"
-         data-teacher="{{ (course.teacher.user.first_name ~ ' ' ~ course.teacher.user.last_name)|lower if course.teacher and course.teacher.user else '' }}"
+         data-teacher="{{ (course.teacher.first_name ~ ' ' ~ course.teacher.last_name)|lower if course.teacher else '' }}"
          data-level="{{ course.level.name }}"
          data-categories="{{ course.course_category|map(attribute='category_id')|list|join(',') }}">
       <a href="{{ url_for('course_detail', course_id=course.id) }}" class="card-ef ef-course-card d-block text-decoration-none text-reset overflow-hidden h-100">
@@ -99,7 +99,7 @@
         <div class="p-3">
           <h3 class="font-display fs-6 line-clamp-2 mb-2" style="font-size:.92rem !important;">{{ course.name }}</h3>
           <p class="text-muted-ef small mb-2">
-            {% if course.teacher and course.teacher.user %}{{ course.teacher.user.first_name }} {{ course.teacher.user.last_name }}{% endif %}
+            {% if course.teacher %}{{ course.teacher.first_name }} {{ course.teacher.last_name }}{% endif %}
           </p>
                    <div class="d-flex align-items-center gap-3 text-muted-ef small mb-2">
             <span><i class="bi bi-layers"></i> {{ course.chapters|length }} chương</span>

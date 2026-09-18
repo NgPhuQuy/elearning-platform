@@ -43,6 +43,18 @@ class User(BaseModel, UserMixin):
     def teacher_profile(self):
         return self if self.role == ROLE.TEACHER else None
 
+    @property
+    def initials(self):
+        fn = (self.first_name or "").strip()
+        ln = (self.last_name or "").strip()
+        if fn and ln:
+            return f"{fn[0]}{ln[0]}".upper()
+        if fn:
+            return fn[:2].upper()
+        if ln:
+            return ln[:2].upper()
+        return (self.username or "U")[:2].upper()
+
     def __str__(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip() or (self.username or "")
 
