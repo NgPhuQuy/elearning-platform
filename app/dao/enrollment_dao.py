@@ -122,13 +122,11 @@ def is_chapter_completed(user_id, course_id, chapter_id):
     if not lesson_ids:
         return True
 
-    completed_count = (
-        LessonProgress.query.filter(
-            LessonProgress.enrollment_id == enrollment.id,
-            LessonProgress.lesson_id.in_(lesson_ids),
-            LessonProgress.is_completed.is_(True),
-        ).count()
-    )
+    completed_count = LessonProgress.query.filter(
+        LessonProgress.enrollment_id == enrollment.id,
+        LessonProgress.lesson_id.in_(lesson_ids),
+        LessonProgress.is_completed.is_(True),
+    ).count()
     return completed_count == len(lesson_ids)
 
 

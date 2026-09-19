@@ -36,6 +36,14 @@ def get_test_attempts(user_id, course_id, test_id):
     return Score.query.filter_by(enrollment_id=enrollment.id, test_id=test_id).order_by(Score.attempt_number).all()
 
 
+def get_passed_test_ids(user_id, course_id):
+    enrollment = get_latest_enrollment(user_id, course_id)
+    if not enrollment:
+        return set()
+    scores = Score.query.filter_by(enrollment_id=enrollment.id, is_passed=True).all()
+    return {score.test_id for score in scores}
+
+
 def can_take_test(user_id, test):
     enrollment = get_latest_enrollment(user_id, test.course_id)
     if not enrollment or enrollment.status == EnrollmentStatus.FAILED:

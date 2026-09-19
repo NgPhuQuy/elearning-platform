@@ -19,6 +19,7 @@ from app.services.course_service import (
     delete_course,
     get_all_active_courses,
     get_course_detail,
+    get_teacher_course_report,
     get_teacher_courses,
     update_course,
 )
@@ -69,6 +70,7 @@ __all__ = [
     "get_all_active_courses",
     "get_teacher_courses",
     "get_course_detail",
+    "get_teacher_course_report",
     "create_course",
     "update_course",
     "delete_course",
