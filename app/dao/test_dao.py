@@ -161,7 +161,7 @@ def sync_questions(test_id, teacher_id, questions_data, pass_score):
     db.session.flush()
 
     for q_data in questions_data:
-        content = q_data.get("content", "").strip()
+        content = q_data.get("content", q_data.get("question", "")).strip()
         if not content:
             continue
 
