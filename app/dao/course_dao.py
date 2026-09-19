@@ -201,9 +201,7 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
 
     chapter_ids_by_temp_id = {}
     incoming_chap_ids = {
-        chapter_id
-        for chapter_id in (_normalize_id(c.get("id")) for c in chapters_data)
-        if chapter_id is not None
+        chapter_id for chapter_id in (_normalize_id(c.get("id")) for c in chapters_data) if chapter_id is not None
     }
     for old_chap in course.chapters:
         if old_chap.id not in incoming_chap_ids:
@@ -235,9 +233,7 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
 
         lessons_data = chap_data.get("lessons", [])
         incoming_les_ids = {
-            lesson_id
-            for lesson_id in (_normalize_id(les.get("id")) for les in lessons_data)
-            if lesson_id is not None
+            lesson_id for lesson_id in (_normalize_id(les.get("id")) for les in lessons_data) if lesson_id is not None
         }
         for old_les in chapter.lessons:
             if old_les.id not in incoming_les_ids:

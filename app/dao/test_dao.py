@@ -117,11 +117,7 @@ def sync_tests(course_id, teacher_id, tests_data, chapter_ids_by_temp_id=None):
         return False
 
     chapter_ids_by_temp_id = chapter_ids_by_temp_id or {}
-    incoming_ids = {
-        test_id
-        for test_id in (_normalize_id(t.get("id")) for t in tests_data)
-        if test_id is not None
-    }
+    incoming_ids = {test_id for test_id in (_normalize_id(t.get("id")) for t in tests_data) if test_id is not None}
     for old_test in course.tests:
         if old_test.id not in incoming_ids:
             db.session.delete(old_test)
