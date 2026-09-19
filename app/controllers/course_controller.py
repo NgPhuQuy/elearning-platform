@@ -21,6 +21,26 @@ def my_courses():
     return render_template("course/manage.html", courses=courses_list, error=error)
 
 
+@app.route("/courses/<int:course_id>/students")
+@login_required
+@teacher_required
+def course_students(course_id):
+    report = course_service.get_teacher_course_report(course_id, current_user.teacher_profile.id)
+    if not report:
+        return redirect(url_for("my_courses"))
+    return render_template("course/students.html", **report)
+
+
+@app.route("/courses/<int:course_id>/scores")
+@login_required
+@teacher_required
+def course_scores(course_id):
+    report = course_service.get_teacher_course_report(course_id, current_user.teacher_profile.id)
+    if not report:
+        return redirect(url_for("my_courses"))
+    return render_template("course/scores.html", **report)
+
+
 @app.route("/courses/<int:course_id>")
 def course_detail(course_id):
     user_id = current_user.id if current_user.is_authenticated else None
