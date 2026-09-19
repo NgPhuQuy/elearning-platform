@@ -8,9 +8,11 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DB_URI")

@@ -77,7 +77,7 @@ def api_unread():
 
 
 @socketio.on("connect")
-def handle_connect():
+def handle_connect(auth=None):
     if not current_user.is_authenticated:
         return
     join_room(f"user_{current_user.id}")
