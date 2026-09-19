@@ -105,6 +105,33 @@ def get_lesson_progress_map(user_id, course_id):
     return {p.lesson_id: p.is_completed for p in progresses}
 
 
+def is_chapter_completed(user_id, course_id, chapter_id):
+    enrollment = get_latest_enrollment(user_id, course_id)
+    if not enrollment:
+        return False
+
+    course = Course.query.get(course_id)
+    if not course:
+        return False
+
+    chapter = next((item for item in course.chapters if item.id == chapter_id), None)
+    if not chapter:
+        return False
+
+    lesson_ids = [lesson.id for lesson in chapter.lessons if _lesson_has_content(lesson)]
+    if not lesson_ids:
+        return True
+
+    completed_count = (
+        LessonProgress.query.filter(
+            LessonProgress.enrollment_id == enrollment.id,
+            LessonProgress.lesson_id.in_(lesson_ids),
+            LessonProgress.is_completed.is_(True),
+        ).count()
+    )
+    return completed_count == len(lesson_ids)
+
+
 def recalc_enrollment_progress(enrollment):
     course = Course.query.get(enrollment.course_id)
     if not course:
