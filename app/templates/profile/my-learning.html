@@ -25,17 +25,28 @@
         <p class="text-muted-ef small mb-2">{{ course.teacher.first_name }} {{ course.teacher.last_name }}</p>
         {% endif %}
 
+        {% set progress = enrollment.progress or 0 %}
+        {% set is_failed = enrollment.status.name == "FAILED" %}
+        {% set is_completed = enrollment.status.name == "COMPLETED" or progress >= 100 %}
         <div class="d-flex justify-content-between mb-1">
           <span class="text-muted-ef small">Tiến độ</span>
-          <span class="text-indigo small fw-semibold">{{ enrollment.progress }}%</span>
+          <span class="small fw-semibold {% if is_failed %}text-danger{% elif is_completed %}text-success{% else %}text-indigo{% endif %}">{{ progress }}%</span>
         </div>
-        <div class="progress-ef mb-3"><div class="progress-bar" style="width:{{ enrollment.progress }}%;"></div></div>
+        <div class="progress-ef mb-3" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-fill {% if is_failed %}progress-fill-failed{% elif is_completed %}progress-fill-completed{% endif %}" style="width: {{ [progress, 100]|min }}%;"></div>
+        </div>
 
         <div class="d-flex align-items-center justify-content-between pt-2 border-top">
           <span class="small text-muted-ef">
             <i class="bi bi-calendar3"></i> {{ enrollment.created_date.strftime("%d/%m/%Y") if enrollment.created_date else '' }}
           </span>
+          {% if is_failed %}
+          <span class="badge-ef badge-ef-failed"><i class="bi bi-x-circle-fill"></i> Rớt</span>
+          {% elif is_completed %}
+          <span class="badge-ef badge-ef-success"><i class="bi bi-check-circle-fill"></i> Hoàn thành</span>
+          {% else %}
           <span class="btn btn-indigo btn-sm"><i class="bi bi-play-circle"></i> Vào học</span>
+          {% endif %}
         </div>
       </div>
     </a>
