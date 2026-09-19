@@ -15,6 +15,28 @@ def get_teacher_courses(teacher_id):
     return dao.get_courses_by_teacher_id(teacher_id)
 
 
+def get_teacher_course_report(course_id, teacher_id):
+    course = dao.get_course_details(course_id, teacher_id=teacher_id)
+    if not course:
+        return None
+
+    tests = list(course.tests)
+    score_rows = []
+    for enrollment in course.enrollments:
+        best_scores = {}
+        for score in enrollment.scores:
+            current = best_scores.get(score.test_id)
+            if (
+                current is None
+                or (score.is_passed and not current.is_passed)
+                or (score.is_passed == current.is_passed and (score.score_value or 0) > (current.score_value or 0))
+            ):
+                best_scores[score.test_id] = score
+        score_rows.append({"enrollment": enrollment, "best_scores": best_scores})
+
+    return {"course": course, "tests": tests, "score_rows": score_rows}
+
+
 def get_course_detail(course_id, user_id=None):
     course = Course.query.get_or_404(course_id)
     is_enrolled = False

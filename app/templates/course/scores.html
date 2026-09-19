@@ -1,0 +1,67 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Điểm học viên · {{ course.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+  <div>
+    <a href="{{ url_for('my_courses') }}" class="small text-muted-ef">
+      <i class="bi bi-arrow-left"></i> Quản lý khóa học
+    </a>
+    <h1 class="font-display fs-3 mb-1 mt-2">Điểm học viên</h1>
+    <p class="text-muted-ef mb-0">{{ course.name }}</p>
+  </div>
+  <a href="{{ url_for('course_students', course_id=course.id) }}" class="btn btn-outline-indigo">
+    <i class="bi bi-people"></i> Học viên
+  </a>
+</div>
+
+<div class="card-ef overflow-hidden">
+  {% if score_rows %}
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="ps-4">Học viên</th>
+          {% for test in tests %}
+          <th class="text-center">Bài {{ loop.index }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in score_rows %}
+        <tr>
+          <td class="ps-4">
+            <div class="fw-semibold">{{ row.enrollment.user.first_name }} {{ row.enrollment.user.last_name }}</div>
+          </td>
+          {% for test in tests %}
+          {% set score = row.best_scores.get(test.id) %}
+          <td class="text-center">
+            {% if score %}
+              <div class="fw-semibold {% if score.is_passed %}text-success{% else %}text-danger{% endif %}">
+                {{ score.score_value }}/10
+              </div>
+              <small class="{% if score.is_passed %}text-success{% else %}text-danger{% endif %}">
+                {{ "Đạt" if score.is_passed else "Rớt" }}
+              </small>
+            {% else %}
+              <span class="text-muted-ef">Chưa làm</span>
+            {% endif %}
+          </td>
+          {% endfor %}
+          {% if not tests %}
+          <td class="text-muted-ef">Khóa học chưa có bài kiểm tra</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="p-5 text-center text-muted-ef">
+    <i class="bi bi-bar-chart fs-1"></i>
+    <p class="mt-2 mb-0">Chưa có dữ liệu điểm vì chưa có học viên.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

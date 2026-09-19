@@ -44,6 +44,7 @@ def get_learn_context(course_id, user_id, lesson_id=None):
 
     enrollment = dao.get_latest_enrollment(user_id, course_id)
     progress_map = dao.get_lesson_progress_map(user_id, course_id)
+    passed_test_ids = dao.get_passed_test_ids(user_id, course_id)
     tests = dao.get_course_tests(course_id)
 
     return {
@@ -53,6 +54,7 @@ def get_learn_context(course_id, user_id, lesson_id=None):
         "doc_kind": doc_kind,
         "enrollment": enrollment,
         "progress_map": progress_map,
+        "passed_test_ids": passed_test_ids,
         "tests": tests,
     }
 

@@ -48,4 +48,6 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
-from app import models  # noqa: F401,E402
+# Register routes whenever the application package is loaded so that
+# `flask --app app` also exposes the application's controllers.
+from app import controllers, models  # noqa: F401, E402
