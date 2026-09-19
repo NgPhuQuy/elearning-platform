@@ -459,8 +459,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Tạo bài test mới cho một chương
     // =====================================================
     function testRowTemplate(chapterBlock) {
-        const chapterId = chapterBlock.dataset.chapterId || '';
-
         const chapterName =
             chapterBlock.querySelector('.chapter-name')?.textContent.trim()
             || 'Chương mới';
@@ -614,6 +612,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             const maxAttemptsInput =
                                 testRow.querySelector('.test-max-attempts');
 
+                            const targetChapterSelect =
+                                testRow.querySelector('.test-chapter-select');
+
+                            const targetChapterId =
+                                targetChapterSelect?.value || chapterId || null;
+
 
                             testsData.push({
 
@@ -626,10 +630,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                     || 'Bài kiểm tra mới',
 
                                 chapter_id:
-                                    chapterId || null,
+                                    targetChapterId,
 
                                 chapter_temp_id:
-                                    chapterBlock.dataset.tempId || null,
+                                    targetChapterId ? null : chapterBlock.dataset.tempId || null,
 
                                 duration:
                                     parseInt(

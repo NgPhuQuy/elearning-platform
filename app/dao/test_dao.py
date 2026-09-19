@@ -5,6 +5,14 @@ from app.dao.enrollment_dao import get_latest_enrollment, recalc_enrollment_prog
 from app.models import Answer, Course, EnrollmentStatus, Question, Score, Test
 
 
+def _normalize_id(value):
+    try:
+        normalized = int(value)
+    except (TypeError, ValueError):
+        return None
+    return normalized if normalized > 0 else None
+
+
 def get_course_tests(course_id):
     return Test.query.filter_by(course_id=course_id).all()
 
@@ -109,19 +117,21 @@ def sync_tests(course_id, teacher_id, tests_data, chapter_ids_by_temp_id=None):
         return False
 
     chapter_ids_by_temp_id = chapter_ids_by_temp_id or {}
-    incoming_ids = {t["id"] for t in tests_data if t.get("id")}
+    incoming_ids = {test_id for test_id in (_normalize_id(t.get("id")) for t in tests_data) if test_id is not None}
     for old_test in course.tests:
         if old_test.id not in incoming_ids:
             db.session.delete(old_test)
     db.session.flush()
 
     for item in tests_data:
-        test_id = item.get("id")
+        test_id = _normalize_id(item.get("id"))
         name = item.get("name", "").strip()
         duration = max(0, int(item.get("duration", 0)))
         max_attempts = max(1, int(item.get("max_attempts", 1)))
         pass_score = float(item.get("pass_score", 5))
-        chapter_id = item.get("chapter_id") or chapter_ids_by_temp_id.get(item.get("chapter_temp_id"))
+        chapter_id = _normalize_id(item.get("chapter_id")) or _normalize_id(
+            chapter_ids_by_temp_id.get(item.get("chapter_temp_id"))
+        )
 
         if not name:
             continue
