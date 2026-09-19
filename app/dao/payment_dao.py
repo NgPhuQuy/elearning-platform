@@ -126,12 +126,14 @@ def confirm_payment_success(order_id, momo_trans_id=None, pay_type=None):
         try:
             from app.mailer import send_invoice_email
 
-            sent, _ = send_invoice_email(payment, payment.user, payment.course)
+            sent, err = send_invoice_email(payment, payment.user, payment.course)
             if sent:
                 payment.invoice_sent = True
                 db.session.commit()
-        except Exception:
-            pass
+            else:
+                print(f"[MAIL_ERROR] Không thể gửi hóa đơn: {err}")
+        except Exception as e:
+            print(f"[MAIL_EXCEPTION] Lỗi khi gửi hóa đơn: {e}")
 
     return payment
 
