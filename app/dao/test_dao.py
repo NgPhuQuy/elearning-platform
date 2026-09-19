@@ -73,7 +73,7 @@ def submit_test_score(user_id, course_id, test_id, answers):
     else:
         correct_count = 0
         for q in questions:
-            user_ans_id = answers.get(str(q.id))
+            user_ans_id = answers.get(f"answer_{q.id}", answers.get(str(q.id)))
             if user_ans_id:
                 try:
                     ans = Answer.query.get(int(user_ans_id))
