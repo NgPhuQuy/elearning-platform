@@ -14,6 +14,14 @@ from app.models import (
 )
 
 
+def _normalize_id(value):
+    try:
+        normalized = int(value)
+    except (TypeError, ValueError):
+        return None
+    return normalized if normalized > 0 else None
+
+
 def get_categories():
     return Category.query.all()
 
@@ -192,14 +200,16 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
         return {}
 
     chapter_ids_by_temp_id = {}
-    incoming_chap_ids = {c["id"] for c in chapters_data if c.get("id")}
+    incoming_chap_ids = {
+        chapter_id for chapter_id in (_normalize_id(c.get("id")) for c in chapters_data) if chapter_id is not None
+    }
     for old_chap in course.chapters:
         if old_chap.id not in incoming_chap_ids:
             db.session.delete(old_chap)
     db.session.flush()
 
     for chap_order, chap_data in enumerate(chapters_data, start=1):
-        chap_id = chap_data.get("id")
+        chap_id = _normalize_id(chap_data.get("id"))
         if chap_id:
             chapter = Chapter.query.filter_by(id=chap_id, course_id=course_id).first()
             if chapter:
@@ -222,14 +232,16 @@ def sync_chapters_and_lessons(course_id, teacher_id, chapters_data, files=None):
             continue
 
         lessons_data = chap_data.get("lessons", [])
-        incoming_les_ids = {les["id"] for les in lessons_data if les.get("id")}
+        incoming_les_ids = {
+            lesson_id for lesson_id in (_normalize_id(les.get("id")) for les in lessons_data) if lesson_id is not None
+        }
         for old_les in chapter.lessons:
             if old_les.id not in incoming_les_ids:
                 db.session.delete(old_les)
         db.session.flush()
 
         for les_data in lessons_data:
-            les_id = les_data.get("id")
+            les_id = _normalize_id(les_data.get("id"))
             les_type_str = les_data.get("type", "NONE")
             file_key = les_data.get("file_key")
             if not file_key and les_type_str in {"VIDEO", "DOCUMENT"}:
