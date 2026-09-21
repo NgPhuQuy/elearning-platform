@@ -1,4 +1,4 @@
-from app.models import Certificate
+from app.models import Certificate, Enrollment
 
 
 def get_certificate_by_id(cert_id):
@@ -11,9 +11,8 @@ def get_certificate_by_enrollment(enrollment_id):
 
 def get_user_certificates(user_id):
     return (
-        Certificate.query.join(Certificate.enrollment)
-        .filter_by(user_id=user_id)
+        Certificate.query.join(Enrollment, Certificate.enrollment_id == Enrollment.id)
+        .filter(Enrollment.user_id == user_id)
         .order_by(Certificate.issued_date.desc())
         .all()
     )
-
