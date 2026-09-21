@@ -50,16 +50,7 @@
           {% if is_failed %}
           <span class="badge-ef badge-ef-failed"><i class="bi bi-x-circle-fill"></i> Rớt</span>
           {% elif is_completed %}
-          <div class="d-flex gap-1 align-items-center">
-            <span class="badge-ef badge-ef-success"><i class="bi bi-check-circle-fill"></i> Hoàn thành</span>
-            {% if enrollment.certificate %}
-            <a href="{{ url_for('view_certificate', cert_id=enrollment.certificate.id) }}"
-              class="btn btn-sm btn-outline-warning text-dark py-0 px-2" style="font-size: 0.78rem;"
-              title="Xem chứng chỉ">
-              <i class="bi bi-award-fill text-warning"></i> Chứng chỉ
-            </a>
-            {% endif %}
-          </div>
+          <span class="badge-ef badge-ef-success"><i class="bi bi-check-circle-fill"></i> Hoàn thành</span>
           {% else %}
           <span class="btn btn-indigo btn-sm"><i class="bi bi-play-circle"></i> Vào học</span>
           {% endif %}
