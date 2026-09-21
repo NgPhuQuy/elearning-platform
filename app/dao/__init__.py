@@ -1,3 +1,8 @@
+from app.dao.certificate_dao import (
+    get_certificate_by_enrollment,
+    get_certificate_by_id,
+    get_user_certificates,
+)
 from app.dao.chat_dao import (
     count_unread,
     create_private_conversation,
@@ -184,4 +189,7 @@ __all__ = [
     "confirm_payment_failed",
     "get_payment_by_order_id",
     "get_my_payments",
+    "get_certificate_by_id",
+    "get_certificate_by_enrollment",
+    "get_user_certificates",
 ]

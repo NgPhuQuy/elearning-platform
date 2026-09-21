@@ -3,7 +3,7 @@ from datetime import datetime
 from flask_login import current_user
 
 from app import db
-from app.models import Course, Enrollment, EnrollmentStatus, Lesson, LessonProgress, LessonType, Score
+from app.models import Certificate, Course, Enrollment, EnrollmentStatus, Lesson, LessonProgress, LessonType, Score
 
 
 def get_latest_enrollment(user_id, course_id):
@@ -163,5 +163,12 @@ def recalc_enrollment_progress(enrollment):
     if enrollment.progress >= 100 and enrollment.status == EnrollmentStatus.IN_PROGRESS:
         enrollment.status = EnrollmentStatus.COMPLETED
         enrollment.completed_date = datetime.now()
+
+        # Tự động cấp chứng chỉ khi hoàn thành nếu khóa học có cấu hình cấp chứng chỉ
+        if course.has_certificate:
+            existing_cert = Certificate.query.filter_by(enrollment_id=enrollment.id).first()
+            if not existing_cert:
+                new_cert = Certificate(course_id=enrollment.course_id, enrollment_id=enrollment.id)
+                db.session.add(new_cert)
 
     db.session.commit()

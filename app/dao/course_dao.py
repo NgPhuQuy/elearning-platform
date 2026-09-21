@@ -83,7 +83,7 @@ def update_course(
             course.level = level
         if price is not None and not course.activate:
             course.price = price
-
+      
         if category_ids is not None:
             CourseCategory.query.filter_by(course_id=course.id).delete()
             for cate_id in category_ids:
