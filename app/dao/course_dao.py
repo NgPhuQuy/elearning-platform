@@ -49,13 +49,14 @@ def get_course_sale():
     return Course.query.filter_by(is_sale=True).all()
 
 
-def create_course(name, description, image, teacher_id, level=None, category_ids=None):
+def create_course(name, description, image, teacher_id, level=None, category_ids=None, has_certificate=False):
     course = Course(
         name=name,
         description=description,
         image=image,
         teacher_id=teacher_id,
         level=CourseLevel[level] if level else CourseLevel.BASIC,
+        has_certificate=has_certificate,
     )
     db.session.add(course)
     db.session.commit()
@@ -69,7 +70,15 @@ def create_course(name, description, image, teacher_id, level=None, category_ids
 
 
 def update_course(
-    course_id, teacher_id, name=None, description=None, image=None, level=None, category_ids=None, price=None
+    course_id,
+    teacher_id,
+    name=None,
+    description=None,
+    image=None,
+    level=None,
+    category_ids=None,
+    price=None,
+    has_certificate=None,
 ):
     course = Course.query.filter(Course.id == course_id, Course.teacher_id == teacher_id).first()
     if course:
@@ -83,7 +92,9 @@ def update_course(
             course.level = level
         if price is not None and not course.activate:
             course.price = price
-
+        if has_certificate is not None and not course.activate:
+            course.has_certificate = has_certificate
+      
         if category_ids is not None:
             CourseCategory.query.filter_by(course_id=course.id).delete()
             for cate_id in category_ids:

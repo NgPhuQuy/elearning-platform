@@ -1,4 +1,5 @@
 from app.models.base import BaseModel
+from app.models.certificate import Certificate
 from app.models.chat import Conversation, ConversationMember, Message, MessageReaction
 from app.models.course import (
     Category,
@@ -65,4 +66,5 @@ __all__ = [
     "MessageReaction",
     "PaymentStatus",
     "Payment",
+    "Certificate",
 ]

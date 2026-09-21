@@ -241,6 +241,11 @@ a {
     color: #fff;
 }
 
+#hasCertificate:checked {
+    background-color: var(--ef-emerald-500);
+    border-color: var(--ef-emerald-600);
+}
+
 .btn-outline-indigo {
     border: 1px solid var(--ef-indigo-200);
     color: var(--ef-indigo-700);
