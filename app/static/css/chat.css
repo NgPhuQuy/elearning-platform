@@ -574,22 +574,9 @@
    Responsive
 ========================= */
 
-@media (max-width: 768px) {
-
+@media (max-width: 1000px) {
     .chat-sidebar {
-        width: 100%;
+        width: 200px;
     }
-
-    .chat-main {
-        display: none;
-    }
-
-    .chat-page.show-chat .chat-sidebar {
-        display: none;
-    }
-
-    .chat-page.show-chat .chat-main {
-        display: flex;
-    }
-
 }
+
