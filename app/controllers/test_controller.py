@@ -115,12 +115,7 @@ def do_test(course_id, test_id):
     )
 
 
-@app.route(
-    "/courses/<int:course_id>/tests/<int:test_id>/questions", methods=["GET", "POST"], endpoint="manage_questions"
-)
-@app.route(
-    "/courses/<int:course_id>/tests/<int:test_id>/questions", methods=["GET", "POST"], endpoint="manage_test_questions"
-)
+@app.route("/courses/<int:course_id>/tests/<int:test_id>/questions", methods=["GET", "POST"])
 @login_required
 @teacher_required
 def manage_questions(course_id, test_id):

@@ -535,20 +535,18 @@
 
                 </div>
 
-
                 <div class="row g-3 mb-3 pt-3 border-top">
                     <div class="col-md-12">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="has_certificate" id="hasCertificate"
                                 value="1" {% if course and course.has_certificate %}checked{% endif %} {% if course and
-                                course.certificates %}checked{% endif %} {% if course and course.activate %}disabled{%
-                                endif %}>
+                                course.activate %}disabled{% endif %}>
                             <label class="form-check-label small fw-semibold" for="hasCertificate">
+
                                 Cấp chứng chỉ sau khi hoàn thành khóa học
                             </label>
                             <div class="form-text small text-muted-ef">
-                                Học viên khi đạt 100% tiến độ và vượt qua các bài kiểm tra sẽ được hệ thống tự động cấp
-                                giấy chứng nhận.
+                                Học viên đạt đủ điều kiện sẽ được hệ thống tự động cấp giấy chứng nhận.
                             </div>
                         </div>
                     </div>
@@ -560,7 +558,7 @@
 
                     <i class="bi bi-lock-fill"></i>
 
-                    Khóa học đã được công khai — các cài đặt (giá bán, chứng chỉ) không thể chỉnh sửa nữa.
+                    Khóa học đã được công khai — giá bán không thể chỉnh sửa nữa.
 
                 </div>
 
