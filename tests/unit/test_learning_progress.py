@@ -79,7 +79,9 @@ def test_recalc_progress_partial_completion(mock_course_cls, mock_db, mock_lp_cl
 @patch("app.dao.enrollment_dao.LessonProgress")
 @patch("app.dao.enrollment_dao.db")
 @patch("app.dao.enrollment_dao.Course")
-def test_recalc_progress_100_percent_triggers_completion(mock_course_cls, mock_db, mock_lp_cls, mock_score_cls, mock_cert_cls):
+def test_recalc_progress_100_percent_triggers_completion(
+    mock_course_cls, mock_db, mock_lp_cls, mock_score_cls, mock_cert_cls
+):
     # Khóa học có 2 bài học
     lesson1 = MagicMock(id=1, type=LessonType.VIDEO, video_content="vid1")
     lesson2 = MagicMock(id=2, type=LessonType.VIDEO, video_content="vid2")
