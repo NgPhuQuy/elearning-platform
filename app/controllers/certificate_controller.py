@@ -1,6 +1,8 @@
 from flask import abort, render_template
+from flask_login import current_user
 
 from app import app, dao
+from app.decorators import login_required
 
 
 @app.route("/certificates/<int:cert_id>")
@@ -20,3 +22,11 @@ def view_certificate(cert_id):
         user=user,
         recipient_name=recipient_name,
     )
+
+
+@app.route("/my-certificates", endpoint="my_certificates")
+@app.route("/my-certificate", endpoint="my_certificate")
+@login_required
+def my_certificates():
+    certificates = dao.get_user_certificates(current_user.id)
+    return render_template("certificate/my_certificates.html", certificates=certificates)
