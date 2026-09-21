@@ -1,0 +1,68 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Chứng chỉ của tôi · EduForum{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h1 class="font-display fs-4 mb-1">Chứng chỉ của tôi</h1>
+        <p class="text-muted-ef small mb-0">Các chứng chỉ bạn đã nhận sau khi xuất sắc hoàn thành khóa học</p>
+    </div>
+    <a href="{{ url_for('my_learning') }}" class="btn btn-outline-indigo btn-sm">
+        <i class="bi bi-mortarboard me-1"></i> Khóa học đang học
+    </a>
+</div>
+
+{% if certificates %}
+<div class="row g-4">
+    {% for cert in certificates %}
+    {% set course = cert.course %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card-ef h-100 d-flex flex-column overflow-hidden border-2 border-warning-subtle shadow-sm">
+            <div class="position-relative text-white p-4 text-center d-flex flex-column align-items-center justify-content-center"
+                 style="min-height: 140px; background: linear-gradient(135deg, #1e1b4b, #3730a3);">
+                <i class="bi bi-award-fill text-warning fs-1 mb-2"></i>
+                <span class="badge bg-warning text-dark fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Chứng nhận hoàn thành</span>
+                <span class="small text-white-50 mt-1">Mã chứng chỉ: #{{ cert.id }}</span>
+            </div>
+            <div class="p-3 d-flex flex-column flex-grow-1">
+                <h3 class="font-display fs-6 line-clamp-2 mb-2" style="font-size: .95rem !important;">{{ course.name }}</h3>
+                {% if course.teacher %}
+                <p class="text-muted-ef small mb-3">Giảng viên: {{ course.teacher.first_name }} {{ course.teacher.last_name }}</p>
+                {% endif %}
+
+                <div class="mt-auto pt-3 border-top d-flex align-items-center justify-content-between">
+                    <span class="small text-muted-ef">
+                        <i class="bi bi-calendar3 me-1"></i>{{ cert.issued_date.strftime("%d/%m/%Y") if cert.issued_date else '' }}
+                    </span>
+                    <a href="{{ url_for('view_certificate', cert_id=cert.id) }}"
+                       class="btn btn-warning btn-sm fw-semibold text-dark d-flex align-items-center gap-1">
+                        <i class="bi bi-eye"></i> Xem chứng chỉ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-ef p-5 text-center">
+    <div class="mb-3">
+        <i class="bi bi-award text-muted-ef" style="font-size: 3.5rem;"></i>
+    </div>
+    <h4 class="font-display fs-6 mb-2">Bạn chưa có chứng chỉ nào</h4>
+    <p class="text-muted-ef small mb-4" style="max-width: 480px; margin-left: auto; margin-right: auto;">
+        Hãy hoàn thành 100% tiến độ bài học và vượt qua các bài kiểm tra trong khóa học để được hệ thống tự động cấp chứng nhận chính thức.
+    </p>
+    <div class="d-flex justify-content-center gap-2">
+        <a href="{{ url_for('my_learning') }}" class="btn btn-indigo btn-sm">
+            <i class="bi bi-mortarboard me-1"></i> Khóa học của tôi
+        </a>
+        <a href="{{ url_for('courses') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-search me-1"></i> Khám phá khóa học
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+

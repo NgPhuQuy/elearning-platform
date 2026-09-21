@@ -13,4 +13,3 @@ class Certificate(BaseModel):
 
     course = relationship("Course", backref="certificates")
     enrollment = relationship("Enrollment", backref=backref("certificate", uselist=False))
-
