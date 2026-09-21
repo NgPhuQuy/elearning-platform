@@ -94,7 +94,7 @@ def update_course(
             course.price = price
         if has_certificate is not None and not course.activate:
             course.has_certificate = has_certificate
-      
+
         if category_ids is not None:
             CourseCategory.query.filter_by(course_id=course.id).delete()
             for cate_id in category_ids:

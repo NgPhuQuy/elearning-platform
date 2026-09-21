@@ -20,4 +20,3 @@ def view_certificate(cert_id):
         user=user,
         recipient_name=recipient_name,
     )
-

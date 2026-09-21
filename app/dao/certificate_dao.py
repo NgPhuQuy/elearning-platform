@@ -16,4 +16,3 @@ def get_user_certificates(user_id):
         .order_by(Certificate.issued_date.desc())
         .all()
     )
-
