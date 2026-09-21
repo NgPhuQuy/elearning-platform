@@ -24,8 +24,7 @@ def view_certificate(cert_id):
     )
 
 
-@app.route("/my-certificates", endpoint="my_certificates")
-@app.route("/my-certificate", endpoint="my_certificate")
+@app.route("/my-certificates")
 @login_required
 def my_certificates():
     certificates = dao.get_user_certificates(current_user.id)

@@ -164,9 +164,11 @@ def recalc_enrollment_progress(enrollment):
         enrollment.status = EnrollmentStatus.COMPLETED
         enrollment.completed_date = datetime.now()
 
-        existing_cert = Certificate.query.filter_by(enrollment_id=enrollment.id).first()
-        if not existing_cert:
-            new_cert = Certificate(course_id=enrollment.course_id, enrollment_id=enrollment.id)
-            db.session.add(new_cert)
+    if (
+        enrollment.status == EnrollmentStatus.COMPLETED
+        and course.has_certificate
+        and not Certificate.query.filter_by(enrollment_id=enrollment.id).first()
+    ):
+        db.session.add(Certificate(course_id=enrollment.course_id, enrollment_id=enrollment.id))
 
     db.session.commit()

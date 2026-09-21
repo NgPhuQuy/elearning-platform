@@ -73,6 +73,7 @@ def create_course(teacher_id, form_data, files):
         teacher_id=teacher_id,
         level=form_data.get("level"),
         category_ids=form_data.getlist("category_ids"),
+        has_certificate=form_data.get("has_certificate") == "1",
     )
     if course:
         outcomes = form_data.getlist("outcomes")
@@ -103,6 +104,7 @@ def update_course(course_id, teacher_id, form_data, files):
 
     was_draft = not course.activate
     action = form_data.get("action", "save")
+    has_certificate = form_data.get("has_certificate") == "1"
 
     dao.update_course(
         course_id=course_id,
@@ -113,6 +115,7 @@ def update_course(course_id, teacher_id, form_data, files):
         level=form_data.get("level"),
         category_ids=form_data.getlist("category_ids"),
         price=price,
+        has_certificate=has_certificate,
     )
 
     outcomes = form_data.getlist("outcomes")

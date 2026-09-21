@@ -36,6 +36,7 @@ class Course(BaseModel):
     name = Column(String(100), nullable=False)
     is_sale = Column(Boolean, default=True)
     price = Column(Integer, default=0)
+    has_certificate = Column(Boolean, nullable=False, default=False, server_default="0")
     description = Column(Text)
     image = Column(String(255), default="")
     teacher_id = Column(Integer, ForeignKey("user.id"))
