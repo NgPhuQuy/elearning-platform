@@ -73,6 +73,7 @@ def create_course(teacher_id, form_data, files):
         teacher_id=teacher_id,
         level=form_data.get("level"),
         category_ids=form_data.getlist("category_ids"),
+        has_certificate=form_data.get("has_certificate") == "1",
     )
     if course:
         outcomes = form_data.getlist("outcomes")
