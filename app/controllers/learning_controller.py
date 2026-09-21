@@ -40,7 +40,6 @@ def learn_course(course_id):
         enrollment=ctx["enrollment"],
         progress_map=ctx["progress_map"],
         tests=ctx["tests"],
-        course_tests=ctx["tests"],
     )
 
 

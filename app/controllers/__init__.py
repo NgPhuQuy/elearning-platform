@@ -1,5 +1,6 @@
 from app.controllers import (
     auth_controller,  # noqa: F401
+    certificate_controller,  # noqa: F401
     chat_controller,  # noqa: F401
     course_controller,  # noqa: F401
     forum_controller,  # noqa: F401

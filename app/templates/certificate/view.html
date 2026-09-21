@@ -1,0 +1,57 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Chứng chỉ hoàn thành khóa học{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <!-- Khung chứng chỉ -->
+            <div class="card border-4 border-warning shadow-lg p-4 p-md-5 text-center bg-white position-relative"
+                style="border-radius: 16px;">
+                <div class="border border-2 border-secondary p-4 p-md-5"
+                    style="border-radius: 12px; border-style: dashed !important;">
+                    <div class="mb-3">
+                        <i class="bi bi-award-fill text-warning display-3"></i>
+                    </div>
+
+                    <h5 class="text-uppercase tracking-wider text-muted mb-2">GIẤY CHỨNG NHẬN HOÀN THÀNH</h5>
+                    <h2 class="fw-bold text-primary mb-4">CHỨNG CHỈ KHÓA HỌC</h2>
+
+                    <p class="fs-5 text-muted mb-1">Chứng nhận học viên:</p>
+                    <h3 class="fw-bold text-dark text-uppercase border-bottom d-inline-block pb-2 px-4 mb-4">
+                        {{ recipient_name }}
+                    </h3>
+
+                    <p class="fs-5 text-muted mb-1">Đã xuất sắc hoàn thành khóa học:</p>
+                    <h4 class="fw-bold text-success mb-4">
+                        {{ course.name }}
+                    </h4>
+
+                    <div class="row mt-5 pt-4 border-top">
+                        <div class="col-sm-6 text-sm-start text-center mb-3 mb-sm-0">
+                            <small class="text-muted d-block">Mã chứng chỉ: #{{ certificate.id }}</small>
+                            <small class="text-muted d-block">Ngày cấp: {{ certificate.issued_date.strftime('%d/%m/%Y')
+                                if certificate.issued_date else '' }}</small>
+                        </div>
+                        <div class="col-sm-6 text-sm-end text-center">
+                            <small class="text-muted d-block">Đơn vị cấp</small>
+                            <strong class="text-primary fs-6">EduForge Platform</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nút điều hướng -->
+            <div class="text-center mt-4 d-flex justify-content-center gap-2">
+                <a href="{{ url_for('my_learning') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Khóa học của tôi
+                </a>
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="bi bi-printer"></i> In chứng chỉ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
