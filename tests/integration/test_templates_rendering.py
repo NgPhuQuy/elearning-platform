@@ -146,6 +146,15 @@ def test_authenticated_profile_and_learning_templates(app_ctx):
         res = client.get(f"/learn/{course.id}")
         assert res.status_code == 200
 
+        # My Certificate page
+        res = client.get("/my-certificate")
+        assert res.status_code == 200
+        assert "Chứng chỉ của tôi" in res.get_data(as_text=True)
+
+        res = client.get("/my-certificates")
+        assert res.status_code == 200
+        assert "Chứng chỉ của tôi" in res.get_data(as_text=True)
+
     # Cleanup
     db.session.delete(payment)
     db.session.delete(enrollment)

@@ -24,6 +24,7 @@ def view_certificate(cert_id):
     )
 
 
+@app.route("/my-certificates", endpoint="my_certificates")
 @app.route("/my-certificate", endpoint="my_certificate")
 @login_required
 def my_certificates():

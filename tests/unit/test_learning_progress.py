@@ -74,18 +74,20 @@ def test_recalc_progress_partial_completion(mock_course_cls, mock_db, mock_lp_cl
     assert fake_enrollment.status == EnrollmentStatus.IN_PROGRESS
 
 
+@patch("app.dao.enrollment_dao.Certificate")
 @patch("app.dao.enrollment_dao.Score")
 @patch("app.dao.enrollment_dao.LessonProgress")
 @patch("app.dao.enrollment_dao.db")
 @patch("app.dao.enrollment_dao.Course")
-def test_recalc_progress_100_percent_triggers_completion(mock_course_cls, mock_db, mock_lp_cls, mock_score_cls):
+def test_recalc_progress_100_percent_triggers_completion(mock_course_cls, mock_db, mock_lp_cls, mock_score_cls, mock_cert_cls):
     # Khóa học có 2 bài học
     lesson1 = MagicMock(id=1, type=LessonType.VIDEO, video_content="vid1")
     lesson2 = MagicMock(id=2, type=LessonType.VIDEO, video_content="vid2")
     chapter = MagicMock(lessons=[lesson1, lesson2])
 
-    fake_course = MagicMock(chapters=[chapter], tests=[])
+    fake_course = MagicMock(chapters=[chapter], tests=[], has_certificate=True)
     mock_course_cls.query.get.return_value = fake_course
+    mock_cert_cls.query.filter_by.return_value.first.return_value = None
 
     # Học viên hoàn thành cả 2 bài học -> 2/2 = 100%
     mock_lp_cls.query.filter.return_value.count.return_value = 2
@@ -98,3 +100,4 @@ def test_recalc_progress_100_percent_triggers_completion(mock_course_cls, mock_d
     assert fake_enrollment.progress == 100
     assert fake_enrollment.status == EnrollmentStatus.COMPLETED
     assert isinstance(fake_enrollment.completed_date, datetime)
+    mock_db.session.add.assert_called_once()
